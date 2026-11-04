@@ -41,6 +41,15 @@ export const HOME_URL = 'https://patryk.pro';
 export const SOURCE_URL = 'https://github.com/sysoppl/Calendar-CE';
 
 /**
+ * The source code of the version that is running (AGPL-3.0 section 13): its
+ * release tag. A modified version has to point this at its own source.
+ */
+export const VERSION_SOURCE_URL = `${SOURCE_URL}/tree/v${__APP_VERSION__}`;
+
+/** The licence's full text; the bundle carries a copy as LICENSE.txt as well. */
+export const LICENSE_URL = 'https://www.gnu.org/licenses/agpl-3.0.html';
+
+/**
  * E2EE Calendar, the hosted edition by the same author: the same app with an
  * end-to-end encrypted cloud that syncs every device. Only ever linked to.
  */

@@ -418,7 +418,7 @@ const messages: Record<MessageKey, string> = {
   'settings.chooseFile': 'Вибрати файл',
   'settings.resetSettings': 'Скинути налаштування',
   'settings.about.text': 'Календар для вебу та Android, спільнотна версія. Ваші події й завдання залишаються на цьому пристрої або на вибраному вами сервері CalDAV.',
-  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Вільне програмне забезпечення за ліцензією GNU AGPL-3.0.',
+  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Вільне програмне забезпечення за ліцензією <license>GNU AGPL-3.0</license>, без жодних гарантій.',
   'settings.about.source': 'Вихідний код',
   'settings.about.licenses': 'Ліцензії відкритого коду',
   'settings.about.licensesIntro': 'Календар містить перелічені тут компоненти з відкритим кодом. Кожен із них залишається під власною ліцензією.',

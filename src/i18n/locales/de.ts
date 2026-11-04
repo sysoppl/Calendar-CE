@@ -418,7 +418,7 @@ const messages: Record<MessageKey, string> = {
   'settings.chooseFile': 'Datei auswählen',
   'settings.resetSettings': 'Einstellungen zurücksetzen',
   'settings.about.text': 'Kalender für Web und Android, Community-Ausgabe. Ihre Termine und Aufgaben bleiben auf diesem Gerät oder auf einem CalDAV-Server Ihrer Wahl.',
-  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Freie Software unter der GNU AGPL-3.0.',
+  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Freie Software unter der <license>GNU AGPL-3.0</license>, ohne jegliche Gewährleistung.',
   'settings.about.source': 'Quellcode',
   'settings.about.licenses': 'Open-Source-Lizenzen',
   'settings.about.licensesIntro': 'Kalender enthält die hier aufgeführten Open-Source-Komponenten. Jede davon steht weiterhin unter ihrer eigenen Lizenz.',

@@ -418,7 +418,7 @@ const messages: Record<MessageKey, string> = {
   'settings.chooseFile': 'Bestand kiezen',
   'settings.resetSettings': 'Instellingen herstellen',
   'settings.about.text': 'Kalender voor het web en Android, community-editie. Je afspraken en taken blijven op dit apparaat of op een CalDAV-server naar keuze.',
-  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Vrije software onder de GNU AGPL-3.0.',
+  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Vrije software onder de <license>GNU AGPL-3.0</license>, zonder enige garantie.',
   'settings.about.source': 'Broncode',
   'settings.about.licenses': 'Opensourcelicenties',
   'settings.about.licensesIntro': 'Kalender bevat de hier vermelde opensourcecomponenten. Elk ervan valt onder zijn eigen licentie.',

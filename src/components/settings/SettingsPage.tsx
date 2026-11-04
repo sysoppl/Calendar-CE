@@ -23,7 +23,7 @@ import { TOUCH_AREA, TOUCH_MIN_H } from '@/components/ui/touch';
 import { LogoMark } from '@/components/layout/Logo';
 import { Copyright } from '@/components/ui/Copyright';
 import { CloudPromo } from '@/components/ui/CloudPromo';
-import { SOURCE_URL } from '@/lib/links';
+import { VERSION_SOURCE_URL } from '@/lib/links';
 import { ShortcutList } from '@/components/ShortcutsDialog';
 
 const SECTIONS: { id: SettingsSection; icon: ReactNode; key: MessageKey }[] = [
@@ -282,7 +282,7 @@ function AboutSection() {
           {t('settings.about.licenses')}
         </button>
         {/* AGPL-3.0: whoever uses the app over a network can get its source. */}
-        <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" className={`text-primary flex items-center font-medium hover:underline ${TOUCH_MIN_H}`}>
+        <a href={VERSION_SOURCE_URL} target="_blank" rel="noopener noreferrer" className={`text-primary flex items-center font-medium hover:underline ${TOUCH_MIN_H}`}>
           {t('settings.about.source')}
         </a>
         <LegalLinks linkClassName={`text-primary flex items-center font-medium hover:underline ${TOUCH_MIN_H}`} />

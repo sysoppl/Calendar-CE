@@ -437,7 +437,7 @@ export const pl: Record<MessageKey, string> = {
   'settings.chooseFile': 'Wybierz plik',
   'settings.resetSettings': 'Przywróć ustawienia domyślne',
   'settings.about.text': 'Kalendarz dla przeglądarki i Androida, wydanie społecznościowe. Wydarzenia i zadania zostają na tym urządzeniu albo na wybranym serwerze CalDAV.',
-  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Wolne oprogramowanie na licencji GNU AGPL-3.0.',
+  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Wolne oprogramowanie na licencji <license>GNU AGPL-3.0</license>, bez żadnej gwarancji.',
   'settings.about.source': 'Kod źródłowy',
   'settings.about.licenses': 'Licencje open source',
   'settings.about.licensesIntro': 'Kalendarz zawiera wymienione tu komponenty open source. Każdy z nich pozostaje na własnej licencji.',

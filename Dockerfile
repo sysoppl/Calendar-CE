@@ -32,7 +32,8 @@ LABEL org.opencontainers.image.title="Calendar CE" \
       org.opencontainers.image.description="Calendar Community Edition: calendar and tasks kept on the device or on your own CalDAV server" \
       org.opencontainers.image.source="https://github.com/sysoppl/Calendar-CE" \
       org.opencontainers.image.licenses="AGPL-3.0-only" \
-      org.opencontainers.image.vendor="patryk.pro"
+      org.opencontainers.image.vendor="patryk.pro" \
+      org.opencontainers.image.base.name="docker.io/library/node:24-alpine"
 WORKDIR /app
 # The host names the DAV proxy answers for come from the app's address, so
 # the build argument is carried over (the environment can still override it).
@@ -41,7 +42,8 @@ ENV NODE_ENV=production PORT=8787 HOST=0.0.0.0 VITE_APP_URL=${VITE_APP_URL}
 COPY --from=build /app/dist ./dist
 # Only the modules the server runs: no tests, no type declarations.
 COPY server/*.mjs ./server/
-COPY package.json ./
+# The licence of the app; its third-party notices are in dist/.
+COPY package.json LICENSE ./
 USER node
 EXPOSE 8787
 # Shell form, so the port is the one the container was started with.

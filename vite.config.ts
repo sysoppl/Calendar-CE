@@ -14,6 +14,20 @@ import { serviceWorkerVersion } from './scripts/sw-version.mjs';
 // Stops a build that is not a production one or still carries the seeder.
 import { developmentGuard } from './scripts/development-guard.mjs';
 
+/**
+ * The licence text next to the app (LICENSE.txt): every copy of the bundle
+ * that is passed on, the Android app and the Docker image, carries it.
+ */
+function licenseFile(): Plugin {
+  return {
+    name: 'calendar-license-file',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'LICENSE.txt', source: readFileSync(new URL('./LICENSE', import.meta.url), 'utf8') });
+    },
+  };
+}
+
 /** Mounts the DAV proxy on the dev and preview servers. */
 function davProxy(): Plugin {
   const isLoopback = (address = '') => address === '::1' || address.replace(/^::ffff:/, '').startsWith('127.');
@@ -106,6 +120,7 @@ export default defineConfig(({ mode }) => {
       cspMeta(contentSecurityPolicy({ meta: true })),
       preloadApp(),
       serviceWorkerVersion(pkg.version),
+      licenseFile(),
       developmentGuard(),
     ],
     // Vitest turns these into globals, so code under test sees them too.

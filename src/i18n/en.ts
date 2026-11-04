@@ -457,7 +457,7 @@ export const en = {
   'settings.chooseFile': 'Choose file',
   'settings.resetSettings': 'Reset settings',
   'settings.about.text': 'Calendar for the web and Android, community edition. Your events and tasks stay on this device or on a CalDAV server of your choice.',
-  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Free software under the GNU AGPL-3.0.',
+  'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Free software under the <license>GNU AGPL-3.0</license>, without any warranty.',
   'settings.about.source': 'Source code',
   'settings.about.licenses': 'Open-source licences',
   'settings.about.licensesIntro': 'Calendar includes the open-source components listed here. Each of them remains under its own licence.',
