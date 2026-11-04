@@ -236,7 +236,7 @@ public class ReminderFlowDeviceTest {
             .commit();
         Context app = context.getApplicationContext();
         SecretVault vault = new SecretVault(
-            new SharedPrefsValues(app, "calendar_vault_devicetest2"), DeviceKeys.keystore());
+            new SharedPrefsValues(app, "calendar_vault_devicetest2"), DeviceKeys.keystore(app));
         try {
             ReminderStore legacy = new ReminderStore(new SharedPrefsValues(app, file), vault);
             assertEquals("Legacy title", legacy.find("legacy|1").title);

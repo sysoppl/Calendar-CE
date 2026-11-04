@@ -35,15 +35,22 @@ import pl.patrykpro.calendar.util.Encoding;
 public class SecretVaultDeviceTest {
     private static final String FILE = "calendar_vault_devicetest";
 
+    private Context context;
     private SharedPreferences file;
     private SecretVault vault;
 
+    /** The real Keystore key source, its marks in the tests' own file. */
+    private KeystoreKeys keystore() {
+        return new KeystoreKeys(new SharedPrefsValues(context, DeviceKeys.MARKS_FILE));
+    }
+
     @Before
     public void setUp() {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         file = context.getSharedPreferences(FILE, Context.MODE_PRIVATE);
         file.edit().clear().commit();
-        vault = new SecretVault(new SharedPrefsValues(context, FILE), new KeystoreKeys());
+        context.getSharedPreferences(DeviceKeys.MARKS_FILE, Context.MODE_PRIVATE).edit().clear().commit();
+        vault = new SecretVault(new SharedPrefsValues(context, FILE), keystore());
     }
 
     @After
@@ -53,7 +60,7 @@ public class SecretVaultDeviceTest {
 
     @Test
     public void theKeyStaysInTheKeystoreAndAsksForNoUnlock() throws Exception {
-        SecretKey key = new KeystoreKeys().key();
+        SecretKey key = keystore().key();
         // No key material in this process.
         assertNull(key.getEncoded());
         KeyInfo info = (KeyInfo) SecretKeyFactory.getInstance(key.getAlgorithm(), "AndroidKeyStore").getKeySpec(key, KeyInfo.class);
@@ -85,7 +92,7 @@ public class SecretVaultDeviceTest {
 
         // A second vault object, as after a restart of the process, reads the same value.
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals(secret, new SecretVault(new SharedPrefsValues(context, FILE), new KeystoreKeys()).getString("other.secret"));
+        assertEquals(secret, new SecretVault(new SharedPrefsValues(context, FILE), keystore()).getString("other.secret"));
     }
 
     @Test

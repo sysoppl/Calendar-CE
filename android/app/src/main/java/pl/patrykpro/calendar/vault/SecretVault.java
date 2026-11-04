@@ -62,7 +62,7 @@ public final class SecretVault {
     /** The vault of this app, on the Keystore key. */
     public static SecretVault get(Context context) {
         synchronized (LOCK) {
-            if (instance == null) instance = new SecretVault(new SharedPrefsValues(context, PREFS), new KeystoreKeys());
+            if (instance == null) instance = new SecretVault(new SharedPrefsValues(context, PREFS), new KeystoreKeys(new SharedPrefsValues(context, PREFS + "_keys")));
             return instance;
         }
     }
