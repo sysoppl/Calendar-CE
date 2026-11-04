@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { appUrl, resolveLinks, resolvePublicConfig } from './publicConfig.mjs';
 import { contentSecurityPolicy, hstsFromEnv, PERMISSIONS_POLICY, securityHeaders } from './securityHeaders.mjs';
-import { STOP_GRACE, createAppServer, createRequestHandler, handleRequest, stopGracefully } from './server.mjs';
+import { LINKS_META, STOP_GRACE, createAppServer, createRequestHandler, handleRequest, linksInjector, stopGracefully } from './server.mjs';
 
 // Declared in src/vite-env.d.ts, which is outside this folder's type-check.
 declare const __APP_VERSION__: string;
@@ -272,6 +272,32 @@ describe('server', () => {
         expect(res.body, path).toBe('Not found');
       }
       expect((await get('/.well-known/security.txt')).body).toBe('Contact: mailto:security@example.com');
+    });
+
+    it('writes the links it was started with into the pages, and nothing else', async () => {
+      const links = { privacy: 'https://example.org/privacy?a=1&b="2"', terms: '', contact: 'mailto:hello@example.org' };
+      const withLinks = createAppServer({ root: join(dir, 'dist'), links });
+      try {
+        const other = await listen(withLinks);
+        const tag = `<meta name="${LINKS_META}" content="{&quot;privacy&quot;:&quot;https://example.org/privacy?a=1&amp;b=\\&quot;2\\&quot;&quot;,&quot;contact&quot;:&quot;mailto:hello@example.org&quot;}">`;
+        for (const path of ['/', '/app/settings']) {
+          const res = await get(path, { port: other });
+          expect(res.body, path).toBe(SHELL.replace('</head>', `${tag}</head>`));
+          expect(res.headers['content-length'], path).toBe(String(Buffer.byteLength(res.body)));
+        }
+        // What the attribute holds is the JSON the app parses.
+        const content = /content="([^"]*)"/.exec(tag)![1].replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+        expect(JSON.parse(content)).toEqual({ privacy: links.privacy, contact: links.contact });
+        expect((await get('/sw.js', { port: other })).body).toBe('self.skipWaiting();');
+        expect((await get('/', { port: other })).headers.etag).not.toBe((await get('/')).headers.etag);
+      } finally {
+        withLinks.close();
+      }
+      // Started without any, it serves the pages as they were built.
+      expect((await get('/')).body).toBe(SHELL);
+      expect(linksInjector({ privacy: '', terms: '', contact: '' })).toBeNull();
+      expect(linksInjector(undefined)).toBeNull();
+      expect(linksInjector({ terms: 'https://example.org/terms' })!(Buffer.from('<p>no head</p>')).toString()).toBe('<p>no head</p>');
     });
 
     it('says what is wrong when there is no build', async () => {
@@ -552,6 +578,42 @@ describe('deployment kit', () => {
       const installs = [...workflow.matchAll(/npm ci[^\n]*/g)].map((m) => m[0]);
       expect(installs.length).toBeGreaterThanOrEqual(2);
       for (const install of installs) expect(install).toContain('--ignore-scripts');
+    });
+
+    it('can be run by the Docker workflow', () => {
+      expect(workflow).toMatch(/^ {2}workflow_call:$/m);
+    });
+  });
+
+  describe('the Docker workflow', () => {
+    const workflow = read('.github/workflows/docker.yml');
+
+    it('publishes for version tags only, after the tests, with the one write permission it needs', () => {
+      expect(workflow).toMatch(/^ {2}push:\n {4}tags: \['v\[0-9\]\+\.\[0-9\]\+\.\[0-9\]\+'\]$/m);
+      expect(workflow).not.toMatch(/^ {4}branches:/m);
+      expect(workflow).toMatch(/^permissions:\n {2}contents: read$/m);
+      expect(workflow).toMatch(/^ {4}needs: tests$/m);
+      expect(workflow).toContain('uses: ./.github/workflows/test.yml');
+      expect([...workflow.matchAll(/packages: write/g)]).toHaveLength(1);
+      expect(workflow).toContain("push: ${{ github.ref_type == 'tag' }}");
+      expect(workflow).toContain("if: github.ref_type == 'tag'");
+      // A tag that does not match the app's version publishes nothing.
+      expect(workflow).toContain("require('./package.json').version");
+      expect(workflow).toContain('platforms: linux/amd64,linux/arm64');
+    });
+
+    it('pins every action to a commit', () => {
+      for (const file of ['docker.yml', 'test.yml']) {
+        const uses = [...read(`.github/workflows/${file}`).matchAll(/^\s*(?:- )?uses: (\S+)/gm)].map((m) => m[1]).filter((u) => !u.startsWith('./'));
+        expect(uses.length, file).toBeGreaterThan(0);
+        for (const action of uses) expect(action, file).toMatch(/^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/);
+      }
+    });
+
+    it('publishes the image the compose file and the README use', () => {
+      expect(workflow).toContain('IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/calendar-ce');
+      expect(read('docker-compose.yml')).toMatch(/^ {4}image: ghcr\.io\/sysoppl\/calendar-ce:latest$/m);
+      expect(read('README.md')).toContain('ghcr.io/sysoppl/calendar-ce');
     });
   });
 });

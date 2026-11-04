@@ -1,5 +1,6 @@
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import type { DavProxyHandler } from './davProxy.mjs';
+import type { AppLinks } from './publicConfig.mjs';
 
 export interface RequestHandlerOptions {
   /** Directory to serve; default `dist` next to the `server` folder. */
@@ -8,7 +9,14 @@ export interface RequestHandlerOptions {
   headers?: Record<string, string>;
   /** Default `handleDavProxy`. */
   proxy?: DavProxyHandler;
+  /** Links written into every HTML page; default `resolveLinks()` (the environment). */
+  links?: Partial<AppLinks>;
 }
+
+/** The meta tag the app reads the server's links from. */
+export const LINKS_META: string;
+/** Writes the links that are set into an HTML page; null when none is set. */
+export function linksInjector(links: Partial<AppLinks> | null | undefined): ((html: Buffer) => Buffer) | null;
 
 export type RequestHandler = (req: IncomingMessage, res: ServerResponse) => Promise<void>;
 

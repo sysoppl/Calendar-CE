@@ -10,6 +10,7 @@ import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleDavProxy, proxyNotices } from './davProxy.mjs';
+import { resolveLinks } from './publicConfig.mjs';
 import { securityHeaders } from './securityHeaders.mjs';
 
 const DIST = resolve(fileURLToPath(new URL('..', import.meta.url)), 'dist');
@@ -59,7 +60,29 @@ function sendPlain(res, status, text = '') {
   res.end(text);
 }
 
-async function serveStatic(req, res, root, headers) {
+/** The meta tag the app reads the server's links from (src/lib/links.ts). */
+export const LINKS_META = 'calendar-links';
+
+const escapeAttribute = (text) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/**
+ * The links the app shows (privacy policy, terms, contact) as the server was
+ * started with them, written into every HTML page it serves: a ready-made
+ * image is built without any, and its operator sets them when it starts. A
+ * link set here wins over the one the bundle was built with; null when none
+ * is set, which leaves the pages as they were built.
+ */
+export function linksInjector(links) {
+  const set = Object.fromEntries(Object.entries(links ?? {}).filter(([, value]) => typeof value === 'string' && value));
+  if (!Object.keys(set).length) return null;
+  const tag = Buffer.from(`<meta name="${LINKS_META}" content="${escapeAttribute(JSON.stringify(set))}">`);
+  return (html) => {
+    const end = html.indexOf('</head>');
+    return end < 0 ? html : Buffer.concat([html.subarray(0, end), tag, html.subarray(end)]);
+  };
+}
+
+async function serveStatic(req, res, root, headers, inject) {
   for (const [name, value] of Object.entries(headers)) res.setHeader(name, value);
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('allow', 'GET, HEAD');
@@ -103,6 +126,7 @@ async function serveStatic(req, res, root, headers) {
   } finally {
     await handle.close();
   }
+  if (inject && extname(file).toLowerCase() === '.html') data = inject(data);
   // A digest rather than size and time: rebuilt files often keep both.
   const etag = `"${createHash('sha256').update(data).digest('base64url').slice(0, 22)}"`;
   res.setHeader('etag', etag);
@@ -122,14 +146,16 @@ async function serveStatic(req, res, root, headers) {
  * Builds the request handler: the DAV proxy first, static files otherwise.
  * `root` is the directory to serve (default ./dist next to this folder),
  * `headers` go on every static response, `proxy` is a `handleDavProxy`
- * compatible function.
+ * compatible function, `links` the links written into HTML pages (default:
+ * VITE_PRIVACY_URL, VITE_TERMS_URL and VITE_CONTACT_URL from the environment).
  */
-export function createRequestHandler({ root = DIST, headers = securityHeaders(), proxy = handleDavProxy } = {}) {
+export function createRequestHandler({ root = DIST, headers = securityHeaders(), proxy = handleDavProxy, links = resolveLinks() } = {}) {
   const base = resolve(root);
+  const inject = linksInjector(links);
   return async function handleRequest(req, res) {
     try {
       if (await proxy(req, res)) return;
-      await serveStatic(req, res, base, headers);
+      await serveStatic(req, res, base, headers, inject);
     } catch (err) {
       console.error(err);
       if (res.headersSent) return res.destroy();
