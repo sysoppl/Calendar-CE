@@ -77,6 +77,10 @@
 - Create events in place, or open the full editor for time zones, custom repeat rules, reminders, busy/free and more
 - Recurring events: edit or delete *this event*, *this and future events* or *all events*
 - Invitations: reply **Yes / Maybe / No** from the event popover
+- **Birthdays and anniversaries**: give a birth date or the day it all started, and every view, search and reminder
+  shows the years ("Anna's birthday (36)", "10th anniversary")
+- **Hidden events**: the eye beside the title keeps an event's name off the screen; views, search and reminders show
+  *Hidden event* until you open it
 - A one-click **Join** button for Zoom, Teams, Jitsi, Webex and other meeting links
 - **Public holidays** for 19 countries, computed on the device (nothing is downloaded)
 - Undo for every change, keyboard shortcuts, search that ignores diacritics
@@ -186,12 +190,14 @@ The hosted web app is loaded from the server at each start, so for the strongest
 
 ## Self-hosting with Docker
 
-You need Docker with the Compose plugin.
+You need Docker with the Compose plugin. Every release is published as a ready-made image,
+`ghcr.io/sysoppl/calendar-ce`, for `linux/amd64` and `linux/arm64` (a Raspberry Pi 4/5 or an ARM server works too),
+so there's nothing to build:
 
 ```sh
-git clone https://github.com/sysoppl/Calendar-CE.git
-cd Calendar-CE
-docker compose up -d --build
+mkdir calendar && cd calendar
+curl -fsSLO https://raw.githubusercontent.com/sysoppl/Calendar-CE/main/docker-compose.yml
+docker compose up -d
 ```
 
 Open <http://localhost:8787>. On the welcome screen choose **On this device** or **Connect a server** (CalDAV).
@@ -206,13 +212,13 @@ locked down by default: **it reaches no server until you allow one.** Set the Ca
       CALENDAR_PROXY_ALLOW: "cloud.example.com,caldav.fastmail.com"
 ```
 
-Then rebuild with `docker compose up -d --build`.
+Then apply the change with `docker compose up -d`.
 
 **Want to try it with a local CalDAV server?** The compose file includes a [Radicale](https://radicale.org/) demo:
 
 ```sh
 # set CALENDAR_PROXY_ALLOW: "radicale" in docker-compose.yml first
-docker compose --profile radicale up -d --build
+docker compose --profile radicale up -d
 ```
 
 Add an account with server `http://radicale:5232/` and any user name and password (authentication is off in the demo).
@@ -220,9 +226,34 @@ Add an account with server `http://radicale:5232/` and any user name and passwor
 > The port is bound to `127.0.0.1` on purpose: put a TLS reverse proxy in front of it
 > (see [Behind a reverse proxy](#behind-a-reverse-proxy)) before you expose it to other people.
 
+**Image tags.** `latest` is the newest release, `1` and `1.11` the newest release of that line, and `1.11.1` one exact
+release. Pin a version in `docker-compose.yml` to update on your own schedule, then update with
+`docker compose pull && docker compose up -d`. Your calendars live in the browser or on your CalDAV server, never in the
+container, so replacing it loses nothing.
+
+**Without Compose:**
+
+```sh
+docker run -d --name calendar --restart unless-stopped \
+  -p 127.0.0.1:8787:8787 --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+  -e CALENDAR_PROXY_ALLOW="cloud.example.com" \
+  ghcr.io/sysoppl/calendar-ce:latest
+```
+
+**Building the image yourself** from a clone of this repository:
+
+```sh
+git clone https://github.com/sysoppl/Calendar-CE.git
+cd Calendar-CE
+docker compose up -d --build
+```
+
 ## Configuration
 
-**Build-time settings** (Docker `build.args` in `docker-compose.yml`, or environment variables for `npm run build`):
+Every setting is an environment variable: `environment:` in `docker-compose.yml`, `-e` for `docker run`, or
+`/etc/calendar.env` for the systemd unit. A change needs only a restart (`docker compose up -d`), never a rebuild.
+
+**The app:**
 
 | Variable           | Default                 | What it does                                                                                 |
 | ------------------ | ----------------------- | -------------------------------------------------------------------------------------------- |
@@ -231,7 +262,10 @@ Add an account with server `http://radicale:5232/` and any user name and passwor
 | `VITE_TERMS_URL`   | *(empty)*               | Link to your terms of service                                                                |
 | `VITE_CONTACT_URL` | *(empty)*               | A contact page or a `mailto:` address                                                        |
 
-**Server settings** (`environment:` in `docker-compose.yml`, or `/etc/calendar.env`):
+`npm run build` reads the same variables, so a build of your own (and the Android app, which has no server) can carry
+them too; the server's values take precedence.
+
+**The server and its DAV proxy:**
 
 | Variable                       | Default        | What it does                                                                                                   |
 | ------------------------------ | -------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -258,7 +292,7 @@ Ready-made examples are in [`deploy/`](deploy):
 - [`Caddyfile`](deploy/Caddyfile): automatic HTTPS
 - [`nginx.conf`](deploy/nginx.conf): with a Let's Encrypt certificate
 
-Replace `calendar.example.com` with your own domain, build with `VITE_APP_URL=https://your.domain`, and set
+Replace `calendar.example.com` with your own domain, set `VITE_APP_URL=https://your.domain` and
 `CALENDAR_TRUST_PROXY=1`. The server sends its own security headers (CSP, HSTS and others), so don't add any in the proxy.
 
 ## Running without Docker
@@ -347,7 +381,7 @@ Contributions are welcome: bug reports, translations, fixes and features that fi
 5. New dependencies must have a licence compatible with the AGPL-3.0; run `npm run licenses` to update the third-party notices.
 6. Open a pull request describing what changed and why.
 
-By contributing you agree that your contribution is licensed under the AGPL-3.0, like the rest of the project.
+By contributing you agree that your contribution is licensed under the AGPL-3.0-only, like the rest of the project.
 
 ## Security
 
@@ -358,10 +392,22 @@ Please don't report security issues in public issues. See [SECURITY.md](SECURITY
 Copyright © 2026 [patryk.pro](https://patryk.pro).
 
 Calendar Community Edition is free software: you can redistribute it and/or modify it under the terms of the
-[GNU Affero General Public License version 3](LICENSE). If you run a modified version for other people over a
-network, you must offer them its source code (the app's **Settings → About → Source code** link points here; point it at
-your fork). Third-party components keep their own licences, listed in
-[`public/THIRD-PARTY-NOTICES.txt`](public/THIRD-PARTY-NOTICES.txt).
+[GNU Affero General Public License, version 3 only](LICENSE) (AGPL-3.0-only). It comes without any warranty. If you
+run a modified version for other people over a network, you must offer them its source code (the app's
+**Settings → About → Source code** link points at the release it was built from; point it at your fork). Third-party
+components keep their own licences, listed in [`public/THIRD-PARTY-NOTICES.txt`](public/THIRD-PARTY-NOTICES.txt).
+
+**The Docker image** contains this app (its licence is `/app/LICENSE`, the third-party notices are
+`/app/dist/THIRD-PARTY-NOTICES.txt`) on top of the official [`node:24-alpine`](https://hub.docker.com/_/node) image,
+which brings Node.js, npm and Alpine Linux packages, each under its own licence. Their sources:
+[Node.js](https://github.com/nodejs/node) (the version `node --version` prints), the
+[image definition](https://github.com/nodejs/docker-node) and [Alpine's aports](https://gitlab.alpinelinux.org/alpine/aports)
+(the branch matching `/etc/alpine-release`). Every published image lists its packages and their licences in an SBOM:
+`docker buildx imagetools inspect ghcr.io/sysoppl/calendar-ce:1.11.1 --format '{{ json .SBOM }}'`.
+
+**Names.** The AGPL-3.0 grants no rights to the names *patryk.pro* and *E2EE Calendar* or to the Calendar icon as
+marks: please give a build you publish a name and icon of your own. Other product names belong to their owners and are
+only used to name the services Calendar works with. Google Play and the Google Play logo are trademarks of Google LLC.
 
 <p align="center">
   Made by <a href="https://patryk.pro">patryk.pro</a> · Hosted edition: <a href="https://calendar.patryk.pro"><b>calendar.patryk.pro</b></a>

@@ -44,4 +44,4 @@ For Android changes also run `npm run android:sync` and `cd android && ./gradlew
 ## Licence
 
 By contributing you agree that your contribution is licensed under the
-[GNU Affero General Public License version 3](LICENSE), like the rest of the project.
+[GNU Affero General Public License, version 3 only](LICENSE) (AGPL-3.0-only), like the rest of the project.
