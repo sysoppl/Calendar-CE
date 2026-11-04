@@ -1,14 +1,17 @@
 // End-to-end check through the UI and the /dav-proxy against a CalDAV server.
-// Usage: node scripts/e2e-caldav.mjs <appUrl> <davUrl> <user> <pass>
+// Usage: node scripts/e2e-caldav.mjs <appUrl> <davUrl> <user> <pass> [checkUrl]
 // Starts like a new user who picks "CalDAV server" on the welcome screen,
 // creates a calendar, a task list, an event and a task from the UI, checks
 // them on the server and removes the two collections again. The server side is
 // read as Radicale lays it out (collections under /<user>/). Exit code 1 when
 // a step or a check fails; a picture of the last screen goes to ./screenshots.
+// checkUrl is where this script reads the server when the app reaches it by
+// another name, e.g. davUrl http://radicale:5232/ for the Docker demo and
+// checkUrl http://127.0.0.1:5232/ on the host.
 // Requires a local Chrome (set CHROME_PATH to use another Chromium build).
 import { chromium } from 'playwright-core';
 
-const [appUrl = 'http://localhost:5173', davUrl = 'http://127.0.0.1:5232/', user = 'alice', pass = 'secret'] = process.argv.slice(2);
+const [appUrl = 'http://localhost:5173', davUrl = 'http://127.0.0.1:5232/', user = 'alice', pass = 'secret', checkUrl = davUrl] = process.argv.slice(2);
 const auth = 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
 const CALENDAR = 'E2E Calendar';
 const TASK_LIST = 'E2E Tasks';
@@ -17,7 +20,7 @@ async function dav(method, path, { depth, body } = {}) {
   const headers = { Authorization: auth };
   if (depth !== undefined) headers.Depth = depth;
   if (body) headers['Content-Type'] = 'application/xml';
-  const res = await fetch(new URL(path, davUrl), { method, headers, body });
+  const res = await fetch(new URL(path, checkUrl), { method, headers, body });
   return res.text();
 }
 
@@ -56,6 +59,8 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, loc
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 const step = (s) => console.log('•', s);
+// A toast, not the screen-reader live region that repeats its text.
+const toast = (text) => page.getByText(text).and(page.locator(':not([aria-live])'));
 
 /** A calendar of the CalDAV account, through "New calendar"; `type` is events or tasks. */
 async function newCollection(name, type) {
@@ -68,9 +73,9 @@ async function newCollection(name, type) {
   await accountSelect.selectOption({ label: options.find((o) => o !== 'On this device') });
   await page.locator('#cal-type').selectOption(type);
   await page.getByRole('button', { name: 'Save' }).click();
-  await page.getByText('Calendar saved').waitFor({ timeout: 15000 });
+  await toast('Calendar saved').waitFor({ timeout: 15000 });
   // The toast stays a few seconds; the next one must not be mistaken for it.
-  await page.getByText('Calendar saved').waitFor({ state: 'hidden', timeout: 15000 });
+  await toast('Calendar saved').waitFor({ state: 'hidden', timeout: 15000 });
 }
 
 try {
@@ -81,7 +86,7 @@ try {
   await page.locator('#acc-user').fill(user);
   await page.locator('#acc-pass').fill(pass);
   await page.getByRole('button', { name: 'Connect' }).click();
-  await page.getByText('Account added').waitFor({ timeout: 15000 });
+  await toast('Account added').waitFor({ timeout: 15000 });
   await page.locator('main').waitFor();
   step('account added through the proxy from the welcome screen');
 
@@ -94,7 +99,7 @@ try {
   await page.locator('input[name=title]').fill('E2E meeting');
   await page.getByLabel('Calendar', { exact: true }).last().selectOption({ label: CALENDAR });
   await page.getByRole('button', { name: 'Save' }).click();
-  await page.getByText('Event created').waitFor({ timeout: 15000 });
+  await toast('Event created').waitFor({ timeout: 15000 });
   step('event created');
 
   // The drawer's quick add, which parses the date out of the text.
