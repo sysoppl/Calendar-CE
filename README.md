@@ -381,7 +381,9 @@ Contributions are welcome: bug reports, translations, fixes and features that fi
 5. New dependencies must have a licence compatible with the AGPL-3.0; run `npm run licenses` to update the third-party notices.
 6. Open a pull request describing what changed and why.
 
-By contributing you agree that your contribution is licensed under the AGPL-3.0-only, like the rest of the project.
+Before your first pull request is merged, the CLA Assistant bot asks you to sign the
+[Contributor License Agreement](CLA.md) once. You keep the copyright in your work; the agreement lets the maintainer
+also use it in other editions of Calendar, such as the hosted one, and keeps everything merged here open source.
 
 ## Security
 

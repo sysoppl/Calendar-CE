@@ -41,7 +41,12 @@ For Android changes also run `npm run android:sync` and `cd android && ./gradlew
   welcome; a change that alters the bytes (and `vectors.json`) can't be merged on its own. Report weaknesses privately
   ([SECURITY.md](SECURITY.md)).
 
-## Licence
+## Licence and the CLA
 
-By contributing you agree that your contribution is licensed under the
-[GNU Affero General Public License, version 3 only](LICENSE) (AGPL-3.0-only), like the rest of the project.
+Calendar CE is published under the [GNU Affero General Public License, version 3 only](LICENSE) (AGPL-3.0-only), and
+so is everything merged into it.
+
+Before your first pull request is merged, the CLA Assistant bot asks you to sign the
+[Contributor License Agreement](CLA.md), once, by following the link in its comment. You keep the copyright in your
+work. The agreement lets the maintainer also use your contribution in other editions of Calendar, such as the hosted
+one, and it promises that what is merged here stays available under the AGPL-3.0 or another open-source licence.
