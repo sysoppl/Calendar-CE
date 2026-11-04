@@ -1,0 +1,87 @@
+apply plugin: 'com.android.application'
+
+// The app version is the one in package.json.
+def appVersion = new groovy.json.JsonSlurper().parse(rootProject.file('../package.json')).version
+def (major, minor, patch) = (appVersion =~ /^(\d+)\.(\d+)\.(\d+)/)[0].tail()*.toInteger()
+
+// Release signing is optional: the ANDROID_KEYSTORE_FILE, ANDROID_KEYSTORE_PASSWORD,
+// ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD environment variables, or storeFile,
+// storePassword, keyAlias and keyPassword in android/keystore.properties (git-ignored).
+// Without either, release builds stay unsigned.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+def signing = { String variable, String property -> System.getenv(variable) ?: keystoreProperties.getProperty(property) }
+def releaseKeystore = signing('ANDROID_KEYSTORE_FILE', 'storeFile')
+
+android {
+    namespace = "pl.patrykpro.calendar"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        // The Java packages stay pl.patrykpro.calendar; the installed app's id is its own, so a
+        // build of this edition never replaces, or passes for, another build of the app.
+        applicationId "pro.patryk.calendar.community"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode major * 1000000 + minor * 1000 + patch
+        versionName appVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (releaseKeystore) {
+            release {
+                storeFile rootProject.file(releaseKeystore)
+                storePassword signing('ANDROID_KEYSTORE_PASSWORD', 'storePassword')
+                keyAlias signing('ANDROID_KEY_ALIAS', 'keyAlias')
+                keyPassword signing('ANDROID_KEY_PASSWORD', 'keyPassword')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            // R8 shrinks and obfuscates the Java code and drops unused
+            // resources. The libraries bring the rules that keep what they
+            // reach by reflection (Capacitor's plugins, WorkManager's
+            // workers); proguard-rules.pro adds the app's own.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (releaseKeystore) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    // WebDAV-capable HTTP client for the DavHttp plugin.
+    // 5.5+ needs compileSdk 37, which Capacitor 8's Android Gradle plugin does not support yet.
+    implementation "com.squareup.okhttp3:okhttp:5.4.0"
+    // Background refresh of reminders.
+    implementation "androidx.work:work-runtime:2.12.0"
+    testImplementation "junit:junit:$junitVersion"
+    // org.json is part of Android; plain JVM unit tests only get stubs of it, so they bring the real one.
+    testImplementation "org.json:json:20250517"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'

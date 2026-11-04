@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="when_today">Dzisiaj</string>
+    <string name="when_tomorrow">Jutro</string>
+    <string name="when_yesterday">Wczoraj</string>
+    <string name="when_day_at_time">%1$s o godzinie %2$s</string>
+</resources>

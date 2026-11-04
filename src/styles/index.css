@@ -1,0 +1,320 @@
+@import 'tailwindcss';
+
+/* `keys:` styles apply while a keyboard is there (hooks/useKeyboardUi.ts sets
+   data-keys on <html>): shortcut hints, "Ctrl+Enter saves". */
+@custom-variant keys (&:where([data-keys], [data-keys] *));
+
+/* Theme tokens are set at runtime by applyTheme(); these are the Daylight
+   defaults so the first paint is already themed. */
+:root {
+  --frame-bg: #f5f5f3;
+  --frame-text: #141619;
+  --frame-text-weak: #535558;
+  --frame-hover: rgba(20, 22, 25, 0.06);
+  --frame-active: #e4e4e0;
+  --frame-border: #e6e6e4;
+  --bg: #ffffff;
+  --bg-weak: #f5f5f3;
+  --bg-strong: #e9e9e7;
+  --bg-elevated: #ffffff;
+  --text: #141619;
+  --text-weak: #535558;
+  --text-hint: #696967;
+  --border: #cdcdcb;
+  --border-weak: #e6e6e4;
+  --field-border: #929290;
+  --primary: #1e2227;
+  --primary-hover: #3a4048;
+  --primary-contrast: #ffffff;
+  --primary-weak: rgba(30, 34, 39, 0.1);
+  --danger: #c62828;
+  --danger-contrast: #ffffff;
+  --success: #1e7d4f;
+  --warning: #b86e00;
+  --now-line: #d93033;
+  --shadow: 0 8px 24px rgba(20, 22, 25, 0.14), 0 2px 6px rgba(20, 22, 25, 0.06);
+  --backdrop: rgba(20, 22, 25, 0.45);
+
+  --app-font: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-scale: 1;
+  /* Height of form fields and the buttons that sit next to them. */
+  --field-h: 2.25rem;
+  --hour-height: 56px;
+  --sidebar-width: 272px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+:root[data-density='compact'] {
+  --hour-height: 40px;
+}
+
+/* Fingers need a larger target than a mouse pointer. */
+@media (pointer: coarse) {
+  :root {
+    --field-h: 2.5rem;
+  }
+}
+
+/* Corner rounding. Every rounded-* utility reads these, so the whole
+   interface follows the chosen shape. */
+:root[data-shape='sharp'] {
+  --radius-xs: 0;
+  --radius-sm: 1px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+  --radius-2xl: 6px;
+  --radius-3xl: 8px;
+}
+:root[data-shape='round'] {
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1.125rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2rem;
+}
+
+@theme inline {
+  --color-frame: var(--frame-bg);
+  --color-frame-text: var(--frame-text);
+  --color-frame-weak: var(--frame-text-weak);
+  --color-frame-hover: var(--frame-hover);
+  --color-frame-active: var(--frame-active);
+  --color-frame-border: var(--frame-border);
+  --color-bg: var(--bg);
+  --color-bg-weak: var(--bg-weak);
+  --color-bg-strong: var(--bg-strong);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-text: var(--text);
+  --color-text-weak: var(--text-weak);
+  --color-text-hint: var(--text-hint);
+  --color-border: var(--border);
+  --color-border-weak: var(--border-weak);
+  --color-field-border: var(--field-border);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-contrast: var(--primary-contrast);
+  --color-primary-weak: var(--primary-weak);
+  --color-danger: var(--danger);
+  --color-danger-contrast: var(--danger-contrast);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-now: var(--now-line);
+  --shadow-elevated: var(--shadow);
+  --font-sans: var(--app-font);
+}
+
+@layer base {
+html {
+  /* The browser's own text size (16 px unless its user changed it; the
+     Android app pins its WebView to 100%), times the app's text size. */
+  font-size: calc(100% * var(--font-scale));
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--frame-bg);
+  color: var(--text);
+  font-family: var(--app-font);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* Thin scrollbars that follow the theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+}
+
+@layer components {
+/* Form field shared look */
+.field {
+  width: 100%;
+  min-height: var(--field-h);
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--field-border);
+  background: var(--bg);
+  color: var(--text);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.field:hover {
+  border-color: var(--text-hint);
+}
+.field:focus,
+.field:focus-visible,
+.field:focus-within {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-weak);
+}
+/* Multi-line fields keep moderate corners even with the round shape. */
+textarea.field {
+  border-radius: min(var(--radius-lg), 0.875rem);
+}
+.field-plain {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+select.field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  padding-right: 2rem;
+}
+
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes slide-up {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+/* The thin line of work going on (ActivityBar): a stretch of it runs across. */
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+.animate-sweep {
+  animation: sweep 1.4s ease-in-out infinite;
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+.animate-pop {
+  animation: pop-in 0.16s ease-out;
+}
+.animate-fade {
+  animation: fade-in 0.16s ease-out;
+}
+.animate-slide-left {
+  animation: slide-in-left 0.2s ease-out;
+}
+.animate-slide-right {
+  animation: slide-in-right 0.2s ease-out;
+}
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop,
+  .animate-fade,
+  .animate-slide-left,
+  .animate-slide-right,
+  .animate-slide-up {
+    animation: none;
+  }
+  /* In place, the whole width, breathing. */
+  .animate-sweep {
+    width: 100%;
+    animation: breathe 2s ease-in-out infinite;
+  }
+}
+
+/* Time grid background: one line per hour */
+.time-grid-bg {
+  background-image: linear-gradient(to bottom, var(--border-weak) 1px, transparent 1px);
+  background-size: 100% var(--hour-height);
+}
+
+.pt-safe {
+  padding-top: var(--safe-top);
+}
+.pb-safe {
+  padding-bottom: var(--safe-bottom);
+}

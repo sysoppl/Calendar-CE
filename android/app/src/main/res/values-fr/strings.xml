@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Calendrier</string>
+    <string name="title_activity_main">Calendrier</string>
+
+    <!-- Reminder notifications -->
+    <string name="reminder_channel_name">Rappels</string>
+    <string name="reminder_channel_description">Rappels d’événements et de tâches</string>
+    <string name="reminder_snooze">Reporter de 10 min</string>
+    <string name="reminder_dismiss">Ignorer</string>
+    <string name="reminder_missed">Manqué</string>
+    <string name="reminder_no_title">(sans titre)</string>
+    <!-- Shown on a locked screen that hides content, and when the text of a reminder cannot be read. -->
+    <string name="reminder_generic_title">Rappel</string>
+    <string name="reminder_generic_text">Ouvrez l’application pour voir les détails.</string>
+
+    <!-- Background refresh, shown under "Reminder health" in the settings -->
+    <string name="reminder_sync_failed">La dernière actualisation a échoué.</string>
+    <string name="reminder_sync_storage">Le stockage chiffré de cet appareil n’est pas disponible.</string>
+    <!-- After a calendar's name and a colon, when the failure has no message of its own. -->
+    <string name="reminder_sync_calendar_failed">n’a pas pu être actualisé</string>
+</resources>

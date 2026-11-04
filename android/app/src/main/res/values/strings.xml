@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Calendar</string>
+    <string name="title_activity_main">Calendar</string>
+    <string name="package_name" translatable="false">pro.patryk.calendar.community</string>
+    <string name="custom_url_scheme" translatable="false">pro.patryk.calendar.community</string>
+
+    <!-- Reminder notifications -->
+    <string name="reminder_channel_name">Reminders</string>
+    <string name="reminder_channel_description">Event and task reminders</string>
+    <string name="reminder_snooze">Snooze 10 min</string>
+    <string name="reminder_dismiss">Dismiss</string>
+    <string name="reminder_missed">Missed</string>
+    <string name="reminder_no_title">(no title)</string>
+    <!-- Shown on a locked screen that hides content, and when the text of a reminder cannot be read. -->
+    <string name="reminder_generic_title">Reminder</string>
+    <string name="reminder_generic_text">Open the app to see the details.</string>
+
+    <!-- Background refresh, shown under "Reminder health" in the settings -->
+    <string name="reminder_sync_failed">The last refresh failed.</string>
+    <string name="reminder_sync_storage">The encrypted storage of this device is not available.</string>
+    <!-- After a calendar's name and a colon, when the failure has no message of its own. -->
+    <string name="reminder_sync_calendar_failed">could not be refreshed</string>
+</resources>

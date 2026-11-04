@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Календар</string>
+    <string name="title_activity_main">Календар</string>
+
+    <!-- Reminder notifications -->
+    <string name="reminder_channel_name">Нагадування</string>
+    <string name="reminder_channel_description">Нагадування про події та завдання</string>
+    <string name="reminder_snooze">Відкласти на 10 хв</string>
+    <string name="reminder_dismiss">Закрити</string>
+    <string name="reminder_missed">Пропущено</string>
+    <string name="reminder_no_title">(без назви)</string>
+    <!-- Shown on a locked screen that hides content, and when the text of a reminder cannot be read. -->
+    <string name="reminder_generic_title">Нагадування</string>
+    <string name="reminder_generic_text">Відкрийте застосунок, щоб побачити подробиці.</string>
+
+    <!-- Background refresh, shown under "Reminder health" in the settings -->
+    <string name="reminder_sync_failed">Останнє оновлення не вдалося.</string>
+    <string name="reminder_sync_storage">Зашифроване сховище цього пристрою недоступне.</string>
+    <!-- After a calendar's name and a colon, when the failure has no message of its own. -->
+    <string name="reminder_sync_calendar_failed">не вдалося оновити</string>
+</resources>

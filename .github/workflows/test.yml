@@ -1,0 +1,61 @@
+# Tests on every push and pull request: the web app and its server, and the
+# Android app's unit tests. Nothing is deployed or published from here.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web app and server
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      # No dependency needs an install script.
+      - run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npx vitest run
+      - name: Third-party notices are up to date
+        run: node scripts/third-party-notices.mjs --check
+      - name: Production build
+        run: npm run build
+
+  android:
+    name: Android unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - run: npm ci --no-audit --no-fund --ignore-scripts
+      # The web bundle and the Capacitor plugin projects the Gradle build needs.
+      - name: Web bundle into the Android project
+        run: npm run android:sync
+      - name: Unit tests
+        working-directory: android
+        run: ./gradlew --no-daemon testDebugUnitTest

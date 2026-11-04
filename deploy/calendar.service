@@ -1,0 +1,77 @@
+# systemd unit of the web app without Docker: a service named `calendar` that
+# runs server/server.mjs from a built copy of this repository in
+# /opt/calendar (`npm ci && npm run build` there). See "Self-hosting" in the
+# README.
+#
+#   sudo useradd --system --home /nonexistent --shell /usr/sbin/nologin calendar
+#   sudo install -m 644 deploy/calendar.service /etc/systemd/system/calendar.service
+#   sudo install -m 640 -g calendar deploy/calendar.env.example /etc/calendar.env   # then edit it
+#   sudo systemctl daemon-reload && sudo systemctl enable --now calendar
+#
+# This service only reads /opt/calendar. After changing this file on the
+# host: `sudo systemctl daemon-reload && sudo systemctl restart calendar`,
+# then `systemd-analyze security calendar` and a look at the journal.
+
+[Unit]
+Description=Calendar web app
+After=network-online.target
+Wants=network-online.target
+# Restart however often it fails: a crash loop (memory pressure) must not
+# leave the unit stopped for good once systemd's default start limit is hit.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=calendar
+Group=calendar
+WorkingDirectory=/opt/calendar
+ExecStart=/usr/bin/node server/server.mjs
+EnvironmentFile=/etc/calendar.env
+Environment=NODE_ENV=production
+Restart=always
+RestartSec=2
+# On SIGTERM the server stops taking connections, gives reads 5 seconds and
+# DAV writes in flight up to 10 in all, so a restart seldom cuts a change off
+# halfway and an update is an outage of a few seconds at most.
+TimeoutStopSec=15
+
+# The server reads its files and opens sockets; it writes nothing to disk.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+# Other processes and the system's own /proc files stay out of sight.
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+# The system calls of an ordinary service; any other fails with EPERM
+# instead of killing the process.
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+UMask=0077
+# Node's JIT needs writable and executable memory: no MemoryDenyWriteExecute.
+# The DAV proxy holds at most 128 MiB of request bodies in all.
+MemoryMax=512M
+TasksMax=256
+# A kernel-level backstop for the DAV proxy's own address checks, for the
+# host to fill in (it needs cgroup BPF, which a container may not offer). Allow
+# the reverse proxy's address and the DNS resolver, or the site goes down:
+#   IPAddressDeny=localhost link-local multicast 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 fc00::/7
+#   IPAddressAllow=<reverse proxy address> <resolver address>
+
+[Install]
+WantedBy=multi-user.target

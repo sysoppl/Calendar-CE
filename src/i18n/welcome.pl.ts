@@ -1,0 +1,42 @@
+import type { welcomeEn } from './welcome.en';
+
+export const welcomePl: Record<keyof typeof welcomeEn, string> = {
+  // Shared controls (components/ui).
+  'ui.password.show': 'Pokaż hasło',
+  'ui.password.hide': 'Ukryj hasło',
+  'ui.password.capsLock': 'Włączony jest Caps Lock.',
+  'ui.option.good': 'Zalety',
+  'ui.option.caveats': 'Warto pamiętać',
+
+  // Ekran powitalny (pierwsze uruchomienie).
+  'welcome.title': 'Witamy w Kalendarzu',
+  'welcome.promise': 'Wydarzenia i zadania w jednym miejscu, z pełną kontrolą nad tym, gdzie są przechowywane.',
+  'welcome.question': 'Gdzie przechowywać kalendarz?',
+  'welcome.language': 'Język',
+  'welcome.back': 'Wstecz',
+  'welcome.moveLater': 'Dane można w każdej chwili przenieść do innej opcji w Ustawieniach.',
+  'welcome.local.title': 'Na tym urządzeniu',
+  'welcome.local.summary': 'Kalendarz zostaje w tej przeglądarce lub aplikacji i nie jest nigdzie wysyłany.',
+  'welcome.local.good.1': 'Kalendarz nie opuszcza urządzenia',
+  'welcome.local.good.2': 'Bez zakładania konta, gotowe od razu',
+  'welcome.local.good.3': 'Działa bez połączenia z internetem',
+  'welcome.local.caveat.1': 'Brak synchronizacji z innymi urządzeniami',
+  'welcome.local.caveat.2': 'Przepada razem z urządzeniem lub danymi przeglądarki, chyba że zostanie wyeksportowany',
+  'welcome.local.action': 'Przechowuj na tym urządzeniu',
+  'welcome.caldav.title': 'Serwer CalDAV',
+  'welcome.caldav.summary': 'Połączenie z własnym serwerem albo z serwerem dostawcy poczty lub hostingu.',
+  'welcome.caldav.good.1': 'Dane zostają na wybranym serwerze',
+  'welcome.caldav.good.2': 'Działa równolegle z innymi aplikacjami kalendarza na tym samym koncie',
+  'welcome.caldav.good.3': 'Synchronizacja na każdym urządzeniu, które się z nim łączy',
+  'welcome.caldav.caveat.1': 'Prywatność zależy od serwera i od tego, kto nim zarządza',
+  'welcome.caldav.caveat.2': 'Konfiguracja wymaga adresu serwera, nazwy użytkownika i hasła',
+  'welcome.caldav.caveat.3': 'Zmiany wymagają połączenia z internetem - bez niego nie zostaną zapisane',
+  'welcome.caldav.caveat.web': 'W przeglądarce połączenie przechodzi przez serwer tej aplikacji, który przekazuje hasło do serwera CalDAV',
+  'welcome.caldav.action': 'Połącz z serwerem',
+  'welcome.caldav.formTitle': 'Połączenie z serwerem CalDAV',
+  'welcome.caldav.formIntro': 'Kalendarze pozostają na serwerze, a aplikacja je wyświetla i synchronizuje.',
+  'welcome.caldav.failed': 'Nie udało się połączyć z serwerem',
+  'welcome.caldav.hint.nextcloud': 'Należy użyć hasła aplikacji z sekcji Ustawienia → Bezpieczeństwo.',
+  'welcome.caldav.hint.fastmail': 'Wymaga hasła aplikacji.',
+  'welcome.caldav.hint.icloud': 'Należy użyć hasła dla aplikacji z appleid.apple.com.',
+};

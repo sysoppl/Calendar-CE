@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Self-hosted CalDAV servers often run on a LAN over plain HTTP or with a
+  certificate from a private CA installed by the user. Allow both, while
+  still verifying certificates against system + user-installed CAs. A
+  password goes over plain HTTP only to a private or loopback address or a
+  local name: the app's HTTP clients refuse the rest themselves
+  (util/CleartextPassword.java), since this file cannot tell a request with
+  a password from a public feed.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

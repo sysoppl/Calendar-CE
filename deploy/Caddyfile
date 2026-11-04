@@ -1,0 +1,44 @@
+# Caddy in front of the `calendar` service (Docker or deploy/calendar.service).
+# Replace calendar.example.com with your own name; Caddy gets a certificate
+# for it by itself. Caddy passes the server's own headers
+# (Content-Security-Policy, HSTS and the rest) through unchanged; add no
+# security headers here, or the browser gets two policies.
+#
+# With Caddy as the only proxy in front of the app, set CALENDAR_TRUST_PROXY=1.
+# Behind a CDN as well, list the CDN's addresses in `trusted_proxies` (global
+# `servers` block) and count it too.
+
+calendar.example.com {
+	encode zstd gzip
+
+	# The DAV proxy takes request bodies of up to 10 MiB.
+	request_body {
+		max_size 11MB
+	}
+
+	reverse_proxy 127.0.0.1:8787 {
+		# The original Host goes along by default; the DAV proxy compares it
+		# with the Origin of browsers that send no Sec-Fetch-Site. Each
+		# relayed request may take 90 s.
+		transport http {
+			response_header_timeout 120s
+		}
+	}
+
+	log {
+		output file /var/log/caddy/calendar.log
+		format filter {
+			wrap json
+			fields {
+				# Caddy logs every request header. The DAV proxy's target and
+				# Destination are full CalDAV URLs (user names, calendar and
+				# event ids); credentials and cookies are dropped as well,
+				# whatever Caddy's own redaction does.
+				request>headers>X-Dav-Target delete
+				request>headers>Destination delete
+				request>headers>Authorization delete
+				request>headers>Cookie delete
+			}
+		}
+	}
+}

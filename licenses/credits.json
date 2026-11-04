@@ -1,0 +1,13 @@
+{
+  "$comment": "Projects whose ideas inspired parts of Calendar, named out of courtesy in part 5 of the notices.",
+  "credits": [
+    {
+      "name": "Analog",
+      "url": "https://github.com/analogdotnow/Analog"
+    },
+    {
+      "name": "Calino",
+      "url": "https://github.com/ivan-malinovski/Calino"
+    }
+  ]
+}

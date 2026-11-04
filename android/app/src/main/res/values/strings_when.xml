@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- How a reminder names the time of its event or task, worded when the notification is shown
+     (reminders/RelativeWhen.java): "Today at 18:00", "Tomorrow", "Thursday at 9:00". -->
+<resources>
+    <string name="when_today">Today</string>
+    <string name="when_tomorrow">Tomorrow</string>
+    <string name="when_yesterday">Yesterday</string>
+    <!-- A day (one of the above, a weekday or a date) and a time of day. -->
+    <string name="when_day_at_time">%1$s at %2$s</string>
+</resources>

@@ -1,0 +1,13 @@
+{
+  "$comment": [
+    "Copyright lines for font packages whose own LICENSE file does not carry one. scripts/third-party-notices.mjs uses an entry only for such a package and fails when one is missing.",
+    "Each line is copied verbatim from the OFL.txt of the font release the package is built from, so the build needs no network."
+  ],
+  "fonts": {
+    "@fontsource-variable/source-serif-4": {
+      "family": "Source Serif 4",
+      "copyright": "Copyright 2014 The Source Serif 4 Project Authors (https://github.com/adobe-fonts/source-serif)",
+      "from": "ofl/sourceserif4/OFL.txt in the font directory release, read on 2026-10-14"
+    }
+  }
+}

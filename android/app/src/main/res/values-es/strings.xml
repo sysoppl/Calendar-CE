@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Calendario</string>
+    <string name="title_activity_main">Calendario</string>
+
+    <!-- Reminder notifications -->
+    <string name="reminder_channel_name">Recordatorios</string>
+    <string name="reminder_channel_description">Recordatorios de eventos y tareas</string>
+    <string name="reminder_snooze">Posponer 10 min</string>
+    <string name="reminder_dismiss">Descartar</string>
+    <string name="reminder_missed">Perdido</string>
+    <string name="reminder_no_title">(sin título)</string>
+    <!-- Shown on a locked screen that hides content, and when the text of a reminder cannot be read. -->
+    <string name="reminder_generic_title">Recordatorio</string>
+    <string name="reminder_generic_text">Abre la aplicación para ver los detalles.</string>
+
+    <!-- Background refresh, shown under "Reminder health" in the settings -->
+    <string name="reminder_sync_failed">La última actualización falló.</string>
+    <string name="reminder_sync_storage">El almacenamiento cifrado de este dispositivo no está disponible.</string>
+    <!-- After a calendar's name and a colon, when the failure has no message of its own. -->
+    <string name="reminder_sync_calendar_failed">no se pudo actualizar</string>
+</resources>

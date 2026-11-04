@@ -1,0 +1,32 @@
+node_modules
+**/node_modules
+dist
+android
+screenshots
+assets
+docs
+coverage
+test-results
+.git
+.github
+.idea
+.vscode
+.radicale
+.claude
+secrets
+*.log
+# Secrets never go into the build context (patterns without **/ match only
+# at the top, so each is given for every folder).
+**/.env
+**/.env.*
+**/.npmrc
+**/*.jks
+**/*.keystore
+**/*.p12
+**/*.pem
+**/*.key
+**/*.cer
+**/keystore.properties
+**/*-services.json
+**/service-account*.json
+**/*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].json

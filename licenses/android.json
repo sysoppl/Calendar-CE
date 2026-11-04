@@ -1,0 +1,404 @@
+{
+  "$comment": [
+    "Maven libraries packaged into the Android app: the resolved runtime classpath of :app, so transitive libraries are included.",
+    "Refresh after changing android/app/build.gradle, android/variables.gradle or a Capacitor version: cd android && ./gradlew -q :app:dependencies --configuration releaseRuntimeClasspath, then update this list (group:artifact:version as resolved, after \"->\").",
+    "Licences come from each artefact's POM (ListenableFuture 1.0 inherits Apache-2.0 from its parent POM; javax.inject 1 is Apache-2.0). A library under another licence needs its licence text in a file under licenses/, named in a \"text\" field. scripts/third-party-notices.mjs checks the direct dependencies in the Gradle files against this list whenever android/ is present."
+  ],
+  "libraries": [
+    {
+      "id": "androidx.activity:activity:1.11.0",
+      "name": "Activity",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/activity#1.11.0"
+    },
+    {
+      "id": "androidx.annotation:annotation-experimental:1.4.1",
+      "name": "Experimental annotation",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/annotation#1.4.1"
+    },
+    {
+      "id": "androidx.annotation:annotation-jvm:1.10.0",
+      "name": "Annotation",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/annotation#1.10.0"
+    },
+    {
+      "id": "androidx.annotation:annotation:1.10.0",
+      "name": "Annotation",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/annotation#1.10.0"
+    },
+    {
+      "id": "androidx.appcompat:appcompat-resources:1.7.1",
+      "name": "AppCompat Resources",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/appcompat#1.7.1"
+    },
+    {
+      "id": "androidx.appcompat:appcompat:1.7.1",
+      "name": "AppCompat",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/appcompat#1.7.1"
+    },
+    {
+      "id": "androidx.arch.core:core-common:2.2.0",
+      "name": "Android Arch-Common",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/arch-core#2.2.0"
+    },
+    {
+      "id": "androidx.arch.core:core-runtime:2.2.0",
+      "name": "Android Arch-Runtime",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/arch-core#2.2.0"
+    },
+    {
+      "id": "androidx.collection:collection-jvm:1.4.2",
+      "name": "collections",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/collection#1.4.2"
+    },
+    {
+      "id": "androidx.collection:collection:1.4.2",
+      "name": "collections",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/collection#1.4.2"
+    },
+    {
+      "id": "androidx.concurrent:concurrent-futures-ktx:1.1.0",
+      "name": "AndroidX Futures Kotlin Extensions",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/topic/libraries/architecture/index.html"
+    },
+    {
+      "id": "androidx.concurrent:concurrent-futures:1.1.0",
+      "name": "AndroidX Futures",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/topic/libraries/architecture/index.html"
+    },
+    {
+      "id": "androidx.coordinatorlayout:coordinatorlayout:1.3.0",
+      "name": "Coordinator Layout",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/coordinatorlayout#1.3.0"
+    },
+    {
+      "id": "androidx.core:core-ktx:1.17.0",
+      "name": "Core Kotlin Extensions",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/core#1.17.0"
+    },
+    {
+      "id": "androidx.core:core-splashscreen:1.2.0",
+      "name": "SplashScreen",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/core#1.2.0"
+    },
+    {
+      "id": "androidx.core:core-viewtree:1.0.0",
+      "name": "androidx.core:core-viewtree",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/core#1.0.0"
+    },
+    {
+      "id": "androidx.core:core:1.17.0",
+      "name": "Core",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/core#1.17.0"
+    },
+    {
+      "id": "androidx.cursoradapter:cursoradapter:1.0.0",
+      "name": "Android Support Library Cursor Adapter",
+      "license": "Apache-2.0",
+      "url": "http://developer.android.com/tools/extras/support-library.html"
+    },
+    {
+      "id": "androidx.customview:customview:1.0.0",
+      "name": "Android Support Library Custom View",
+      "license": "Apache-2.0",
+      "url": "http://developer.android.com/tools/extras/support-library.html"
+    },
+    {
+      "id": "androidx.drawerlayout:drawerlayout:1.0.0",
+      "name": "Android Support Library Drawer Layout",
+      "license": "Apache-2.0",
+      "url": "http://developer.android.com/tools/extras/support-library.html"
+    },
+    {
+      "id": "androidx.emoji2:emoji2-views-helper:1.3.0",
+      "name": "Android Emoji2 Compat view helpers",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/emoji2#1.3.0"
+    },
+    {
+      "id": "androidx.emoji2:emoji2:1.3.0",
+      "name": "Android Emoji2 Compat",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/emoji2#1.3.0"
+    },
+    {
+      "id": "androidx.fragment:fragment:1.8.9",
+      "name": "fragment",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/fragment#1.8.9"
+    },
+    {
+      "id": "androidx.interpolator:interpolator:1.0.0",
+      "name": "Android Support Library Interpolators",
+      "license": "Apache-2.0",
+      "url": "http://developer.android.com/tools/extras/support-library.html"
+    },
+    {
+      "id": "androidx.lifecycle:lifecycle-common:2.6.2",
+      "name": "Android Lifecycle-Common",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/lifecycle#2.6.2"
+    },
+    {
+      "id": "androidx.lifecycle:lifecycle-livedata-core:2.6.2",
+      "name": "Android Lifecycle LiveData Core",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/lifecycle#2.6.2"
+    },
+    {
+      "id": "androidx.lifecycle:lifecycle-livedata:2.6.2",
+      "name": "Android Lifecycle LiveData",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/lifecycle#2.6.2"
+    },
+    {
+      "id": "androidx.lifecycle:lifecycle-process:2.6.2",
+      "name": "Android Lifecycle Process",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/lifecycle#2.6.2"
+    },
+    {
+      "id": "androidx.lifecycle:lifecycle-runtime:2.6.2",
+      "name": "Android Lifecycle Runtime",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/lifecycle#2.6.2"
+    },
+    {
+      "id": "androidx.lifecycle:lifecycle-service:2.6.2",
+      "name": "Android Lifecycle Service",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/lifecycle#2.6.2"
+    },
+    {
+      "id": "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2",
+      "name": "Android Lifecycle ViewModel with SavedState",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/lifecycle#2.6.2"
+    },
+    {
+      "id": "androidx.lifecycle:lifecycle-viewmodel:2.6.2",
+      "name": "Android Lifecycle ViewModel",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/lifecycle#2.6.2"
+    },
+    {
+      "id": "androidx.loader:loader:1.0.0",
+      "name": "Android Support Library loader",
+      "license": "Apache-2.0",
+      "url": "http://developer.android.com/tools/extras/support-library.html"
+    },
+    {
+      "id": "androidx.profileinstaller:profileinstaller:1.4.0",
+      "name": "Profile Installer",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/profileinstaller#1.4.0"
+    },
+    {
+      "id": "androidx.resourceinspection:resourceinspection-annotation:1.0.1",
+      "name": "Android Resource Inspection - Annotations",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/resourceinspection#1.0.1"
+    },
+    {
+      "id": "androidx.room:room-common-jvm:2.7.0",
+      "name": "Room-Common",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/room#2.7.0"
+    },
+    {
+      "id": "androidx.room:room-common:2.7.0",
+      "name": "Room-Common",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/room#2.7.0"
+    },
+    {
+      "id": "androidx.room:room-runtime-android:2.7.0",
+      "name": "Room-Runtime",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/room#2.7.0"
+    },
+    {
+      "id": "androidx.room:room-runtime:2.7.0",
+      "name": "Room-Runtime",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/room#2.7.0"
+    },
+    {
+      "id": "androidx.savedstate:savedstate:1.2.1",
+      "name": "Saved State",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/savedstate#1.2.1"
+    },
+    {
+      "id": "androidx.sqlite:sqlite-android:2.5.0",
+      "name": "SQLite",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/sqlite#2.5.0"
+    },
+    {
+      "id": "androidx.sqlite:sqlite-framework-android:2.5.0",
+      "name": "SQLite Framework Integration",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/sqlite#2.5.0"
+    },
+    {
+      "id": "androidx.sqlite:sqlite-framework:2.5.0",
+      "name": "SQLite Framework Integration",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/sqlite#2.5.0"
+    },
+    {
+      "id": "androidx.sqlite:sqlite:2.5.0",
+      "name": "SQLite",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/sqlite#2.5.0"
+    },
+    {
+      "id": "androidx.startup:startup-runtime:1.2.0",
+      "name": "Startup Runtime",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/startup#1.2.0"
+    },
+    {
+      "id": "androidx.tracing:tracing-ktx:1.2.0",
+      "name": "Android Tracing Runtime Kotlin Extensions",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/tracing#1.2.0"
+    },
+    {
+      "id": "androidx.tracing:tracing:1.2.0",
+      "name": "Android Tracing",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/tracing#1.2.0"
+    },
+    {
+      "id": "androidx.vectordrawable:vectordrawable-animated:1.1.0",
+      "name": "Android Support AnimatedVectorDrawable",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx"
+    },
+    {
+      "id": "androidx.vectordrawable:vectordrawable:1.1.0",
+      "name": "Android Support VectorDrawable",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx"
+    },
+    {
+      "id": "androidx.versionedparcelable:versionedparcelable:1.1.1",
+      "name": "VersionedParcelable",
+      "license": "Apache-2.0",
+      "url": "http://developer.android.com/tools/extras/support-library.html"
+    },
+    {
+      "id": "androidx.viewpager:viewpager:1.0.0",
+      "name": "Android Support Library View Pager",
+      "license": "Apache-2.0",
+      "url": "http://developer.android.com/tools/extras/support-library.html"
+    },
+    {
+      "id": "androidx.webkit:webkit:1.14.0",
+      "name": "WebKit",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/webkit#1.14.0"
+    },
+    {
+      "id": "androidx.work:work-runtime:2.12.0",
+      "name": "WorkManager Runtime",
+      "license": "Apache-2.0",
+      "url": "https://developer.android.com/jetpack/androidx/releases/work#2.12.0"
+    },
+    {
+      "id": "com.google.guava:listenablefuture:1.0",
+      "name": "Guava ListenableFuture only",
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "com.squareup.okhttp3:okhttp-android:5.4.0",
+      "name": "okhttp",
+      "license": "Apache-2.0",
+      "url": "https://square.github.io/okhttp/"
+    },
+    {
+      "id": "com.squareup.okhttp3:okhttp:5.4.0",
+      "name": "okhttp",
+      "license": "Apache-2.0",
+      "url": "https://square.github.io/okhttp/"
+    },
+    {
+      "id": "com.squareup.okio:okio-jvm:3.17.0",
+      "name": "okio",
+      "license": "Apache-2.0",
+      "url": "https://github.com/square/okio/"
+    },
+    {
+      "id": "com.squareup.okio:okio:3.17.0",
+      "name": "okio",
+      "license": "Apache-2.0",
+      "url": "https://github.com/square/okio/"
+    },
+    {
+      "id": "org.apache.cordova:framework:14.0.1",
+      "name": "Cordova",
+      "license": "Apache-2.0",
+      "url": "https://cordova.apache.org"
+    },
+    {
+      "id": "org.jetbrains.kotlin:kotlin-stdlib:2.2.21",
+      "name": "Kotlin Stdlib",
+      "license": "Apache-2.0",
+      "url": "https://kotlinlang.org/"
+    },
+    {
+      "id": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0",
+      "name": "kotlinx-coroutines-android",
+      "license": "Apache-2.0",
+      "url": "https://github.com/Kotlin/kotlinx.coroutines"
+    },
+    {
+      "id": "org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.9.0",
+      "name": "kotlinx-coroutines-bom",
+      "license": "Apache-2.0",
+      "url": "https://github.com/Kotlin/kotlinx.coroutines"
+    },
+    {
+      "id": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.9.0",
+      "name": "kotlinx-coroutines-core",
+      "license": "Apache-2.0",
+      "url": "https://github.com/Kotlin/kotlinx.coroutines"
+    },
+    {
+      "id": "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0",
+      "name": "kotlinx-coroutines-core",
+      "license": "Apache-2.0",
+      "url": "https://github.com/Kotlin/kotlinx.coroutines"
+    },
+    {
+      "id": "org.jetbrains:annotations:23.0.0",
+      "name": "JetBrains Java Annotations",
+      "license": "Apache-2.0",
+      "url": "https://github.com/JetBrains/java-annotations"
+    },
+    {
+      "id": "org.jspecify:jspecify:1.0.0",
+      "name": "JSpecify annotations",
+      "license": "Apache-2.0",
+      "url": "http://jspecify.org/"
+    }
+  ]
+}

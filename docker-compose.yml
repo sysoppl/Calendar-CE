@@ -1,0 +1,118 @@
+services:
+  calendar:
+    build:
+      context: .
+      args:
+        # The public address of the app: its host name is the one the DAV
+        # proxy answers for. Links the app shows (VITE_PRIVACY_URL,
+        # VITE_TERMS_URL, VITE_CONTACT_URL) go here too.
+        VITE_APP_URL: "http://localhost:8787"
+    image: calendar-community:latest
+    ports:
+      # Plain HTTP on this machine only, for a TLS reverse proxy on the same
+      # host. "8787:8787" opens it to the network.
+      - "127.0.0.1:8787:8787"
+    environment:
+      # The CalDAV hosts the proxy may contact (comma separated, wildcards
+      # like *.example.com allowed). Empty = none, unless CALENDAR_PROXY_OPEN
+      # is "true". Exact entries that are addresses, names without a dot or
+      # names under .local/.lan/.internal/.home.arpa may be on a private/LAN
+      # address. For the bundled Radicale demo below, set this to "radicale".
+      CALENDAR_PROXY_ALLOW: ""
+      # Dotted names of your own servers that live on a private network
+      # (e.g. "dav.home.example"); allowed as if listed above.
+      # CALENDAR_PROXY_PRIVATE_HOSTS: ""
+      # "true" lets the proxy contact any public host while the lists above
+      # are empty: an open relay for whoever reaches the port. Only for a
+      # server that you alone use.
+      CALENDAR_PROXY_OPEN: "false"
+      # "true" lets the proxy reach loopback/LAN addresses for every host.
+      # Leave off unless the server only serves a network you trust.
+      CALENDAR_PROXY_ALLOW_PRIVATE: "false"
+      # "true" lets plain http:// requests with a password reach public
+      # addresses (the password then crosses the internet unencrypted). By
+      # default those only go to servers on a private network; requests
+      # without a password (public feeds) go anywhere.
+      # CALENDAR_PROXY_ALLOW_HTTP: "false"
+      # Host names this server is reached by (comma separated), besides the
+      # host of VITE_APP_URL above. The proxy answers only requests for those,
+      # IP addresses and local names, which keeps out pages that rebind their
+      # name to this server. A server reached by another name has to list it
+      # here, or its proxy requests get 421.
+      # CALENDAR_PUBLIC_HOSTS: "calendar.home.example"
+      # "true" switches the DAV proxy off altogether. CalDAV accounts in the
+      # browser then only work with servers that send CORS headers; the
+      # Android app never uses the proxy.
+      CALENDAR_PROXY_DISABLED: "false"
+      # Number of reverse proxies in front of this container (usually 1 behind
+      # nginx, Caddy or Traefik; 0 when browsers connect directly). Only then
+      # is the client address taken from X-Forwarded-For - without it every
+      # visitor behind the reverse proxy shares one request budget. Set it
+      # only when the port above is reachable through that proxy alone, and
+      # not higher than the real number: otherwise clients pick their own
+      # address and with it a fresh budget.
+      CALENDAR_TRUST_PROXY: "0"
+      # Request budget of the DAV proxy per client address (IPv6: per /64).
+      # Requests over a limit wait up to 30 s for their turn, then get 429/503.
+      #   RATE                requests per minute in the long run, 0 = unlimited
+      #   BURST               requests allowed at once before the rate applies
+      #   CLIENT_CONCURRENCY  requests in flight per client, 0 = unlimited
+      #   CONCURRENCY         requests in flight in total, 0 = unlimited; each
+      #                       may buffer a 10 MiB request body, so keep
+      #                       CONCURRENCY x 10 MiB well below the memory limit
+      # CALENDAR_PROXY_RATE: "600"
+      # CALENDAR_PROXY_BURST: "300"
+      # CALENDAR_PROXY_CLIENT_CONCURRENCY: "6"
+      # CALENDAR_PROXY_CONCURRENCY: "32"
+      # Answers 401 (wrong password) one client may get through the proxy in
+      # 10 minutes; past it its requests with a password get 429 for a while,
+      # so the proxy cannot be used to try passwords. 0 = unlimited.
+      # CALENDAR_PROXY_AUTH_FAILURES: "20"
+      # The proxy logs one line per request: client address, method, target
+      # host and status - never paths, credentials or content. "false" turns
+      # the lines off.
+      # CALENDAR_PROXY_LOG: "true"
+      # Strict-Transport-Security header; browsers honour it only over HTTPS.
+      # "off" removes it, any other value replaces the default.
+      # CALENDAR_HSTS: "max-age=63072000; includeSubDomains"
+      # Listen port inside the container (the health check follows it; change
+      # the port mapping above to match).
+      # PORT: "8787"
+    # The server needs little; the limit caps what a flood of large proxy
+    # requests can take from the host.
+    mem_limit: 512m
+    # The proxy writes a line per request; keep the log from growing forever.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # The server lets DAV writes in flight finish when it stops (up to 10 s).
+    stop_grace_period: 15s
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # Optional local CalDAV server for trying things out:
+  #   docker compose --profile radicale up
+  # then set CALENDAR_PROXY_ALLOW to "radicale" above and add an account
+  # with server http://radicale:5232/ (via the proxy) and any
+  # username/password (auth disabled in this demo config).
+  radicale:
+    profiles: ["radicale"]
+    image: tomsquest/docker-radicale:3.5.0.0
+    # Radicale 3.5 refuses every login unless told otherwise (auth type
+    # "denyall"); the demo accepts any user name and password instead.
+    command: ["/venv/bin/radicale", "--config", "/config/config", "--auth-type", "none"]
+    ports:
+      # Authentication is disabled in the demo, so keep it off the network.
+      - "127.0.0.1:5232:5232"
+    volumes:
+      - radicale-data:/data
+    restart: unless-stopped
+
+volumes:
+  radicale-data:
