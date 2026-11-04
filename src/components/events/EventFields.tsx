@@ -1,13 +1,15 @@
 // The rows of an event form, shared by the quick-create popover and the full
 // editor so both look and behave the same.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AlignLeft, CalendarDays, ChevronDown, Clock, MapPin, Repeat, Text, Users, X } from 'lucide-react';
+import { AlignLeft, CalendarDays, Cake, ChevronDown, Clock, MapPin, PartyPopper, Repeat, Text, Users, X } from 'lucide-react';
 import { useT } from '@/i18n';
 import { useFormat } from '@/hooks/useFormat';
 import { eventColor } from '@/lib/color';
 import { isRangeInvalid, shownEnd, withAllDay, withEndDate, withEndTime, withStartDate, withStartTime } from '@/lib/eventTimes';
 import type { RepeatPreset } from '@/lib/ical/recurrence';
 import type { EventData } from '@/lib/ical/types';
+import { dayInYear, describeMilestone, MIN_SINCE_YEAR, milestoneKind, milestoneOf, sinceFromInput, sinceToInput } from '@/lib/milestone';
+import { isSameDay } from '@/lib/date';
 import { useData, type Calendar } from '@/store/data';
 import { useSettings } from '@/store/settings';
 import { useKeyboardUi } from '@/hooks/useKeyboardUi';
@@ -60,6 +62,45 @@ export function DateTimeRow({ data, set, children }: RowProps & { children?: Rea
           {children}
         </div>
       </div>
+    </IconRow>
+  );
+}
+
+/**
+ * The date a birthday or anniversary counts from, offered only while the
+ * title names one (by its words). A date picked for an event that does not
+ * repeat yet moves it onto that day of its year and has it repeat every year
+ * (`repeatYearly`). An event on the day of the date it had (one moved there
+ * before, a typo corrected) follows a new one; any other keeps its dates.
+ */
+export function MilestoneRow({ data, set, repeats, repeatYearly }: RowProps & { repeats: boolean; repeatYearly: () => void }) {
+  const t = useT();
+  const fmt = useFormat();
+  const kind = milestoneKind(data.title);
+  if (!kind) return null;
+  const label = t(kind === 'birthday' ? 'milestone.birthDate' : 'milestone.sinceDate');
+  const milestone = milestoneOf(data, data.start);
+  const choose = (value: string) => {
+    const since = sinceFromInput(value);
+    const year = data.start.getFullYear();
+    const follows = !repeats || (!!data.since && isSameDay(data.start, dayInYear(data.since, year)));
+    if (!since || !follows) return set({ since });
+    set({ since, ...withStartDate(data, dayInYear(since, year)) });
+    if (!repeats) repeatYearly();
+  };
+  return (
+    <IconRow icon={kind === 'birthday' ? <Cake size={18} /> : <PartyPopper size={18} />} label={label}>
+      <div className="flex items-center gap-2">
+        <input type="date" className="field min-w-0 flex-1" value={sinceToInput(data.since)} min={`${MIN_SINCE_YEAR}-01-01`} max={sinceToInput(new Date())} onChange={(e) => choose(e.target.value)} aria-label={label} title={label} />
+        {data.since && (
+          <button type="button" aria-label={t('milestone.clear')} title={t('milestone.clear')} className="hover:bg-bg-weak text-text-weak shrink-0 rounded-full p-1.5" onClick={() => set({ since: undefined })}>
+            <X size={16} />
+          </button>
+        )}
+      </div>
+      <p className="text-text-hint mt-1 text-xs">
+        {milestone ? describeMilestone(milestone, t, fmt) : t(kind === 'birthday' ? 'milestone.hint.birthday' : 'milestone.hint.anniversary')}
+      </p>
     </IconRow>
   );
 }

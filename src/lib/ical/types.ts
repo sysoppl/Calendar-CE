@@ -79,6 +79,11 @@ export interface EventData {
   organizer?: Attendee;
   attendees: Attendee[];
   categories: string[];
+  /**
+   * The date a birthday or anniversary counts from (X-PATRYKPRO-SINCE), as a
+   * local midnight. It belongs to the series: an instance shows its master's.
+   */
+  since?: Date;
 }
 
 export interface Occurrence {
@@ -111,6 +116,8 @@ export interface Occurrence {
   floating: boolean;
   /** The user's own reply when they are an invited attendee (not the organizer). */
   selfStatus?: PartStat;
+  /** The date its birthday or anniversary counts from (EventData.since). */
+  since?: Date;
 }
 
 export type TaskStatus = 'NEEDS-ACTION' | 'IN-PROCESS' | 'COMPLETED' | 'CANCELLED';

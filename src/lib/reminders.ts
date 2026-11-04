@@ -20,6 +20,7 @@ import { useSettings } from '@/store/settings';
 import { useUi } from '@/store/ui';
 import { makeFormatter, type Formatter } from '@/hooks/useFormat';
 import { expandEvent } from './ical/events';
+import { titleWithYears } from './milestone';
 import { parseObject } from './ical/parse';
 import { readTask } from './ical/tasks';
 import { selfEmailsByAccount } from './identity';
@@ -158,7 +159,7 @@ export function computeReminders(now: Date, horizonMs: number, only?: (calendar:
               key,
               calendarId: cal.id,
               at,
-              title: reminderTitle(occ.title, false),
+              title: reminderTitle(titleWithYears(occ), false),
               start: occ.start,
               end: occ.end,
               allDay: occ.allDay,

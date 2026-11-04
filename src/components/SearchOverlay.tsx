@@ -11,6 +11,7 @@ import { parseObject } from '@/lib/ical/parse';
 import { openEditTask } from '@/lib/actions';
 import type { Occurrence } from '@/lib/ical/types';
 import { eventColor, normalizeItemColor } from '@/lib/color';
+import { titleWithYears } from '@/lib/milestone';
 
 const fold = (s: string) =>
   s
@@ -149,7 +150,7 @@ function SearchPanel() {
                   >
                     <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: color }} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold">{e.title || t('grid.noTitle')}</span>
+                      <span className="block truncate font-semibold">{titleWithYears(e, t('grid.noTitle'))}</span>
                       <span className="text-text-weak flex flex-wrap gap-x-3 text-[0.8125rem]">
                         <span>
                           {fmt.date(e.start, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}

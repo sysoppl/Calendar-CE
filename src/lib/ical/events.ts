@@ -1,6 +1,7 @@
 // Reading, expanding and modifying VEVENTs.
 import ICAL from 'ical.js';
 import { normalizeItemColor } from '../color';
+import { readSince, writeSince } from '../milestone';
 import { cloneRoot, newUid, wrapCalendar, type ParsedObject } from './parse';
 import { applyRecurrence, budgetExpansion, budgetRecurrence, keepsRule, readRecurrence } from './recurrence';
 import { dateToIcal, nowUtc, setTextProp, setTimeProp, zoneOf } from './time';
@@ -157,6 +158,7 @@ export function readEventData(comp: ICAL.Component, start?: ICAL.Time, end?: ICA
     organizer: organizer ? readAttendee(organizer) : undefined,
     attendees: comp.getAllProperties('attendee').map(readAttendee),
     categories: readCategories(comp),
+    since: readSince(comp),
   };
 }
 
@@ -194,6 +196,7 @@ function toOccurrence(
   recurrenceId: ICAL.Time | undefined,
   isRecurring: boolean,
   self?: ReadonlySet<string>,
+  master?: ICAL.Component,
 ): Occurrence {
   const s = start.toJSDate();
   let e = end.toJSDate();
@@ -221,6 +224,8 @@ function toOccurrence(
     ...(alarms.fixed.length ? { fixedAlarms: alarms.fixed } : {}),
     floating: zoneOf(start) === 'floating',
     selfStatus: selfStatusOf(comp, self),
+    // A series' date: an override (a moved instance) does not carry its own.
+    since: readSince(master ?? comp),
   };
 }
 
@@ -395,7 +400,7 @@ export function expandEvent(obj: ParsedObject, rangeStart: Date, rangeEnd: Date,
     if (nextDate.getTime() + durationMs + DAY_MS < rangeStart.getTime()) continue;
     const details = event.getOccurrenceDetails(next);
     const comp = details.item.component;
-    const occ = toOccurrence(obj, comp, details.startDate, details.endDate, details.recurrenceId, true, self);
+    const occ = toOccurrence(obj, comp, details.startDate, details.endDate, details.recurrenceId, true, self, master);
     seen.add(idOf(details.recurrenceId));
     if (occ.status === 'CANCELLED' && occ.isException) continue;
     if (overlaps(occ.start, occ.end, occ.allDay)) out.push(occ);
@@ -411,7 +416,7 @@ export function expandEvent(obj: ParsedObject, rangeStart: Date, rangeEnd: Date,
     const rid = c.getFirstPropertyValue('recurrence-id') as ICAL.Time | null;
     if (!rid) continue;
     const ev = new ICAL.Event(c);
-    const occ = toOccurrence(obj, c, ev.startDate, ev.endDate, rid, true, self);
+    const occ = toOccurrence(obj, c, ev.startDate, ev.endDate, rid, true, self, master);
     if (!seen.has(idOf(rid)) && !seen.has(dayOf(rid)) && occ.status !== 'CANCELLED' && overlaps(occ.start, occ.end, occ.allDay)) {
       // Only if the RRULE actually produces this instance (not EXDATE'd).
       out.push(occ);
@@ -434,6 +439,7 @@ export function eventDataFor(obj: ParsedObject, occ: Pick<Occurrence, 'recurrenc
       ...base,
       rrule,
       ruleAsWritten,
+      since: readSince(master),
       start: occ.start,
       end: occ.end,
     };
@@ -529,6 +535,8 @@ export function applyEventData(comp: ICAL.Component, data: EventData, opts: { rr
   }
   applyAlarms(comp, data.alarms, data.title);
   applyAttendees(comp, data);
+  // A series' master carries it; updateEvent leaves it off an override of one (see `since`).
+  writeSince(comp, data.since);
   touch(comp);
 }
 
@@ -575,6 +583,10 @@ export function createEventIcs(data: EventData, recurrence: ICAL.Property[] = []
   applyEventData(vevent, data, { rrule: true });
   vevent.updatePropertyWithValue('sequence', 0);
   return serialize(wrapCalendar(vevent));
+}
+
+function sameSince(a: Date | undefined, b: Date | undefined): boolean {
+  return a?.getTime() === b?.getTime();
 }
 
 function untilBefore(occStart: ICAL.Time): Date {
@@ -707,7 +719,13 @@ export function updateEvent(
   if (scope === 'future' && sameRecurrenceId(rid, masterStart)) scope = 'all';
 
   if (scope === 'single') {
-    applyEventData(ensureException(root, master, rid), { ...data, rrule: undefined }, { rrule: false });
+    // The override drops the copy of the master's date ensureException made.
+    applyEventData(ensureException(root, master, rid), { ...data, rrule: undefined, since: undefined }, { rrule: false });
+    // The date counted from is the series': changed on one instance, it changes on all.
+    if (!sameSince(readSince(master), data.since)) {
+      writeSince(master, data.since);
+      touch(master, false);
+    }
     return [{ type: 'update', url: obj.url, etag: obj.etag, data: serialize(root) }];
   }
 

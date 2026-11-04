@@ -13,6 +13,7 @@ import { deleteOccurrence, duplicateOccurrence, occurrenceIcs, openEditEvent, re
 import { isSameDay } from '@/lib/date';
 import { downloadText } from '@/lib/importExport';
 import { findMeetingLink, type MeetingLink } from '@/lib/meeting';
+import { describeMilestone, describeSince, milestoneOf, titleWithYears } from '@/lib/milestone';
 import { externalLink } from '@/lib/externalLink';
 import { IconButton } from '@/components/ui/Button';
 import { IconRow } from '@/components/ui/Controls';
@@ -88,7 +89,7 @@ export function EventPopover() {
           <div
             ref={sheet}
             role="dialog"
-            aria-label={popover.occurrence.title}
+            aria-label={titleWithYears(popover.occurrence)}
             className="animate-slide-up bg-bg-elevated pb-safe absolute inset-x-0 bottom-0 max-h-[85%] overflow-y-auto rounded-t-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -110,7 +111,7 @@ export function EventPopover() {
         style={placedStyle(floatingStyles, isPositioned)}
         className={`${popIn(isPositioned)} bg-bg-elevated border-border-weak shadow-elevated text-text z-40 w-[380px] max-w-[calc(100vw-24px)] overflow-y-auto rounded-2xl border`}
         role="dialog"
-        aria-label={popover.occurrence.title}
+        aria-label={titleWithYears(popover.occurrence)}
       >
         <PopoverBody key={revision} onClose={close} />
       </div>
@@ -202,6 +203,7 @@ function PopoverBody({ onClose }: { onClose: () => void }) {
   const color = eventColor(occ.color, calendar?.color);
   const readOnly = calendar?.readOnly;
   const deletable = canDeleteItems(calendar);
+  const milestone = milestoneOf(data, occ.start);
 
   // An invitation can be answered when the user is a guest, not the host.
   const self = selfEmailsFor(occ.calendarId);
@@ -280,6 +282,12 @@ function PopoverBody({ onClose }: { onClose: () => void }) {
         <div className="min-w-0 py-0.5">
           <h2 className={`text-[1.375rem] leading-snug font-medium break-words ${occ.status === 'CANCELLED' ? 'line-through' : ''}`}>{data.title || t('grid.noTitle')}</h2>
           <div className="mt-0.5 font-semibold">{when}</div>
+          {milestone && data.since && (
+            <div>
+              <span className="text-primary font-semibold">{describeMilestone(milestone, t, fmt)}</span>
+              <span className="text-text-weak"> · {describeSince(milestone.kind, data.since, t, fmt)}</span>
+            </div>
+          )}
           {!occ.allDay && data.timezone !== 'floating' && data.timezone !== Intl.DateTimeFormat().resolvedOptions().timeZone && (
             <div className="text-text-weak text-xs">{data.timezone.replace(/_/g, ' ')}</div>
           )}

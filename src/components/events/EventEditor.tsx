@@ -7,11 +7,12 @@ import { deleteOccurrence, saveEvent } from '@/lib/actions';
 import { defaultAlarmsFor, sameAlarms } from '@/lib/calendarAlarms';
 import { isRangeInvalid } from '@/lib/eventTimes';
 import { localTimezone } from '@/lib/ical/timezone';
+import { presetRule } from '@/lib/ical/recurrence';
 import type { EventData, EventStatus } from '@/lib/ical/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { IconRow as Row } from '@/components/ui/Controls';
-import { CalendarRow, DateTimeRow, DescriptionRow, LocationRow, ParticipantsRow, TitleRow } from './EventFields';
+import { CalendarRow, DateTimeRow, DescriptionRow, LocationRow, MilestoneRow, ParticipantsRow, TitleRow } from './EventFields';
 import { RecurrenceFields } from './RecurrenceFields';
 import { AlarmFields } from './AlarmFields';
 
@@ -38,6 +39,8 @@ function EditorForm({ state }: { state: EventEditorState }) {
   const [data, setData] = useState<EventData>(state.data);
   const [calendarId, setCalendarId] = useState(state.calendarId);
   const [saving, setSaving] = useState(false);
+  // Bumped when a birth date makes the event yearly: the repeat control then starts again from the rule.
+  const [repeatSet, setRepeatSet] = useState(0);
   const [showTz, setShowTz] = useState(!state.data.allDay && state.data.timezone !== localTimezone() && state.data.timezone !== 'floating');
   // Kept as typed: the parsed list would drop the comma the moment it is entered.
   const [categories, setCategories] = useState(state.data.categories.join(', '));
@@ -138,13 +141,24 @@ function EditorForm({ state }: { state: EventEditorState }) {
           </Row>
         )}
 
+        <MilestoneRow
+          data={data}
+          set={set}
+          repeats={!!data.rrule || !!data.ruleAsWritten}
+          repeatYearly={() => {
+            set({ rrule: presetRule('yearly', data.start) });
+            setRepeatSet((n) => n + 1);
+          }}
+        />
+
         <Row icon={<Repeat size={18} />} label={t('editor.repeat')}>
           <RecurrenceFields
+            key={repeatSet}
             rule={data.rrule}
             asWritten={data.ruleAsWritten}
             start={data.start}
             onChange={(rrule, ruleAsWritten) => set({ rrule, ruleAsWritten })}
-            initialCustom={state.customRepeat}
+            initialCustom={!repeatSet && state.customRepeat}
           />
         </Row>
 

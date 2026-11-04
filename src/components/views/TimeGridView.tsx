@@ -18,6 +18,7 @@ import { useT } from '@/i18n';
 import { zonedParts } from '@/lib/ical/timezone';
 import { BarChip, TaskChip, TimedChipContent } from './EventChip';
 import { DEFAULT_TASK_COLOR, eventColor } from '@/lib/color';
+import { titleWithYears } from '@/lib/milestone';
 
 type Item = { kind: 'event'; occ: Occurrence } | { kind: 'task'; task: Task };
 
@@ -559,7 +560,7 @@ export function TimeGridView({ days, peers = null }: { days: Date[]; peers?: { b
                   >
                     <BarChip
                       dense={phone}
-                      title={occ.title || t('grid.noTitle')}
+                      title={titleWithYears(occ, t('grid.noTitle'))}
                       color={colorOf(occ)}
                       eventStyle={settings.eventStyle}
                       past={settings.dimPastEvents && occ.end < now}
@@ -628,7 +629,7 @@ export function TimeGridView({ days, peers = null }: { days: Date[]; peers?: { b
                       ) : (
                         <BarChip
                           dense={phone}
-                          title={b.item.occ.title || t('grid.noTitle')}
+                          title={titleWithYears(b.item.occ, t('grid.noTitle'))}
                           color={colorOf(b.item.occ)}
                           eventStyle={settings.eventStyle}
                           past={settings.dimPastEvents && b.item.occ.end < now}
@@ -701,7 +702,7 @@ export function TimeGridView({ days, peers = null }: { days: Date[]; peers?: { b
                           data-occ={occ.key}
                           role="button"
                           tabIndex={0}
-                          aria-label={`${occ.title}, ${fmt.timeRange(occ.start, occ.end)}`}
+                          aria-label={`${titleWithYears(occ)}, ${fmt.timeRange(occ.start, occ.end)}`}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               const r = e.currentTarget.getBoundingClientRect();
@@ -712,7 +713,7 @@ export function TimeGridView({ days, peers = null }: { days: Date[]; peers?: { b
                           style={style}
                         >
                           <TimedChipContent
-                            title={occ.title || t('grid.noTitle')}
+                            title={titleWithYears(occ, t('grid.noTitle'))}
                             time={fmt.timeRange(occ.start, occ.end)}
                             location={occ.location}
                             color={colorOf(occ)}
@@ -743,7 +744,7 @@ export function TimeGridView({ days, peers = null }: { days: Date[]; peers?: { b
                     {drag?.kind === 'move' && drag.day === i && (
                       <div className="pointer-events-none absolute right-1.5 left-px z-[3]" style={{ top: drag.min * pxPerMin + 1, height: Math.max(18, drag.duration * pxPerMin - 2) }}>
                         <TimedChipContent
-                          title={drag.occ.title || t('grid.noTitle')}
+                          title={titleWithYears(drag.occ, t('grid.noTitle'))}
                           time={fmt.timeRange(setMinutesOfDay(day, drag.min), setMinutesOfDay(day, drag.min + drag.duration))}
                           color={colorOf(drag.occ)}
                           eventStyle={settings.eventStyle}
@@ -759,7 +760,7 @@ export function TimeGridView({ days, peers = null }: { days: Date[]; peers?: { b
                         style={{ top: minutesOfDay(drag.occ.start) * pxPerMin + 1, height: Math.max(18, (drag.endMin - minutesOfDay(drag.occ.start)) * pxPerMin - 2) }}
                       >
                         <TimedChipContent
-                          title={drag.occ.title || t('grid.noTitle')}
+                          title={titleWithYears(drag.occ, t('grid.noTitle'))}
                           time={fmt.timeRange(drag.occ.start, setMinutesOfDay(drag.occ.start, drag.endMin))}
                           color={colorOf(drag.occ)}
                           eventStyle={settings.eventStyle}
@@ -810,7 +811,7 @@ export function TimeGridView({ days, peers = null }: { days: Date[]; peers?: { b
                           return (
                             <div key={occ.key} className="absolute z-[1]" style={style}>
                               <TimedChipContent
-                                title={occ.title || t('grid.noTitle')}
+                                title={titleWithYears(occ, t('grid.noTitle'))}
                                 time={fmt.timeRange(occ.start, occ.end)}
                                 location={occ.location}
                                 color={colorOf(occ)}

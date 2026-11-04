@@ -16,7 +16,7 @@ import type { EventData } from '@/lib/ical/types';
 import { Button, IconButton } from '@/components/ui/Button';
 import { useBackdropDismiss } from '@/components/ui/backdrop';
 import { placedStyle, popIn } from '@/components/ui/floating';
-import { CalendarRow, DateTimeRow, DescriptionRow, LocationRow, ParticipantsRow, RepeatButton, TitleRow } from './EventFields';
+import { CalendarRow, DateTimeRow, DescriptionRow, LocationRow, MilestoneRow, ParticipantsRow, RepeatButton, TitleRow } from './EventFields';
 
 /**
  * Popover that creates an event in place, next to its placeholder in the
@@ -168,6 +168,7 @@ function QuickCreateForm({ qc }: { qc: QuickCreateState }) {
       <DateTimeRow data={data} set={set}>
         <RepeatButton preset={repeat} start={data.start} onChange={(p) => (p === 'custom' ? more(true) : setRepeat(p))} />
       </DateTimeRow>
+      <MilestoneRow data={data} set={set} repeats={repeat !== 'none'} repeatYearly={() => setRepeat('yearly')} />
       <CalendarRow data={data} set={set} calendars={calendars} calendarId={calendarId} onCalendar={chooseCalendar} />
       <ParticipantsRow data={data} set={set} calendarId={calendarId} />
       <LocationRow data={data} set={set} />
