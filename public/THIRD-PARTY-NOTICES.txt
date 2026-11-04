@@ -1,4 +1,4 @@
-Calendar (Kalendarz) 1.5.2: third-party notices
+Calendar (Kalendarz) 1.11.1: third-party notices
 Generated on 2026-11-04 by scripts/third-party-notices.mjs.
 
 Calendar is free software: Copyright (c) 2026 patryk.pro, licensed under
