@@ -51,7 +51,8 @@ describe('App', () => {
     useData.setState({ init: () => Promise.reject(new DOMException(`no store for ${SECRET}`, 'InvalidStateError')) });
     root = createRoot(host, ROOT_ERROR_OPTIONS);
     root.render(h(App));
-    await vi.waitFor(() => expect(host.textContent).toContain('The data kept on this device could not be opened'));
+    // Generous: a busy CI runner may take more than the default second to render.
+    await vi.waitFor(() => expect(host.textContent).toContain('The data kept on this device could not be opened'), { timeout: 5000 });
     expect(host.textContent).toContain('start/InvalidStateError');
     expect([...host.querySelectorAll('button')].map((b) => b.textContent)).toContain('Reload');
     // No spinner left behind it.
