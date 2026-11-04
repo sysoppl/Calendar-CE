@@ -1,18 +1,26 @@
 services:
   calendar:
+    # The ready-made image (linux/amd64 and linux/arm64), published with every
+    # release. Pin a version such as ghcr.io/sysoppl/calendar-ce:1.11.1 to
+    # update on your own schedule; `docker compose pull` fetches a newer one.
+    image: ghcr.io/sysoppl/calendar-ce:latest
+    # Building the image yourself instead: `docker compose up -d --build` in a
+    # clone of the repository.
     build:
       context: .
-      args:
-        # The public address of the app: its host name is the one the DAV
-        # proxy answers for. Links the app shows (VITE_PRIVACY_URL,
-        # VITE_TERMS_URL, VITE_CONTACT_URL) go here too.
-        VITE_APP_URL: "http://localhost:8787"
-    image: calendar-community:latest
     ports:
       # Plain HTTP on this machine only, for a TLS reverse proxy on the same
       # host. "8787:8787" opens it to the network.
       - "127.0.0.1:8787:8787"
     environment:
+      # The public address of the app, e.g. https://calendar.example.com: the
+      # DAV proxy answers only requests for its host name.
+      VITE_APP_URL: "http://localhost:8787"
+      # Links the app shows: your privacy policy, terms of service and a
+      # contact page or mailto: address. An empty one is not shown.
+      # VITE_PRIVACY_URL: ""
+      # VITE_TERMS_URL: ""
+      # VITE_CONTACT_URL: ""
       # The CalDAV hosts the proxy may contact (comma separated, wildcards
       # like *.example.com allowed). Empty = none, unless CALENDAR_PROXY_OPEN
       # is "true". Exact entries that are addresses, names without a dot or

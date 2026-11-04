@@ -3,7 +3,10 @@
 ARG NODE_IMAGE=node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
 
 # --- build ---------------------------------------------------------------
-FROM ${NODE_IMAGE} AS build
+# The bundle is the same for every platform, so it is built once on the
+# builder's own platform; only the small runtime stage below is per platform
+# (a multi-platform build needs no emulated npm install).
+FROM --platform=$BUILDPLATFORM ${NODE_IMAGE} AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 # No dependency needs an install script (the lockfile has none outside
@@ -25,6 +28,11 @@ RUN npm run build
 # --- runtime -------------------------------------------------------------
 # Zero-dependency Node server: serves dist/ and the /dav-proxy endpoint.
 FROM ${NODE_IMAGE}
+LABEL org.opencontainers.image.title="Calendar CE" \
+      org.opencontainers.image.description="Calendar Community Edition: calendar and tasks kept on the device or on your own CalDAV server" \
+      org.opencontainers.image.source="https://github.com/sysoppl/Calendar-CE" \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
+      org.opencontainers.image.vendor="patryk.pro"
 WORKDIR /app
 # The host names the DAV proxy answers for come from the app's address, so
 # the build argument is carried over (the environment can still override it).
