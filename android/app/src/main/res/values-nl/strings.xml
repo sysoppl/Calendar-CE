@@ -10,6 +10,7 @@
     <string name="reminder_dismiss">Sluiten</string>
     <string name="reminder_missed">Gemist</string>
     <string name="reminder_no_title">(geen titel)</string>
+    <string name="reminder_hidden_title">Verborgen afspraak</string>
     <!-- Shown on a locked screen that hides content, and when the text of a reminder cannot be read. -->
     <string name="reminder_generic_title">Herinnering</string>
     <string name="reminder_generic_text">Open de app om de details te zien.</string>

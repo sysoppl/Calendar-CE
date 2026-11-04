@@ -19,6 +19,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -107,13 +108,14 @@ public class ReminderSyncWorker extends Worker {
         // While reminders are switched off in the app it sends no calendars at all.
         JSONArray calendars = config.optBoolean("enabled", true) ? config.optJSONArray("calendars") : null;
         String untitled = context.getString(R.string.reminder_no_title);
+        String hiddenTitle = context.getString(R.string.reminder_hidden_title);
         List<String> errors = new ArrayList<>();
         List<String> log = new ArrayList<>();
         int refreshed = 0;
 
         if (calendars != null) {
             String failed = context.getString(R.string.reminder_sync_calendar_failed);
-            refreshed += refreshCalDav(store, calendars, CalDavFetcher::new, now, horizon, untitled, failed, this::isStopped, errors, log);
+            refreshed += refreshCalDav(store, calendars, CalDavFetcher::new, now, horizon, untitled, hiddenTitle, failed, this::isStopped, errors, log);
             for (String line : log) Log.w(TAG, line);
         }
 
@@ -146,7 +148,7 @@ public class ReminderSyncWorker extends Worker {
      * @return how many calendars were refreshed
      */
     static int refreshCalDav(ReminderStore store, JSONArray calendars, CalendarSources sources, long now, long horizon,
-                             String untitled, String failed, BooleanSupplier stopped, List<String> errors, List<String> log) {
+                             String untitled, String hiddenTitle, String failed, BooleanSupplier stopped, List<String> errors, List<String> log) {
         // Look past the horizon by the longest common lead time (4 weeks).
         long to = now + horizon + 28L * 86400000L;
         int refreshed = 0;
@@ -163,7 +165,7 @@ public class ReminderSyncWorker extends Worker {
                 boolean tasks = comps == null || comps.toString().contains("VTODO");
                 if (events) {
                     for (String ics : source.events(cal.optString("url"), now, to)) {
-                        if (!collectEvents(key, ics, now, now + horizon, untitled, reminders)) expanded = false;
+                        if (!collectEvents(key, ics, now, now + horizon, untitled, hiddenTitle, reminders)) expanded = false;
                     }
                 }
                 if (tasks) {
@@ -196,12 +198,31 @@ public class ReminderSyncWorker extends Worker {
      * Returns false when an RRULE is present, i.e. the server did not expand.
      */
     static boolean collectEvents(String calendarKey, String ics, long from, long to, String untitled, List<Reminder> out) {
+        return collectEvents(calendarKey, ics, from, to, untitled, untitled, out);
+    }
+
+    /**
+     * As above; a hidden event (X-PATRYKPRO-HIDDEN:TRUE, src/lib/hidden.ts) is
+     * named {@code hiddenTitle}, without its place. Hiding belongs to a series:
+     * the web app writes it on the master only, and a server that expands
+     * copies it onto the instances it makes but not onto stored overrides, so
+     * any VEVENT of a UID that carries it hides all of that UID's.
+     */
+    static boolean collectEvents(String calendarKey, String ics, long from, long to, String untitled, String hiddenTitle, List<Reminder> out) {
         boolean expanded = true;
-        for (IcsMini.Component cal : IcsMini.parse(ics)) {
+        List<IcsMini.Component> calendars = IcsMini.parse(ics);
+        Set<String> hidden = new HashSet<>();
+        for (IcsMini.Component cal : calendars) {
+            for (IcsMini.Component ev : cal.all("VEVENT")) {
+                String flag = ev.text("X-PATRYKPRO-HIDDEN");
+                if (flag != null && flag.trim().equalsIgnoreCase("TRUE")) hidden.add(String.valueOf(ev.text("UID")));
+            }
+        }
+        for (IcsMini.Component cal : calendars) {
             for (IcsMini.Component ev : cal.all("VEVENT")) {
                 if (ev.prop("RRULE") != null) expanded = false;
                 try {
-                    collectEvent(calendarKey, ev, from, to, untitled, out);
+                    collectEvent(calendarKey, ev, from, to, hidden.contains(String.valueOf(ev.text("UID"))) ? hiddenTitle : null, untitled, out);
                 } catch (RuntimeException e) {
                     // One odd event costs its own reminders, not the calendar's.
                 }
@@ -210,7 +231,8 @@ public class ReminderSyncWorker extends Worker {
         return expanded;
     }
 
-    private static void collectEvent(String calendarKey, IcsMini.Component ev, long from, long to, String untitled, List<Reminder> out) {
+    /** {@code hiddenTitle} names a hidden event (no place then); null for one that is not. */
+    private static void collectEvent(String calendarKey, IcsMini.Component ev, long from, long to, String hiddenTitle, String untitled, List<Reminder> out) {
         if ("CANCELLED".equalsIgnoreCase(ev.text("STATUS"))) return;
         IcsMini.Time start = IcsMini.parseTime(ev.prop("DTSTART"));
         if (start == null) return;
@@ -225,6 +247,10 @@ public class ReminderSyncWorker extends Worker {
         if (title == null || title.isEmpty() || title.length() > MAX_REMINDER_TEXT) title = untitled;
         String location = ev.text("LOCATION");
         String place = location == null || location.length() > MAX_REMINDER_TEXT ? "" : location;
+        if (hiddenTitle != null) {
+            title = hiddenTitle;
+            place = "";
+        }
         String uid = ev.text("UID");
         if (uid != null && uid.length() > MAX_UID) return;
         List<IcsMini.Component> alarms = ev.all("VALARM");

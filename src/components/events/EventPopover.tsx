@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
 import { autoUpdate, flip, offset, shift, useFloating, FloatingPortal, size } from '@floating-ui/react';
-import { Pencil, Trash2, Copy, X, MapPin, Users, Bell, CalendarDays as CalendarIcon, AlignLeft, Link2, MoreHorizontal, Download, ClipboardCopy, CircleSlash, Eye, Video, MailQuestion } from 'lucide-react';
+import { Pencil, Trash2, Copy, X, MapPin, Users, Bell, CalendarDays as CalendarIcon, AlignLeft, Link2, MoreHorizontal, Download, ClipboardCopy, CircleSlash, Eye, EyeOff, Video, MailQuestion } from 'lucide-react';
 import { useUi } from '@/store/ui';
 import { useT, type MessageKey } from '@/i18n';
 import { useFormat } from '@/hooks/useFormat';
@@ -282,6 +282,12 @@ function PopoverBody({ onClose }: { onClose: () => void }) {
         <div className="min-w-0 py-0.5">
           <h2 className={`text-[1.375rem] leading-snug font-medium break-words ${occ.status === 'CANCELLED' ? 'line-through' : ''}`}>{data.title || t('grid.noTitle')}</h2>
           <div className="mt-0.5 font-semibold">{when}</div>
+          {data.hidden && (
+            <div className="text-text-weak flex items-center gap-1.5 text-xs">
+              <EyeOff size={13} aria-hidden />
+              {t('event.hiddenNote')}
+            </div>
+          )}
           {milestone && data.since && (
             <div>
               <span className="text-primary font-semibold">{describeMilestone(milestone, t, fmt)}</span>

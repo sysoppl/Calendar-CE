@@ -10,6 +10,7 @@
     <string name="reminder_dismiss">Zavřít</string>
     <string name="reminder_missed">Zmeškáno</string>
     <string name="reminder_no_title">(bez názvu)</string>
+    <string name="reminder_hidden_title">Skrytá událost</string>
     <!-- Shown on a locked screen that hides content, and when the text of a reminder cannot be read. -->
     <string name="reminder_generic_title">Připomínka</string>
     <string name="reminder_generic_text">Podrobnosti zobrazíte otevřením aplikace.</string>

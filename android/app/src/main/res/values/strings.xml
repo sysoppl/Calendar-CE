@@ -12,6 +12,7 @@
     <string name="reminder_dismiss">Dismiss</string>
     <string name="reminder_missed">Missed</string>
     <string name="reminder_no_title">(no title)</string>
+    <string name="reminder_hidden_title">Hidden event</string>
     <!-- Shown on a locked screen that hides content, and when the text of a reminder cannot be read. -->
     <string name="reminder_generic_title">Reminder</string>
     <string name="reminder_generic_text">Open the app to see the details.</string>

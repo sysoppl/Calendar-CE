@@ -84,6 +84,8 @@ export interface EventData {
    * local midnight. It belongs to the series: an instance shows its master's.
    */
   since?: Date;
+  /** The calendar shows "Hidden event" until it is opened (X-PATRYKPRO-HIDDEN, src/lib/hidden.ts); the series', as `since`. */
+  hidden?: boolean;
 }
 
 export interface Occurrence {
@@ -118,6 +120,8 @@ export interface Occurrence {
   selfStatus?: PartStat;
   /** The date its birthday or anniversary counts from (EventData.since). */
   since?: Date;
+  /** Its name is not shown until it is opened (EventData.hidden). */
+  hidden?: boolean;
 }
 
 export type TaskStatus = 'NEEDS-ACTION' | 'IN-PROCESS' | 'COMPLETED' | 'CANCELLED';

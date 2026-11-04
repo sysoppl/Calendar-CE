@@ -22,6 +22,14 @@ const calendar = (id: string, components: Calendar['components']): Calendar => (
 const raw = (calendarId: string, url: string, data: string) => ({ url, etag: '"1"', calendarId, data: data.replace(/\r?\n/g, '\r\n') });
 
 describe('computeReminders', () => {
+  it('names a hidden event only as one, and leaves out its place', () => {
+    const at = new Date(Date.now() + 2 * 3600_000);
+    const ics = createEventIcs({ uid: 'hid', title: 'Surprise party', description: '', location: "Ola's flat", start: at, end: at, allDay: false, timezone: 'UTC', alarms: [10], busy: true, attendees: [], categories: [], hidden: true });
+    useData.setState({ calendars: [calendar('local|events', ['VEVENT'])], objects: { 'local|events': { hid: raw('local|events', 'hid', ics) } } });
+    const [reminder] = computeReminders(new Date(), 3 * 3600_000);
+    expect([reminder.title, reminder.location]).toEqual(['Hidden event', undefined]);
+  });
+
   it('reminds of everything else when one item cannot be read or followed', () => {
     const now = new Date();
     const soon = new Date(now.getTime() + 3600_000);

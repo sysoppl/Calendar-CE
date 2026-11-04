@@ -72,7 +72,7 @@ public class ReminderRefreshTest {
     @Test
     public void aCalendarThatBreaksTheParserCostsOnlyItsOwnReminders() throws Exception {
         int refreshed = ReminderSyncWorker.refreshCalDav(store, calendars("deep", "huge", "broken", "fine"), (user, password) -> source(null),
-            now(), HORIZON, "", "could not be refreshed", () -> false, errors, log);
+            now(), HORIZON, "", "Hidden event", "could not be refreshed", () -> false, errors, log);
         assertEquals(1, refreshed);
         assertEquals(4, fetched.size());
         assertEquals(1, store.getSets().get("fine").items.size());
@@ -88,7 +88,7 @@ public class ReminderRefreshTest {
     public void stopsBetweenCalendarsOnceTheRunIsStopped() throws Exception {
         boolean[] stopped = {false};
         int refreshed = ReminderSyncWorker.refreshCalDav(store, calendars("first", "second", "third"), (user, password) -> source(() -> stopped[0] = true),
-            now(), HORIZON, "", "could not be refreshed", () -> stopped[0], errors, log);
+            now(), HORIZON, "", "Hidden event", "could not be refreshed", () -> stopped[0], errors, log);
         // What the first calendar brought is kept; nothing more is asked for.
         assertEquals(1, refreshed);
         assertEquals(Collections.singletonList("https://dav.example.org/first/"), fetched);

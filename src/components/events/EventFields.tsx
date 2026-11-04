@@ -1,7 +1,7 @@
 // The rows of an event form, shared by the quick-create popover and the full
 // editor so both look and behave the same.
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AlignLeft, CalendarDays, Cake, ChevronDown, Clock, MapPin, PartyPopper, Repeat, Text, Users, X } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { AlignLeft, CalendarDays, Cake, ChevronDown, Clock, Eye, EyeOff, MapPin, PartyPopper, Repeat, Text, Users, X } from 'lucide-react';
 import { useT } from '@/i18n';
 import { useFormat } from '@/hooks/useFormat';
 import { eventColor } from '@/lib/color';
@@ -26,9 +26,29 @@ interface RowProps {
 
 export function TitleRow({ data, set, autoFocus = false }: RowProps & { autoFocus?: boolean }) {
   const t = useT();
+  const hintId = useId();
   return (
     <IconRow icon={<Text size={18} />} label={t('editor.title')}>
-      <input name="title" className="field" autoFocus={autoFocus} value={data.title} onChange={(e) => set({ title: e.target.value })} placeholder={t('editor.title')} aria-label={t('editor.title')} maxLength={255} />
+      <div className="flex items-center gap-2">
+        <input name="title" className="field min-w-0 flex-1" autoFocus={autoFocus} value={data.title} onChange={(e) => set({ title: e.target.value })} placeholder={t('editor.title')} aria-label={t('editor.title')} maxLength={255} />
+        {/* Hides the name in the calendar until the event is opened (src/lib/hidden.ts). */}
+        <button
+          type="button"
+          aria-pressed={!!data.hidden}
+          aria-label={t('editor.hideName')}
+          aria-describedby={data.hidden ? hintId : undefined}
+          title={t('editor.hideName')}
+          className={`border-border hover:bg-bg-weak flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${data.hidden ? 'bg-primary-weak text-primary border-transparent' : 'text-text-weak'}`}
+          onClick={() => set({ hidden: !data.hidden })}
+        >
+          {data.hidden ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+      </div>
+      {data.hidden && (
+        <p id={hintId} className="text-text-hint mt-1 text-xs">
+          {t('editor.hiddenHint')}
+        </p>
+      )}
     </IconRow>
   );
 }

@@ -82,6 +82,16 @@ const chip = (host: HTMLElement, key: string) => host.querySelector(`[data-occ="
 // Wednesday 14 Oct, 9:15: on the stand-up.
 const ON_STANDUP = { x: 250, y: 9.25 * HOUR };
 
+describe('a hidden event in the time grid', () => {
+  it('shows "Hidden event" and neither its title nor its place, also to a screen reader', () => {
+    data.occurrences = [{ ...occurrence('party', 'work', new Date(2026, 9, 14, 9), new Date(2026, 9, 14, 11)), title: 'Surprise party for Ola', location: 'Ola flat', hidden: true }];
+    const host = grid();
+    expect(host.textContent).toContain('Hidden event');
+    expect(host.innerHTML).not.toContain('Surprise');
+    expect(host.innerHTML).not.toContain('Ola');
+  });
+});
+
 describe('a tap in the time grid', () => {
   it('opens the event only with the click that follows it, so the sheet is not closed by that click', () => {
     const host = grid();

@@ -1,6 +1,7 @@
 // Reading, expanding and modifying VEVENTs.
 import ICAL from 'ical.js';
 import { normalizeItemColor } from '../color';
+import { readHidden, writeHidden } from '../hidden';
 import { readSince, writeSince } from '../milestone';
 import { cloneRoot, newUid, wrapCalendar, type ParsedObject } from './parse';
 import { applyRecurrence, budgetExpansion, budgetRecurrence, keepsRule, readRecurrence } from './recurrence';
@@ -159,6 +160,7 @@ export function readEventData(comp: ICAL.Component, start?: ICAL.Time, end?: ICA
     attendees: comp.getAllProperties('attendee').map(readAttendee),
     categories: readCategories(comp),
     since: readSince(comp),
+    hidden: readHidden(comp),
   };
 }
 
@@ -224,8 +226,9 @@ function toOccurrence(
     ...(alarms.fixed.length ? { fixedAlarms: alarms.fixed } : {}),
     floating: zoneOf(start) === 'floating',
     selfStatus: selfStatusOf(comp, self),
-    // A series' date: an override (a moved instance) does not carry its own.
+    // A series' date and choice: an override (a moved instance) does not carry its own.
     since: readSince(master ?? comp),
+    hidden: readHidden(master ?? comp),
   };
 }
 
@@ -440,6 +443,7 @@ export function eventDataFor(obj: ParsedObject, occ: Pick<Occurrence, 'recurrenc
       rrule,
       ruleAsWritten,
       since: readSince(master),
+      hidden: readHidden(master),
       start: occ.start,
       end: occ.end,
     };
@@ -535,8 +539,9 @@ export function applyEventData(comp: ICAL.Component, data: EventData, opts: { rr
   }
   applyAlarms(comp, data.alarms, data.title);
   applyAttendees(comp, data);
-  // A series' master carries it; updateEvent leaves it off an override of one (see `since`).
+  // A series' master carries them; updateEvent leaves them off an override of one (see `since`).
   writeSince(comp, data.since);
+  writeHidden(comp, data.hidden);
   touch(comp);
 }
 
@@ -719,13 +724,14 @@ export function updateEvent(
   if (scope === 'future' && sameRecurrenceId(rid, masterStart)) scope = 'all';
 
   if (scope === 'single') {
-    // The override drops the copy of the master's date ensureException made.
-    applyEventData(ensureException(root, master, rid), { ...data, rrule: undefined, since: undefined }, { rrule: false });
-    // The date counted from is the series': changed on one instance, it changes on all.
-    if (!sameSince(readSince(master), data.since)) {
-      writeSince(master, data.since);
-      touch(master, false);
-    }
+    // The override drops the copies of the master's date and choice ensureException made.
+    applyEventData(ensureException(root, master, rid), { ...data, rrule: undefined, since: undefined, hidden: undefined }, { rrule: false });
+    // The date counted from and hiding are the series': changed on one instance, they change on all.
+    const sinceChanged = !sameSince(readSince(master), data.since);
+    const hiddenChanged = readHidden(master) !== !!data.hidden;
+    if (sinceChanged) writeSince(master, data.since);
+    if (hiddenChanged) writeHidden(master, data.hidden);
+    if (sinceChanged || hiddenChanged) touch(master, false);
     return [{ type: 'update', url: obj.url, etag: obj.etag, data: serialize(root) }];
   }
 

@@ -14,7 +14,7 @@ import { useUi } from '@/store/ui';
 import { useT } from '@/i18n';
 import { EventDot } from './EventChip';
 import { DEFAULT_TASK_COLOR, calendarColor, eventColor, readableText } from '@/lib/color';
-import { titleWithYears } from '@/lib/milestone';
+import { shownTitle } from '@/lib/hidden';
 
 type Row = { kind: 'event'; occ: Occurrence } | { kind: 'task'; task: Task };
 
@@ -136,10 +136,10 @@ export function AgendaView() {
                         <span className="text-text-weak w-[5.5rem] shrink-0 pt-px text-[0.8125rem] tabular-nums sm:w-28">{time}</span>
                         <span className="min-w-0 flex-1">
                           <span className={`block truncate font-semibold ${past ? 'text-text-weak' : ''} ${occ.status === 'CANCELLED' || declined ? 'line-through' : ''}`}>
-                            {titleWithYears(occ, t('grid.noTitle'))}
+                            {shownTitle(occ, t)}
                             {occ.isRecurring && <Repeat size={12} className="text-text-hint ml-1.5 inline-block" />}
                           </span>
-                          {occ.location && (
+                          {!occ.hidden && occ.location && (
                             <span className="text-text-weak flex items-center gap-1 truncate text-[0.8125rem]">
                               <MapPin size={12} className="shrink-0" />
                               <span className="truncate">{occ.location}</span>

@@ -17,7 +17,7 @@ import { useT } from '@/i18n';
 import { Popover } from '@/components/ui/Menu';
 import { BarChip, DotChip, TaskChip } from './EventChip';
 import { DEFAULT_TASK_COLOR, eventColor } from '@/lib/color';
-import { titleWithYears } from '@/lib/milestone';
+import { shownTitle } from '@/lib/hidden';
 
 /** 'ghost' is the event being created in the quick-create popover. */
 type Item = { kind: 'event'; occ: Occurrence } | { kind: 'task'; task: Task } | { kind: 'ghost' };
@@ -279,7 +279,7 @@ const MonthGrid = memo(function MonthGrid({ month, height, peer }: { month: Date
         {multi ? (
           <BarChip
             dense={compact}
-            title={titleWithYears(occ, t('grid.noTitle'))}
+            title={shownTitle(occ, t)}
             color={colorOf(occ)}
             eventStyle={settings.eventStyle}
             past={past}
@@ -290,9 +290,9 @@ const MonthGrid = memo(function MonthGrid({ month, height, peer }: { month: Date
             prefix={!occ.allDay && !b.continuesBefore && !compact ? <span className="shrink-0 font-normal opacity-85">{fmt.time(occ.start)}</span> : undefined}
           />
         ) : compact ? (
-          <BarChip dense title={titleWithYears(occ, t('grid.noTitle'))} color={colorOf(occ)} eventStyle={settings.eventStyle} past={past} cancelled={occ.status === 'CANCELLED'} reply={occ.selfStatus} />
+          <BarChip dense title={shownTitle(occ, t)} color={colorOf(occ)} eventStyle={settings.eventStyle} past={past} cancelled={occ.status === 'CANCELLED'} reply={occ.selfStatus} />
         ) : (
-          <DotChip title={titleWithYears(occ, t('grid.noTitle'))} time={fmt.time(occ.start)} color={colorOf(occ)} past={past} cancelled={occ.status === 'CANCELLED'} reply={occ.selfStatus} />
+          <DotChip title={shownTitle(occ, t)} time={fmt.time(occ.start)} color={colorOf(occ)} past={past} cancelled={occ.status === 'CANCELLED'} reply={occ.selfStatus} />
         )}
       </button>
     );

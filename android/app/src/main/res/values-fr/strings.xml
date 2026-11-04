@@ -10,6 +10,7 @@
     <string name="reminder_dismiss">Ignorer</string>
     <string name="reminder_missed">Manqué</string>
     <string name="reminder_no_title">(sans titre)</string>
+    <string name="reminder_hidden_title">Événement masqué</string>
     <!-- Shown on a locked screen that hides content, and when the text of a reminder cannot be read. -->
     <string name="reminder_generic_title">Rappel</string>
     <string name="reminder_generic_text">Ouvrez l’application pour voir les détails.</string>

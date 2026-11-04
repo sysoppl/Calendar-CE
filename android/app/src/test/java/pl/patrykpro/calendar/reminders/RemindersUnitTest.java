@@ -195,6 +195,31 @@ public class RemindersUnitTest {
     }
 
     /** One event of {@code lines} in a calendar, with a 15-minute reminder after them. */
+    @Test
+    public void namesAHiddenEventOnlyAsOneWithoutItsPlace() {
+        List<Reminder> out = new ArrayList<>();
+        // A server's expansion: an instance with the series' properties and a stored override without them.
+        String ics = "BEGIN:VCALENDAR\r\n"
+            + "BEGIN:VEVENT\r\nUID:party\r\nRECURRENCE-ID:20261012T070000Z\r\nSUMMARY:Surprise party\r\nLOCATION:Ola's flat\r\n"
+            + "X-PATRYKPRO-HIDDEN:TRUE\r\nDTSTART:20261012T070000Z\r\n" + ALARM_15_MIN + "END:VEVENT\r\n"
+            + "BEGIN:VEVENT\r\nUID:party\r\nRECURRENCE-ID:20261019T070000Z\r\nSUMMARY:Surprise party\r\nLOCATION:Park\r\n"
+            + "DTSTART:20261019T090000Z\r\n" + ALARM_15_MIN + "END:VEVENT\r\n"
+            + "BEGIN:VEVENT\r\nUID:other\r\nSUMMARY:Dentist\r\nLOCATION:Clinic\r\nX-PATRYKPRO-HIDDEN:FALSE\r\n"
+            + "DTSTART:20261013T070000Z\r\n" + ALARM_15_MIN + "END:VEVENT\r\n"
+            + "END:VCALENDAR\r\n";
+        assertTrue(ReminderSyncWorker.collectEvents("cal", ics, 0, Long.MAX_VALUE, "(untitled)", "Hidden event", out));
+        assertEquals(3, out.size());
+        for (Reminder r : out) {
+            if (r.key.contains("|party|")) {
+                assertEquals("Hidden event", r.title);
+                assertEquals("", r.body);
+            } else {
+                assertEquals("Dentist", r.title);
+                assertEquals("Clinic", r.body);
+            }
+        }
+    }
+
     private static String eventWith(String lines) {
         return event("hostile", "SUMMARY:Call\r\nDTSTART:20261012T070000Z\r\n" + lines + ALARM_15_MIN);
     }

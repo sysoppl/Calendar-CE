@@ -81,6 +81,17 @@ function month(peek = false) {
 
 const cellOf = (host: HTMLElement, d: Date) => host.querySelector<HTMLElement>(`[data-day="${d.getTime()}"]`)!;
 
+describe('a hidden event in the month', () => {
+  it('shows "Hidden event", and its title nowhere', () => {
+    width = 1280;
+    data.occurrences = [{ ...data.occurrences[0], title: 'Surprise party for Ola', location: "Ola's flat", hidden: true }];
+    const host = month();
+    expect(host.textContent).toContain('Hidden event');
+    expect(host.innerHTML).not.toContain('Surprise');
+    expect(host.innerHTML).not.toContain('Ola');
+  });
+});
+
 describe('the month on a phone', () => {
   it('fits four lanes of chips in a row of a 6-week month, the last giving way to "+N"', () => {
     expect(monthMetrics(true, 1)).toEqual({ lane: 19, header: 24 });
