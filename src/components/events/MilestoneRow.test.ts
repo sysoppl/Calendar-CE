@@ -79,9 +79,24 @@ describe('MilestoneRow', () => {
     expect(repeatYearly).not.toHaveBeenCalled();
   });
 
-  it('takes no year before 1000, as typed so far', () => {
-    const { set, input } = show(event());
-    pick(input!, '0199-05-12');
+  it('keeps a date whose year is still being typed in the field, and gives the event only the whole one', () => {
+    const { set, repeatYearly, input } = show(event());
+    for (const typed of ['0001-09-19', '0019-09-19', '0199-09-19']) {
+      pick(input!, typed);
+      expect(input!.value).toBe(typed);
+    }
+    expect(set).not.toHaveBeenCalled();
+    pick(input!, '1997-09-19');
+    expect(set).toHaveBeenCalledWith({ since: new Date(1997, 8, 19), start: new Date(2026, 8, 19), end: new Date(2026, 8, 20) });
+    expect(repeatYearly).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a date that already has one while a new year is typed', () => {
+    const { set, input } = show(event({ since: new Date(1990, 4, 12) }), true);
+    pick(input!, '0002-05-12');
+    expect(input!.value).toBe('0002-05-12');
+    expect(set).not.toHaveBeenCalled();
+    pick(input!, '');
     expect(set).toHaveBeenCalledWith({ since: undefined });
   });
 

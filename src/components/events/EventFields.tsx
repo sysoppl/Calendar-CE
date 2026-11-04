@@ -76,22 +76,35 @@ export function DateTimeRow({ data, set, children }: RowProps & { children?: Rea
 export function MilestoneRow({ data, set, repeats, repeatYearly }: RowProps & { repeats: boolean; repeatYearly: () => void }) {
   const t = useT();
   const fmt = useFormat();
+  // What the field holds while a date is typed. A year being typed reaches it as
+  // "0001", "0019", ...: only a whole date goes to the event, and the field keeps
+  // the rest, since writing the event's date back would empty its day and month.
+  const shown = sinceToInput(data.since);
+  const [typed, setTyped] = useState(shown);
+  const [synced, setSynced] = useState(shown);
+  if (shown !== synced) {
+    setSynced(shown);
+    setTyped(shown);
+  }
   const kind = milestoneKind(data.title);
   if (!kind) return null;
   const label = t(kind === 'birthday' ? 'milestone.birthDate' : 'milestone.sinceDate');
   const milestone = milestoneOf(data, data.start);
   const choose = (value: string) => {
+    setTyped(value);
+    if (!value) return data.since && set({ since: undefined });
     const since = sinceFromInput(value);
+    if (!since || since.getTime() === data.since?.getTime()) return;
     const year = data.start.getFullYear();
     const follows = !repeats || (!!data.since && isSameDay(data.start, dayInYear(data.since, year)));
-    if (!since || !follows) return set({ since });
+    if (!follows) return set({ since });
     set({ since, ...withStartDate(data, dayInYear(since, year)) });
     if (!repeats) repeatYearly();
   };
   return (
     <IconRow icon={kind === 'birthday' ? <Cake size={18} /> : <PartyPopper size={18} />} label={label}>
       <div className="flex items-center gap-2">
-        <input type="date" className="field min-w-0 flex-1" value={sinceToInput(data.since)} min={`${MIN_SINCE_YEAR}-01-01`} max={sinceToInput(new Date())} onChange={(e) => choose(e.target.value)} aria-label={label} title={label} />
+        <input type="date" className="field min-w-0 flex-1" value={typed} min={`${MIN_SINCE_YEAR}-01-01`} max={sinceToInput(new Date())} onChange={(e) => choose(e.target.value)} aria-label={label} title={label} />
         {data.since && (
           <button type="button" aria-label={t('milestone.clear')} title={t('milestone.clear')} className="hover:bg-bg-weak text-text-weak shrink-0 rounded-full p-1.5" onClick={() => set({ since: undefined })}>
             <X size={16} />
