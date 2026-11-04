@@ -125,7 +125,7 @@
 | -------------------------------------------- | :---------------------------: | :-------------------------------------------: |
 | Calendars on the device                      | ✓                             | ✓                                             |
 | CalDAV accounts                              | ✓                             | ✓                                             |
-| Web app and Android app                      | ✓ (you build and host them)   | ✓ (hosted, on Google Play)                    |
+| Web app and Android app                      | ✓ (you host them; ready-made Docker image) | ✓ (hosted, on Google Play)       |
 | End-to-end encrypted sync between devices    | –                             | ✓                                             |
 | Settings that follow you to every device     | –                             | ✓                                             |
 | Encrypted profile picture, Recovery Kit      | –                             | ✓                                             |
@@ -190,9 +190,21 @@ The hosted web app is loaded from the server at each start, so for the strongest
 
 ## Self-hosting with Docker
 
-You need Docker with the Compose plugin. Every release is published as a ready-made image,
-`ghcr.io/sysoppl/calendar-ce`, for `linux/amd64` and `linux/arm64` (a Raspberry Pi 4/5 or an ARM server works too),
-so there's nothing to build:
+Every release is published as a ready-made image, **`ghcr.io/sysoppl/calendar-ce`**, for `linux/amd64` and
+`linux/arm64` (a Raspberry Pi 4/5 or an ARM server works too). There's nothing to build: you need Docker with the
+Compose plugin and the [`docker-compose.yml`](docker-compose.yml) of this repository.
+
+| Image tag | What it is                                                                                 |
+| --------- | ------------------------------------------------------------------------------------------ |
+| `1.11.1`  | One exact release. Recommended on a server: you decide when to update                       |
+| `1.11`    | The newest release of the 1.11 line                                                          |
+| `1`       | The newest release of version 1                                                             |
+| `latest`  | The newest release (the default in `docker-compose.yml`)                                     |
+
+The container holds no data: calendars live in the browser (**On this device**) or on your CalDAV server. Replacing
+or removing the container loses nothing, and there's no volume to back up.
+
+### Try it on your computer
 
 ```sh
 mkdir calendar && cd calendar
@@ -204,49 +216,118 @@ Open <http://localhost:8787>. On the welcome screen choose **On this device** or
 
 The container serves the web app and a small **DAV proxy** (`/dav-proxy`). Browsers can't talk to most CalDAV servers
 directly (no CORS headers), so the web app relays CalDAV requests through it. The proxy stores nothing and is
-locked down by default: **it reaches no server until you allow one.** Set the CalDAV hosts your users need in
-`docker-compose.yml`:
+locked down by default: **it reaches no server until you allow one.** Name the CalDAV hosts your users need in
+`docker-compose.yml`, then apply the change with `docker compose up -d`:
 
 ```yaml
     environment:
       CALENDAR_PROXY_ALLOW: "cloud.example.com,caldav.fastmail.com"
 ```
 
-Then apply the change with `docker compose up -d`.
-
-**Want to try it with a local CalDAV server?** The compose file includes a [Radicale](https://radicale.org/) demo:
+**No CalDAV server at hand?** The compose file includes a [Radicale](https://radicale.org/) demo. Set
+`CALENDAR_PROXY_ALLOW: "radicale"`, then:
 
 ```sh
-# set CALENDAR_PROXY_ALLOW: "radicale" in docker-compose.yml first
 docker compose --profile radicale up -d
 ```
 
 Add an account with server `http://radicale:5232/` and any user name and password (authentication is off in the demo).
 
-> The port is bound to `127.0.0.1` on purpose: put a TLS reverse proxy in front of it
-> (see [Behind a reverse proxy](#behind-a-reverse-proxy)) before you expose it to other people.
+### Deploy on a server with HTTPS
 
-**Image tags.** `latest` is the newest release, `1` and `1.11` the newest release of that line, and `1.11.1` one exact
-release. Pin a version in `docker-compose.yml` to update on your own schedule, then update with
-`docker compose pull && docker compose up -d`. Your calendars live in the browser or on your CalDAV server, never in the
-container, so replacing it loses nothing.
+You need a Linux server with Docker, a domain name (here `calendar.example.com`) whose DNS record points at it, and
+ports 80 and 443 open. The app listens on `127.0.0.1:8787` only, and a reverse proxy on the same server
+([Caddy](https://caddyserver.com/) or nginx) handles HTTPS.
 
-**Without Compose:**
+1. **Get the compose file:**
+
+   ```sh
+   sudo mkdir -p /opt/calendar && cd /opt/calendar
+   sudo curl -fsSLO https://raw.githubusercontent.com/sysoppl/Calendar-CE/main/docker-compose.yml
+   ```
+
+2. **Set it up.** Edit `/opt/calendar/docker-compose.yml`: pin the release, and in `environment:` set your address,
+   the reverse proxy and the CalDAV servers your users may reach:
+
+   ```yaml
+       image: ghcr.io/sysoppl/calendar-ce:1.11.1
+       ...
+       environment:
+         VITE_APP_URL: "https://calendar.example.com"
+         CALENDAR_TRUST_PROXY: "1"
+         CALENDAR_PROXY_ALLOW: "cloud.example.com,caldav.fastmail.com"
+         # Optional, shown in the app: VITE_PRIVACY_URL, VITE_TERMS_URL, VITE_CONTACT_URL
+   ```
+
+   The `build:` section only matters when you build the image yourself; Compose ignores it otherwise.
+
+3. **Start it**, check that the container reports `healthy`, and read what the server says about its settings when it
+   starts (`dav-proxy:` lines):
+
+   ```sh
+   sudo docker compose up -d
+   sudo docker compose ps
+   sudo docker compose logs calendar
+   curl -I http://127.0.0.1:8787/
+   ```
+
+4. **Put HTTPS in front of it.** With Caddy, which gets the certificate by itself:
+
+   ```sh
+   sudo curl -fsSL https://raw.githubusercontent.com/sysoppl/Calendar-CE/main/deploy/Caddyfile -o /etc/caddy/Caddyfile
+   sudo sed -i 's/calendar.example.com/your.domain/' /etc/caddy/Caddyfile
+   sudo mkdir -p /var/log/caddy && sudo chown caddy:caddy /var/log/caddy
+   sudo systemctl reload caddy
+   ```
+
+   With nginx, use [`deploy/nginx.conf`](deploy/nginx.conf) and a certificate from certbot instead. See
+   [Behind a reverse proxy](#behind-a-reverse-proxy) for what both examples take care of.
+
+5. **Open `https://calendar.example.com`.** Users who choose **On this device** keep their calendar in their own
+   browser; those who connect a CalDAV server reach it through the proxy.
+
+### Updating
+
+```sh
+cd /opt/calendar
+# with a pinned release: change the image tag in docker-compose.yml first
+sudo docker compose pull
+sudo docker compose up -d
+sudo docker image prune -f   # removes the previous image
+```
+
+New releases are listed under the repository's [tags](https://github.com/sysoppl/Calendar-CE/tags). Every image carries
+its version and the commit it was built from (`org.opencontainers.image.version` and `.revision` labels), plus an SBOM
+and build provenance.
+
+### Without Compose
+
+The same container with `docker run`, locked down like the compose file:
 
 ```sh
 docker run -d --name calendar --restart unless-stopped \
   -p 127.0.0.1:8787:8787 --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+  --memory 512m \
+  -e VITE_APP_URL="https://calendar.example.com" \
+  -e CALENDAR_TRUST_PROXY="1" \
   -e CALENDAR_PROXY_ALLOW="cloud.example.com" \
-  ghcr.io/sysoppl/calendar-ce:latest
+  ghcr.io/sysoppl/calendar-ce:1.11.1
 ```
 
-**Building the image yourself** from a clone of this repository:
+Update it with `docker pull` of the new tag, then `docker rm -f calendar` and the same `docker run` with that tag.
+
+### Building the image yourself
+
+From a clone of this repository, for example to run a modified version:
 
 ```sh
 git clone https://github.com/sysoppl/Calendar-CE.git
 cd Calendar-CE
 docker compose up -d --build
 ```
+
+The image is tagged like the published one (`ghcr.io/sysoppl/calendar-ce:latest`) on your machine only. If you publish
+a modified version, give it your own image name and point the app's **Source code** link at your fork (AGPL-3.0).
 
 ## Configuration
 
@@ -287,13 +368,16 @@ them too; the server's values take precedence.
 
 ## Behind a reverse proxy
 
-Ready-made examples are in [`deploy/`](deploy):
+Ready-made examples are in [`deploy/`](deploy). Both forward to `127.0.0.1:8787`, where the container (or the systemd
+service) listens:
 
 - [`Caddyfile`](deploy/Caddyfile): automatic HTTPS
 - [`nginx.conf`](deploy/nginx.conf): with a Let's Encrypt certificate
 
-Replace `calendar.example.com` with your own domain, set `VITE_APP_URL=https://your.domain` and
-`CALENDAR_TRUST_PROXY=1`. The server sends its own security headers (CSP, HSTS and others), so don't add any in the proxy.
+Replace `calendar.example.com` with your own domain, and set `VITE_APP_URL=https://your.domain` and
+`CALENDAR_TRUST_PROXY=1` for the app. Both examples allow the DAV proxy's request size (10 MiB) and time (90 s), keep
+CalDAV addresses and credentials out of their access logs, and pass the client address on. The server sends its own
+security headers (CSP, HSTS and others), so don't add any in the proxy.
 
 ## Running without Docker
 
