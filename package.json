@@ -1,5 +1,5 @@
 {
-  "name": "calendar",
+  "name": "calendar-ce",
   "private": true,
   "version": "1.11.1",
   "description": "Calendar and tasks for the web and Android, kept on the device or on your own CalDAV server",
