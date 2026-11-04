@@ -335,6 +335,13 @@
       "url": "https://square.github.io/okhttp/"
     },
     {
+      "id": "org.publicsuffix:list (in okhttp-android)",
+      "name": "Public Suffix List, assets/PublicSuffixDatabase.list; source: https://publicsuffix.org/list/",
+      "license": "MPL-2.0",
+      "text": "MPL-2.0.txt",
+      "url": "https://publicsuffix.org/"
+    },
+    {
       "id": "com.squareup.okhttp3:okhttp:5.4.0",
       "name": "okhttp",
       "license": "Apache-2.0",

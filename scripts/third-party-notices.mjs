@@ -50,8 +50,21 @@ const BUILD_INJECTED = [
  */
 const CONTAINED = {};
 
-/** Notices inside a package that its licence file only points to. */
-const EMBEDDED = {};
+/**
+ * Files a package compiles into the app that carry a licence of their own,
+ * which the package's licence file does not mention. Their leading comment is
+ * printed; `licence` names a file under licenses/ with a licence text the
+ * comment only refers to.
+ */
+const EMBEDDED = {
+  // Compiled into the Android app.
+  '@capacitor/android': [
+    { file: 'capacitor/src/main/java/com/getcapacitor/AndroidProtocolHandler.java', licence: 'Chromium-BSD-3-Clause.txt' },
+    { file: 'capacitor/src/main/java/com/getcapacitor/FileUtils.java' },
+    { file: 'capacitor/src/main/java/com/getcapacitor/UriMatcher.java' },
+    { file: 'capacitor/src/main/java/com/getcapacitor/WebViewLocalServer.java' },
+  ],
+};
 
 const RULE = '='.repeat(78);
 const LINE = '-'.repeat(78);
@@ -170,10 +183,12 @@ function copyrightLines(text) {
   return found;
 }
 
-/** The first comment block of a source file, without the comment markers. */
+/** The first comment of a source file (a block, or a run of // lines), without the comment markers. */
 function leadingComment(source) {
-  const m = source.match(/^\s*\/\*+([\s\S]*?)\*\//);
-  return m ? m[1].split('\n').map((l) => l.replace(/^\s*\*? ?/, '')).join('\n') : '';
+  const block = source.match(/^\s*\/\*+([\s\S]*?)\*\//);
+  if (block) return block[1].split('\n').map((l) => l.replace(/^\s*\*? ?/, '')).join('\n');
+  const lines = source.match(/^(?:[ \t]*\/\/[^\n]*\n)+/);
+  return lines ? lines[0].split('\n').map((l) => l.replace(/^\s*\/\/ ?/, '')).join('\n') : '';
 }
 
 const LICENCE_FILE = /^(licen[cs]e|copying)([.-].*)?$/i;
@@ -484,11 +499,18 @@ for (const p of packagesInApp) {
     add('', 'The full text of the Apache License 2.0 is in part 6.');
   }
   add('', p.text);
-  for (const file of EMBEDDED[p.name] ?? []) {
+  for (const { file, licence } of EMBEDDED[p.name] ?? []) {
     const path = join(p.dir, file);
-    if (!existsSync(path)) continue;
-    const notice = tidy(leadingComment(readText(path)));
-    if (notice) add('', `Notice in ${file}, part of the code above:`, '', notice);
+    const notice = existsSync(path) ? tidy(leadingComment(readText(path))) : '';
+    if (!notice) {
+      fail(`${p.name} ${p.version} no longer carries a notice in ${file}; update EMBEDDED.`);
+      continue;
+    }
+    add('', `Notice in ${file}, part of the code above:`, '', notice);
+    if (licence) {
+      const text = readText(join(ROOT, 'licenses', licence));
+      add('', 'The licence it refers to:', '', tidy(leadingComment(text) || text));
+    }
   }
   for (const work of CONTAINED[p.name] ?? []) {
     const dir = join(p.dir, work.dir);
