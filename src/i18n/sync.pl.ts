@@ -31,7 +31,7 @@ export const syncPl: Record<keyof typeof syncEn, string> = {
   'settings.textSize.systemHint': 'Teraz {pct}%, zgodnie z ustawieniem systemu (maks. {max}%).',
 
   'settings.notificationsHintAndroid': 'Przypomnienia przychodzą także przy zamkniętej aplikacji.',
-  'settings.notificationsHintWeb': 'Przypomnienia pojawiają się, gdy Kalendarz jest otwarty w przeglądarce.',
+  'settings.notificationsHintWeb': 'Przypomnienia pojawiają się, gdy Kalendarz CE jest otwarty w przeglądarce.',
 
   'shortcuts.refresh': 'Odśwież',
 };

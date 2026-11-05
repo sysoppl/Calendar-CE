@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Kalendarz</string>
-    <string name="title_activity_main">Kalendarz</string>
+    <string name="app_name">Kalendarz CE</string>
+    <string name="title_activity_main">Kalendarz CE</string>
 
     <string name="reminder_channel_name">Przypomnienia</string>
     <string name="reminder_channel_description">Przypomnienia o wydarzeniach i zadaniach</string>

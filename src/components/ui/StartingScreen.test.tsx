@@ -41,7 +41,7 @@ describe('StartingScreen', () => {
     act(() => vi.advanceTimersByTime(SLOW_START_MS - 1));
     expect(line()).toBe('');
     act(() => vi.advanceTimersByTime(1));
-    expect(line()).toContain('Calendar is taking longer than usual to start');
+    expect(line()).toContain('Calendar CE is taking longer than usual to start');
     // Still starting, not a failure: the spinner stays.
     expect(host.querySelector('svg.animate-spin')).not.toBeNull();
     const reload = [...host.querySelectorAll('button')].find((b) => b.textContent === 'Reload')!;
@@ -51,20 +51,20 @@ describe('StartingScreen', () => {
 
   it('counts from when the start began, not from when the screen came', () => {
     show({ since: Date.now() - SLOW_START_MS });
-    expect(line()).toContain('Calendar is taking longer than usual to start');
+    expect(line()).toContain('Calendar CE is taking longer than usual to start');
     act(() => root!.unmount());
     root = null;
 
     show({ since: Date.now() - SLOW_START_MS + 1000 });
     expect(line()).toBe('');
     act(() => vi.advanceTimersByTime(1000));
-    expect(line()).toContain('Calendar is taking longer than usual to start');
+    expect(line()).toContain('Calendar CE is taking longer than usual to start');
   });
 
   it('speaks Polish', () => {
     useSettings.setState({ language: 'pl' });
     show({ since: Date.now() - SLOW_START_MS });
-    expect(line()).toContain('Uruchamianie Kalendarza trwa dłużej niż zwykle');
+    expect(line()).toContain('Uruchamianie Kalendarza CE trwa dłużej niż zwykle');
     expect(line()).toContain('Wczytaj ponownie');
   });
 });

@@ -35,7 +35,7 @@ export const syncEn = {
 
   // Settings → Notifications
   'settings.notificationsHintAndroid': 'Reminders arrive even when the app is closed.',
-  'settings.notificationsHintWeb': 'Reminders appear while Calendar is open in the browser.',
+  'settings.notificationsHintWeb': 'Reminders appear while Calendar CE is open in the browser.',
 
   // The list of shortcuts: R
   'shortcuts.refresh': 'Refresh',

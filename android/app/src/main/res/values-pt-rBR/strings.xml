@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Calendário</string>
-    <string name="title_activity_main">Calendário</string>
+    <string name="app_name">Calendário CE</string>
+    <string name="title_activity_main">Calendário CE</string>
 
     <!-- Reminder notifications -->
     <string name="reminder_channel_name">Lembretes</string>

@@ -1,10 +1,10 @@
 # End-to-end encryption in the hosted edition (protocol v1)
 
-The hosted edition, [E2EE Calendar](https://calendar.patryk.pro), syncs your calendars through a cloud that stores
+The [hosted edition](https://calendar.patryk.pro) of Calendar CE syncs your calendars through a cloud that stores
 them **without being able to read them**. This document describes exactly how. The code that does it is published in
 [`src/lib/crypto/`](../src/lib/crypto), with tests and fixed test vectors, so you can check every step yourself.
 
-> The Community Edition in this repository doesn't use this code: it keeps your calendars on the device or on your own
+> The self-hosted edition in this repository doesn't use this code: it keeps your calendars on the device or on your own
 > CalDAV server. The module is here for transparency. It contains only the client-side cryptography, no cloud client
 > and no server code.
 

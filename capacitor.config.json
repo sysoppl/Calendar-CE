@@ -1,6 +1,6 @@
 {
   "appId": "pro.patryk.calendar.community",
-  "appName": "Calendar",
+  "appName": "Calendar CE",
   "webDir": "dist",
   "loggingBehavior": "none",
   "backgroundColor": "#f5f5f3",

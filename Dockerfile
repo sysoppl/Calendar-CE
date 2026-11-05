@@ -29,7 +29,7 @@ RUN npm run build
 # Zero-dependency Node server: serves dist/ and the /dav-proxy endpoint.
 FROM ${NODE_IMAGE}
 LABEL org.opencontainers.image.title="Calendar CE" \
-      org.opencontainers.image.description="Calendar Community Edition: calendar and tasks kept on the device or on your own CalDAV server" \
+      org.opencontainers.image.description="Calendar CE, self-hosted: calendar and tasks kept on the device or on your own CalDAV server" \
       org.opencontainers.image.source="https://github.com/sysoppl/Calendar-CE" \
       org.opencontainers.image.licenses="AGPL-3.0-only" \
       org.opencontainers.image.vendor="patryk.pro" \
