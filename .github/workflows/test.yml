@@ -1,6 +1,9 @@
-# Tests on every push and pull request: the web app and its server, and the
-# Android app's unit tests. The Docker workflow runs them too before it
-# publishes an image; nothing is deployed or published from here.
+# The full test run, on every push to main and every pull request: the
+# checks of the Gradle wrapper and the third-party notices, the typecheck,
+# the unit tests, a production build with its Content-Security-Policy, the
+# server started on that build, and the Android app's unit tests. The release
+# workflow runs it too, before it builds anything for a version tag. Nothing
+# is deployed or published from here, and no image, APK or bundle is kept.
 name: Tests
 
 on:
@@ -13,8 +16,10 @@ on:
 permissions:
   contents: read
 
+# Called by the release workflow, github.workflow is that workflow's name, so
+# its test run never cancels (and is never cancelled by) the one for a push.
 concurrency:
-  group: tests-${{ github.ref }}
+  group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 # Third-party actions are pinned to a commit; the comment names its release.
@@ -33,14 +38,34 @@ jobs:
           cache: npm
       # No dependency needs an install script.
       - run: npm ci --no-audit --no-fund --ignore-scripts
+      # The build writes the notices anyway; this catches a committed copy
+      # that no longer matches the dependencies.
+      - name: Third-party notices are up to date
+        run: node scripts/third-party-notices.mjs --check
       - name: Type check
         run: npm run typecheck
       - name: Unit tests
         run: npx vitest run
-      - name: Third-party notices are up to date
-        run: node scripts/third-party-notices.mjs --check
       - name: Production build
         run: npm run build
+      # The Android app has no server to send headers, so its policy has to
+      # be in the page itself.
+      - name: The build carries its Content-Security-Policy
+        run: grep -q 'http-equiv="Content-Security-Policy"' dist/index.html
+      # The server as the Docker image runs it: sources only, on the build.
+      - name: The server starts and serves the app with its headers
+        run: |
+          PORT=8799 HOST=127.0.0.1 node server/server.mjs &
+          server=$!
+          trap 'kill "$server"' EXIT
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if node -e "fetch('http://127.0.0.1:8799/').then((r) => process.exit(r.ok && r.headers.has('content-security-policy') ? 0 : 1), () => process.exit(1))"; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::The server did not answer with its Content-Security-Policy"
+          exit 1
 
   android:
     name: Android unit tests
@@ -50,6 +75,39 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # Gradle runs the committed wrapper jar, which downloads Gradle: the jar
+      # has to be one Gradle published for this version line, and the
+      # distribution has to carry its published checksum.
+      - name: The Gradle wrapper is Gradle's own
+        run: |
+          props=android/gradle/wrapper/gradle-wrapper.properties
+          version=$(sed -n 's/^distributionUrl=.*gradle-\([0-9][0-9.]*\)-\(all\|bin\)\.zip$/\1/p' "$props")
+          kind=$(sed -n 's/^distributionUrl=.*gradle-[0-9][0-9.]*-\(all\|bin\)\.zip$/\1/p' "$props")
+          pinned=$(sed -n 's/^distributionSha256Sum=\([0-9a-f]\{64\}\)$/\1/p' "$props")
+          if [ -z "$version" ] || [ -z "$pinned" ]; then
+            echo "::error::$props needs a services.gradle.org distributionUrl and a distributionSha256Sum"
+            exit 1
+          fi
+          expected=$(curl -fsSL "https://services.gradle.org/distributions/gradle-$version-$kind.zip.sha256")
+          if [ "$expected" != "$pinned" ]; then
+            echo "::error::distributionSha256Sum is not Gradle's checksum of gradle-$version-$kind.zip"
+            exit 1
+          fi
+          jar=$(sha256sum android/gradle/wrapper/gradle-wrapper.jar | cut -d' ' -f1)
+          line=$(echo "$version" | cut -d. -f1,2)
+          last=$(echo "$version" | cut -s -d. -f3)
+          patch=0
+          while [ "$patch" -le "${last:-0}" ]; do
+            candidate=$line
+            [ "$patch" -eq 0 ] || candidate="$line.$patch"
+            if [ "$(curl -fsSL "https://services.gradle.org/distributions/gradle-$candidate-wrapper.jar.sha256" || true)" = "$jar" ]; then
+              echo "gradle-wrapper.jar is the wrapper of Gradle $candidate ($jar)"
+              exit 0
+            fi
+            patch=$((patch + 1))
+          done
+          echo "::error::gradle-wrapper.jar ($jar) is not the wrapper of any Gradle $line.x"
+          exit 1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
