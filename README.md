@@ -249,10 +249,10 @@ Compose plugin and the [`docker-compose.yml`](docker-compose.yml) of this reposi
 
 | Image tag | What it is                                                                                 |
 | --------- | ------------------------------------------------------------------------------------------ |
-| `1.11.1`  | One exact release. Recommended on a server: you decide when to update                       |
-| `1.11`    | The newest release of the 1.11 line                                                          |
-| `1`       | The newest release of version 1                                                             |
-| `latest`  | The newest release (the default in `docker-compose.yml`)                                     |
+| `latest`  | The newest release: the default in `docker-compose.yml` and in the examples below          |
+| `X.Y.Z`   | One exact release (see the [releases page](https://github.com/sysoppl/Calendar-CE/releases)): you decide when to update |
+| `X.Y`     | The newest release of the X.Y line                                                           |
+| `X`       | The newest release of version X                                                              |
 
 The container holds no data: calendars live in the browser (**On this device**) or on your CalDAV server. Replacing
 or removing the container loses nothing, and there's no volume to back up.
@@ -299,11 +299,12 @@ ports 80 and 443 open. The app listens on `127.0.0.1:8787` only, and a reverse p
    sudo curl -fsSLO https://raw.githubusercontent.com/sysoppl/Calendar-CE/main/docker-compose.yml
    ```
 
-2. **Set it up.** Edit `/opt/calendar/docker-compose.yml`: pin the release, and in `environment:` set your address,
-   the reverse proxy and the CalDAV servers your users may reach:
+2. **Set it up.** Edit `/opt/calendar/docker-compose.yml`: in `environment:` set your address, the reverse proxy
+   and the CalDAV servers your users may reach. The image is `latest`; to update on your own schedule, put an exact
+   release (`X.Y.Z`) in its place:
 
    ```yaml
-       image: ghcr.io/sysoppl/calendar-ce:1.11.1
+       image: ghcr.io/sysoppl/calendar-ce:latest
        ...
        environment:
          VITE_APP_URL: "https://calendar.example.com"
@@ -365,10 +366,11 @@ docker run -d --name calendar --restart unless-stopped \
   -e VITE_APP_URL="https://calendar.example.com" \
   -e CALENDAR_TRUST_PROXY="1" \
   -e CALENDAR_PROXY_ALLOW="cloud.example.com" \
-  ghcr.io/sysoppl/calendar-ce:1.11.1
+  ghcr.io/sysoppl/calendar-ce:latest
 ```
 
-Update it with `docker pull` of the new tag, then `docker rm -f calendar` and the same `docker run` with that tag.
+Update it with `docker pull ghcr.io/sysoppl/calendar-ce:latest`, then `docker rm -f calendar` and the same `docker run`.
+With an exact release instead of `latest`, pull and run the new tag.
 
 ### Building the image yourself
 
@@ -543,7 +545,7 @@ which brings Node.js, npm and Alpine Linux packages, each under its own licence.
 [Node.js](https://github.com/nodejs/node) (the version `node --version` prints), the
 [image definition](https://github.com/nodejs/docker-node) and [Alpine's aports](https://gitlab.alpinelinux.org/alpine/aports)
 (the branch matching `/etc/alpine-release`). Every published image lists its packages and their licences in an SBOM:
-`docker buildx imagetools inspect ghcr.io/sysoppl/calendar-ce:1.11.1 --format '{{ json .SBOM }}'`.
+`docker buildx imagetools inspect ghcr.io/sysoppl/calendar-ce:latest --format '{{ json .SBOM }}'`.
 
 **Names.** The AGPL-3.0 grants no rights to the names *patryk.pro* and *Calendar CE* or to the Calendar CE icon as
 marks: please give a build you publish a name and icon of your own. Other product names belong to their owners and are
