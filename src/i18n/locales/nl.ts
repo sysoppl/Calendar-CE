@@ -134,6 +134,9 @@ const messages: Record<MessageKey, string> = {
   'editor.notifications': 'Meldingen',
   'editor.addNotification': 'Melding toevoegen',
   'editor.notificationsMax': 'Een afspraak of taak kan maximaal {n} meldingen hebben.',
+  'editor.persistent': 'Blijvende melding',
+  'editor.persistentHint.event': 'De melding blijft staan tot ze wordt gesloten.',
+  'editor.persistentHint.task': 'De melding blijft staan tot ze wordt gesloten of de taak is voltooid.',
   'editor.calendar': 'Agenda',
   'editor.description': 'Beschrijving toevoegen',
   'editor.showAs': 'Toon mij als',
@@ -764,6 +767,7 @@ const messages: Record<MessageKey, string> = {
   'reminders.when.at': '{day} om {time}',
   'reminders.title.event': 'Herinnering voor afspraak',
   'reminders.title.task': 'Herinnering voor taak',
+  'reminders.done.missing': 'De taak is niet gevonden, dus de melding ervan is gesloten.',
 };
 
 const holidays: Record<string, string> = {

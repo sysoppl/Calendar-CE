@@ -10,4 +10,5 @@ export const remindersEn = {
   // The title of a notification whose item's own title is too long to show.
   'reminders.title.event': 'Event reminder',
   'reminders.title.task': 'Task reminder',
+  'reminders.done.missing': 'The task was not found, so its notification was closed.',
 };

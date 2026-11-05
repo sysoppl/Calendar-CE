@@ -384,6 +384,7 @@ function PopoverBody({ onClose }: { onClose: () => void }) {
             {data.alarms.map((m) => (
               <div key={m}>{describeAlarm(m, data.allDay, t, fmt)}</div>
             ))}
+            {data.persistent && <div className="text-text-weak text-xs">{t('editor.persistent')}</div>}
           </IconRow>
         )}
         {/* Only worth a line when it is not what such an event usually is. */}

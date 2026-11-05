@@ -134,6 +134,9 @@ const messages: Record<MessageKey, string> = {
   'editor.notifications': 'Notificações',
   'editor.addNotification': 'Adicionar notificação',
   'editor.notificationsMax': 'Um evento ou uma tarefa pode ter até {n} notificações.',
+  'editor.persistent': 'Notificação persistente',
+  'editor.persistentHint.event': 'A notificação fica até ser dispensada.',
+  'editor.persistentHint.task': 'A notificação fica até ser dispensada ou a tarefa ser concluída.',
   'editor.calendar': 'Calendário',
   'editor.description': 'Adicionar descrição',
   'editor.showAs': 'Mostrar como',
@@ -764,6 +767,7 @@ const messages: Record<MessageKey, string> = {
   'reminders.when.at': '{day} às {time}',
   'reminders.title.event': 'Lembrete de evento',
   'reminders.title.task': 'Lembrete de tarefa',
+  'reminders.done.missing': 'A tarefa não foi encontrada, então a notificação dela foi fechada.',
 };
 
 const holidays: Record<string, string> = {

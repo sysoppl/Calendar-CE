@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { X, Plus } from 'lucide-react';
 import { useT } from '@/i18n';
 import { useFormat } from '@/hooks/useFormat';
 import { describeAlarm } from '@/lib/describe';
 import { MAX_ALARMS_PER_ITEM } from '@/lib/reminders';
+import { Checkbox } from '@/components/ui/Controls';
 import { TOUCH_MIN, TOUCH_MIN_H } from '@/components/ui/touch';
 
 type Unit = 'minutes' | 'hours' | 'days' | 'weeks';
@@ -18,6 +19,25 @@ function split(minutes: number): { n: number; unit: Unit } {
 
 const TIMED_PRESETS = [0, 5, 10, 15, 30, 60, 120, 1440, 2880, 10080];
 const ALL_DAY_PRESETS = [-720, -540, -480, 900, 960, 1440, 10080];
+
+/**
+ * Whether the item's notifications stay until they are dealt with
+ * (lib/persistent.ts). Offered below the notifications once there is one.
+ */
+export function PersistentField({ checked, task, onChange }: { checked: boolean; task: boolean; onChange: (persistent: boolean) => void }) {
+  const t = useT();
+  const hintId = useId();
+  return (
+    <div>
+      <Checkbox checked={checked} onChange={onChange} describedBy={hintId}>
+        {t('editor.persistent')}
+      </Checkbox>
+      <p id={hintId} className="text-text-hint text-xs">
+        {t(task ? 'editor.persistentHint.task' : 'editor.persistentHint.event')}
+      </p>
+    </div>
+  );
+}
 
 /**
  * Edits reminder offsets (minutes before start). Common values are offered

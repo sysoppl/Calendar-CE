@@ -134,6 +134,9 @@ const messages: Record<MessageKey, string> = {
   'editor.notifications': 'Upozornění',
   'editor.addNotification': 'Přidat upozornění',
   'editor.notificationsMax': 'Událost nebo úkol může mít nejvýše {n} upozornění.',
+  'editor.persistent': 'Trvalé upozornění',
+  'editor.persistentHint.event': 'Upozornění zůstane, dokud ho nikdo nezavře.',
+  'editor.persistentHint.task': 'Upozornění zůstane, dokud ho nikdo nezavře nebo dokud nebude úkol dokončen.',
   'editor.calendar': 'Kalendář',
   'editor.description': 'Přidat popis',
   'editor.showAs': 'Zobrazit mě jako',
@@ -764,6 +767,7 @@ const messages: Record<MessageKey, string> = {
   'reminders.when.at': '{day} v {time}',
   'reminders.title.event': 'Připomínka události',
   'reminders.title.task': 'Připomínka úkolu',
+  'reminders.done.missing': 'Úkol se nenašel, a tak bylo jeho upozornění zavřeno.',
 };
 
 const holidays: Record<string, string> = {
