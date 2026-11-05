@@ -1,5 +1,5 @@
 // Bridge to the native reminder engine (android/app/src/main/java/pl/patrykpro/calendar/reminders).
-import { registerPlugin } from '@capacitor/core';
+import { registerPlugin, type PluginListenerHandle } from '@capacitor/core';
 
 export interface NativeReminder {
   key: string;
@@ -23,6 +23,15 @@ export interface NativeReminder {
    * with the clock when the device changes time zone.
    */
   floating?: boolean;
+  /** A task's reminder: its notification offers Done. */
+  task?: boolean;
+  /**
+   * The notification stays until Done, Snooze or Dismiss, or until the app
+   * says the item was dealt with (`clearStanding`): pinned, put up again
+   * without a sound when it is swiped away, after a restart and after an
+   * update (src/lib/persistent.ts).
+   */
+  persistent?: boolean;
 }
 
 export interface SyncCalendarConfig {
@@ -69,6 +78,16 @@ interface RemindersPlugin {
   openBatterySettings(): Promise<void>;
   testNotification(options: { delaySeconds: number; title: string; body: string }): Promise<void>;
   listUpcoming(): Promise<{ reminders: NativeReminder[] }>;
+  /** The reminder keys of the notifications that stay up now (`persistent`), the newest of each item. */
+  listStanding(): Promise<{ keys: string[] }>;
+  /** Takes down the standing notifications of these reminder keys' items, for good. */
+  clearStanding(options: { keys: string[] }): Promise<void>;
+  /**
+   * Done on a task's standing notification: it opened the app, which marks
+   * the task done and then clears the notification. Kept until a listener
+   * takes it, so it also reaches a page that is still starting.
+   */
+  addListener(event: 'reminderDone', listener: (data: { key: string }) => void): Promise<PluginListenerHandle>;
 }
 
 export const NativeReminders = registerPlugin<RemindersPlugin>('Reminders');
