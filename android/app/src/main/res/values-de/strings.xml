@@ -8,6 +8,7 @@
     <string name="reminder_channel_description">Erinnerungen an Termine und Aufgaben</string>
     <string name="reminder_snooze">10 Min. schlummern</string>
     <string name="reminder_dismiss">Verwerfen</string>
+    <string name="reminder_done">Erledigt</string>
     <string name="reminder_missed">Verpasst</string>
     <string name="reminder_no_title">(ohne Titel)</string>
     <string name="reminder_hidden_title">Verborgener Termin</string>

@@ -7,6 +7,7 @@
     <string name="reminder_channel_description">Przypomnienia o wydarzeniach i zadaniach</string>
     <string name="reminder_snooze">Drzemka 10 min</string>
     <string name="reminder_dismiss">Odrzuć</string>
+    <string name="reminder_done">Zrobione</string>
     <string name="reminder_missed">Pominięte</string>
     <string name="reminder_no_title">(bez tytułu)</string>
     <string name="reminder_hidden_title">Ukryte wydarzenie</string>

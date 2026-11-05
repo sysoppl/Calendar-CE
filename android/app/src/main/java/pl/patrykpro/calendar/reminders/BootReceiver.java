@@ -54,6 +54,8 @@ public class BootReceiver extends BroadcastReceiver {
         new Thread(() -> {
             try {
                 ReminderScheduler.restore(app, afterBoot);
+                // A restart and an update take every notification away; the persistent ones go up again.
+                ReminderNotifier.restoreStanding(app);
                 ReminderSyncWorker.ensurePeriodic(app);
                 // A refresh that is waiting or running already will do; a newer one would only stop it.
                 ReminderSyncWorker.runOnceUnlessPending(app);

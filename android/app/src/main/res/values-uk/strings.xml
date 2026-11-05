@@ -8,6 +8,7 @@
     <string name="reminder_channel_description">Нагадування про події та завдання</string>
     <string name="reminder_snooze">Відкласти на 10 хв</string>
     <string name="reminder_dismiss">Закрити</string>
+    <string name="reminder_done">Виконано</string>
     <string name="reminder_missed">Пропущено</string>
     <string name="reminder_no_title">(без назви)</string>
     <string name="reminder_hidden_title">Прихована подія</string>
