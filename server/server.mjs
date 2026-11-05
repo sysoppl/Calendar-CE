@@ -234,7 +234,7 @@ if (isEntryFile()) {
   const host = process.env.HOST || '0.0.0.0';
   const server = createAppServer();
   server.listen(port, host, () => {
-    console.log(`Calendar listening on http://${host === '0.0.0.0' ? 'localhost' : host}:${port}`);
+    console.log(`Calendar CE listening on http://${host === '0.0.0.0' ? 'localhost' : host}:${port}`);
     for (const notice of proxyNotices()) console.warn(notice);
   });
   // As PID 1 in a container Node ignores these signals unless they are

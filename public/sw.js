@@ -1,4 +1,4 @@
-// Calendar service worker: keeps the app shell available offline.
+// Calendar CE service worker: keeps the app shell available offline.
 // Calendar data itself lives in IndexedDB; DAV requests are never cached, and
 // neither is anything from another origin.
 //

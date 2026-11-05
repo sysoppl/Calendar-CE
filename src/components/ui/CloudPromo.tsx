@@ -1,4 +1,4 @@
-// A small card about E2EE Calendar, the hosted edition by the author of this
+// A small card about the hosted edition of Calendar CE, by the author of this
 // app. It is only a link: this edition holds no code of the cloud and sends
 // nothing anywhere; the page opens outside the app.
 import { Cloud, ExternalLink } from 'lucide-react';

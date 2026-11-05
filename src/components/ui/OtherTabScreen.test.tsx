@@ -28,7 +28,7 @@ describe('OtherTabScreen', () => {
     localStorage.setItem('calendar.settings', JSON.stringify({ state: { language: 'pl' }, version: 1 }));
     const onUseHere = vi.fn();
     show(onUseHere);
-    expect(host.querySelector('h1')?.textContent).toBe('Kalendarz jest otwarty w innej karcie');
+    expect(host.querySelector('h1')?.textContent).toBe('Kalendarz CE jest otwarty w innej karcie');
     expect(document.documentElement.lang).toBe('pl');
 
     const button = host.querySelector('button')!;
@@ -50,7 +50,7 @@ describe('OtherTabScreen', () => {
   it('falls back to the language of the browser when the settings cannot be read', () => {
     localStorage.setItem('calendar.settings', '{not json');
     show();
-    expect(host.querySelector('h1')?.textContent).toBe('Calendar is open in another tab');
+    expect(host.querySelector('h1')?.textContent).toBe('Calendar CE is open in another tab');
   });
 
   describe('looks like the app', () => {

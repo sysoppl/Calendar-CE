@@ -1,5 +1,5 @@
 // Writes public/THIRD-PARTY-NOTICES.txt: the licence of every third-party
-// component that ships with Calendar, for the "Open-source licences" screen
+// component that ships with Calendar CE, for the "Open-source licences" screen
 // (the file is a bundled asset, so the Android app has it offline too).
 //
 //   node scripts/third-party-notices.mjs           also `npm run licenses`; runs before every build
@@ -88,7 +88,7 @@ const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 // ---------------------------------------------------------------- licences
 
 /**
- * The licence terms Calendar uses a component under, given its SPDX
+ * The licence terms Calendar CE uses a component under, given its SPDX
  * expression: `OR` takes the first allowed alternative, `AND` needs all of its
  * parts allowed, `WITH` exceptions are not accepted. Null when nothing allowed
  * is left, or the expression cannot be read.
@@ -463,10 +463,10 @@ const heading = (title) => add('', '', RULE, title, RULE);
 const entry = (title) => add('', LINE, title);
 
 add(
-  `Calendar (Kalendarz) ${app.version}: third-party notices`,
+  `Calendar CE (Kalendarz CE) ${app.version}: third-party notices`,
   `Generated on ${new Date().toISOString().slice(0, 10)} by scripts/third-party-notices.mjs.`,
   '',
-  'Calendar is free software: Copyright (c) 2026 patryk.pro, licensed under',
+  'Calendar CE is free software: Copyright (c) 2026 patryk.pro, licensed under',
   'the GNU Affero General Public License version 3 (see LICENSE). It contains the',
   'third-party components listed below. Each of them remains under its own',
   'licence, reproduced here.',
@@ -536,8 +536,8 @@ heading('2. Fonts');
 add(
   '',
   'The fonts are packaged by Fontsource and licensed under the SIL Open Font',
-  'License 1.1, whose text is in part 6. They are bundled with Calendar and are',
-  'not sold on their own.',
+  'License 1.1, whose text is in part 6. They are bundled with Calendar CE and',
+  'are not sold on their own.',
 );
 for (const f of fonts) {
   entry(`${f.family}: ${f.name} ${f.version}`);
@@ -582,7 +582,7 @@ for (const [text, group] of byText) {
 }
 
 heading('5. Credits');
-add('', 'Ideas from these projects inspired parts of Calendar.', '');
+add('', 'Ideas from these projects inspired parts of Calendar CE.', '');
 for (const c of credits) add(`${c.name}: ${c.url}`);
 
 heading('6. Licence texts');

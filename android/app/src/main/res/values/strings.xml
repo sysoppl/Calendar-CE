@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Calendar</string>
-    <string name="title_activity_main">Calendar</string>
+    <string name="app_name">Calendar CE</string>
+    <string name="title_activity_main">Calendar CE</string>
     <string name="package_name" translatable="false">pro.patryk.calendar.community</string>
     <string name="custom_url_scheme" translatable="false">pro.patryk.calendar.community</string>
 

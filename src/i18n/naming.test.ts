@@ -60,12 +60,18 @@ function encryptedPlaces(text: string): string[] {
 }
 
 describe('naming', () => {
-  it('names the app Calendar', () => {
-    expect(en['app.name']).toBe('Calendar');
-    expect(pl['app.name']).toBe('Kalendarz');
+  it('names the app Calendar CE, in every language with its own word for calendar', () => {
+    expect(en['app.name']).toBe('Calendar CE');
+    expect(pl['app.name']).toBe('Kalendarz CE');
     const android = androidStrings();
-    expect(stringsOf(android.values).get('app_name')).toBe('Calendar');
-    expect(stringsOf(android['values-pl']).get('app_name')).toBe('Kalendarz');
+    expect(stringsOf(android.values).get('app_name')).toBe('Calendar CE');
+    expect(stringsOf(android['values-pl']).get('app_name')).toBe('Kalendarz CE');
+    for (const [dir, xml] of Object.entries(android)) {
+      const strings = stringsOf(xml);
+      if (strings.has('app_name')) expect(strings.get('app_name'), dir).toMatch(/^\p{L}+ CE$/u);
+    }
+    // The hosted edition is "the hosted edition", never the name it was promoted under until 1.12.
+    for (const [lang, dict] of Object.entries({ en, pl })) for (const [key, text] of Object.entries(dict)) expect(text, `${lang} ${key}`).not.toMatch(/E2EE Calendar|Kalendarz E2EE|community edition|wydanie społecznościowe/iu);
   });
 
   it('never says that this device or a CalDAV server is end-to-end encrypted', () => {
@@ -87,7 +93,7 @@ describe('naming', () => {
     expect(encryptedPlaces('Keep them on this device, on a CalDAV server or in the cloud, end-to-end encrypted.')).toEqual(['cloud']);
     expect(encryptedPlaces('Keep them in the cloud, or on this device, end-to-end encrypted.')).toEqual(['device']);
     expect(encryptedPlaces('Sync with the cloud. Keep them on a CalDAV server, end‑to‑end encrypted.')).toEqual(['caldav']);
-    expect(encryptedPlaces('E2EE Calendar for the web and Android.')).toEqual([]);
+    expect(encryptedPlaces('Calendar CE for the web and Android.')).toEqual([]);
     expect(encryptedPlaces('Na tym urządzeniu albo na serwerze CalDAV z szyfrowaniem end‑to‑end.')).toEqual(['caldav']);
   });
 

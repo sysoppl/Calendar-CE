@@ -1,6 +1,6 @@
 // End-to-end encryption of the hosted edition (protocol v1), published so that
 // anyone can check how the hosted cloud encrypts data: docs/ENCRYPTION.md
-// describes it, vectors.json pins it byte for byte. The Community Edition
+// describes it, vectors.json pins it byte for byte. The self-hosted edition
 // itself keeps data on the device or a CalDAV server and does not call it.
 //
 // Nothing in this folder imports from stores or the interface, and nothing

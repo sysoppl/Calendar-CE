@@ -74,7 +74,7 @@ describe('App', () => {
       expect(host.querySelector('svg.animate-spin')).not.toBeNull();
       expect(host.textContent).not.toContain('longer than usual');
       await vi.advanceTimersByTimeAsync(100);
-      await vi.waitFor(() => expect(host.textContent).toContain('Calendar is taking longer than usual to start'));
+      await vi.waitFor(() => expect(host.textContent).toContain('Calendar CE is taking longer than usual to start'));
       expect([...host.querySelectorAll('button')].map((b) => b.textContent)).toContain('Reload');
       // Not turned into a failure: the spinner is still there, and no error code.
       expect(host.querySelector('svg.animate-spin')).not.toBeNull();

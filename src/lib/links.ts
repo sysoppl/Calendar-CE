@@ -50,7 +50,7 @@ export const VERSION_SOURCE_URL = `${SOURCE_URL}/tree/v${__APP_VERSION__}`;
 export const LICENSE_URL = 'https://www.gnu.org/licenses/agpl-3.0.html';
 
 /**
- * E2EE Calendar, the hosted edition by the same author: the same app with an
+ * The hosted edition of Calendar CE, by the same author: the same app with an
  * end-to-end encrypted cloud that syncs every device. Only ever linked to.
  */
 export const CLOUD_URL = 'https://calendar.patryk.pro/?utm_source=calendar-community&utm_medium=app';

@@ -7,7 +7,7 @@ import { remindersPl } from './reminders.pl';
 import type { MessageKey } from './en';
 
 export const pl: Record<MessageKey, string> = {
-  'app.name': 'Kalendarz',
+  'app.name': 'Kalendarz CE',
   'promo.cloud.title': 'Chcesz mieć go na każdym urządzeniu?',
   'promo.cloud.text': 'Wypróbuj wersję hostowaną na calendar.patryk.pro: ta sama aplikacja z chmurą szyfrowaną end‑to‑end, która synchronizuje wszystkie Twoje urządzenia.',
   'promo.cloud.action': 'Wypróbuj chmurę',
@@ -18,9 +18,9 @@ export const pl: Record<MessageKey, string> = {
   'app.failure.code': 'Kod błędu:',
   'app.failure.reload': 'Wczytaj ponownie',
 
-  'app.slowStart': 'Uruchamianie Kalendarza trwa dłużej niż zwykle',
+  'app.slowStart': 'Uruchamianie Kalendarza CE trwa dłużej niż zwykle',
 
-  'app.otherTab.title': 'Kalendarz jest otwarty w innej karcie',
+  'app.otherTab.title': 'Kalendarz CE jest otwarty w innej karcie',
   'app.otherTab.body': 'Aplikacja działa naraz tylko w jednej karcie lub oknie, aby żadna nie cofnęła tego, co zapisała druga. Uruchomi się tutaj sama po zamknięciu tamtej.',
   'app.otherTab.useHere': 'Użyj tutaj',
   'app.otherTab.switching': 'Przełączanie na tę kartę…',
@@ -439,11 +439,11 @@ export const pl: Record<MessageKey, string> = {
   'settings.download': 'Pobierz',
   'settings.chooseFile': 'Wybierz plik',
   'settings.resetSettings': 'Przywróć ustawienia domyślne',
-  'settings.about.text': 'Kalendarz dla przeglądarki i Androida, wydanie społecznościowe. Wydarzenia i zadania zostają na tym urządzeniu albo na wybranym serwerze CalDAV.',
+  'settings.about.text': 'Kalendarz CE dla przeglądarki i Androida, wydanie do samodzielnego hostowania. Wydarzenia i zadania zostają na tym urządzeniu albo na wybranym serwerze CalDAV.',
   'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Wolne oprogramowanie na licencji <license>GNU AGPL-3.0</license>, bez żadnej gwarancji.',
   'settings.about.source': 'Kod źródłowy',
   'settings.about.licenses': 'Licencje open source',
-  'settings.about.licensesIntro': 'Kalendarz zawiera wymienione tu komponenty open source. Każdy z nich pozostaje na własnej licencji.',
+  'settings.about.licensesIntro': 'Kalendarz CE zawiera wymienione tu komponenty open source. Każdy z nich pozostaje na własnej licencji.',
   'settings.about.licensesLoading': 'Wczytywanie licencji…',
   'settings.about.licensesError': 'Nie udało się wczytać licencji.',
   'settings.about.licensesRetry': 'Spróbuj ponownie',

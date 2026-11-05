@@ -1,7 +1,7 @@
 # `src/lib/crypto`: the hosted edition's end-to-end encryption
 
-This folder is the client-side cryptography of [E2EE Calendar](https://calendar.patryk.pro), the hosted edition, published
-so that anyone can check how it encrypts data. The Community Edition doesn't call it, so it isn't part of the app bundle.
+This folder is the client-side cryptography of the [hosted edition](https://calendar.patryk.pro) of Calendar CE, published
+so that anyone can check how it encrypts data. The self-hosted edition doesn't call it, so it isn't part of the app bundle.
 
 - **Specification:** [`docs/ENCRYPTION.md`](../../../docs/ENCRYPTION.md)
 - **Test vectors:** [`vectors.json`](vectors.json), checked by [`vectors.test.ts`](vectors.test.ts) against an independent

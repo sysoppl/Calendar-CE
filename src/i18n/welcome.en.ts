@@ -8,7 +8,7 @@ export const welcomeEn = {
   'ui.option.caveats': 'Keep in mind',
 
   // Welcome screen (first start).
-  'welcome.title': 'Welcome to Calendar',
+  'welcome.title': 'Welcome to Calendar CE',
   'welcome.promise': 'Your events and tasks in one place, with full control over where they are kept.',
   'welcome.question': 'Where should your calendar be kept?',
   'welcome.language': 'Language',

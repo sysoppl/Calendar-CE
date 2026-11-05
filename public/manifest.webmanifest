@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Calendar",
-  "short_name": "Calendar",
+  "name": "Calendar CE",
+  "short_name": "Calendar CE",
   "description": "Private calendar and tasks for the web and Android: keep them on your device or on your own CalDAV server.",
   "lang": "en",
   "dir": "ltr",

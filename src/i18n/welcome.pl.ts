@@ -9,7 +9,7 @@ export const welcomePl: Record<keyof typeof welcomeEn, string> = {
   'ui.option.caveats': 'Warto pamiętać',
 
   // Ekran powitalny (pierwsze uruchomienie).
-  'welcome.title': 'Witamy w Kalendarzu',
+  'welcome.title': 'Witamy w Kalendarzu CE',
   'welcome.promise': 'Wydarzenia i zadania w jednym miejscu, z pełną kontrolą nad tym, gdzie są przechowywane.',
   'welcome.question': 'Gdzie przechowywać kalendarz?',
   'welcome.language': 'Język',

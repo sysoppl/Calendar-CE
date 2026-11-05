@@ -306,7 +306,7 @@ public class RemindersPlugin extends Plugin {
     @PluginMethod
     public void testNotification(PluginCall call) {
         int delay = call.getInt("delaySeconds", 5);
-        String title = call.getString("title", "Calendar");
+        String title = call.getString("title", "Calendar CE");
         String body = call.getString("body", "Test reminder");
         long at = System.currentTimeMillis() + delay * 1000L;
         ReminderScheduler.scheduleOne(getContext(), new Reminder("test|" + at, at, title, body));

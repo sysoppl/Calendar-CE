@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Kalendarz",
-  "short_name": "Kalendarz",
+  "name": "Kalendarz CE",
+  "short_name": "Kalendarz CE",
   "description": "Prywatny kalendarz i zadania w przeglądarce i na Androidzie: na urządzeniu albo na własnym serwerze CalDAV.",
   "lang": "pl",
   "dir": "ltr",

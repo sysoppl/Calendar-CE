@@ -7,7 +7,7 @@ import { syncEn } from './sync.en';
 import { remindersEn } from './reminders.en';
 
 export const en = {
-  'app.name': 'Calendar',
+  'app.name': 'Calendar CE',
 
   // The card about the hosted edition (components/ui/CloudPromo.tsx)
   'promo.cloud.title': 'Want it on every device?',
@@ -22,10 +22,10 @@ export const en = {
   'app.failure.reload': 'Reload',
 
   // Under the spinner when the start takes long
-  'app.slowStart': 'Calendar is taking longer than usual to start',
+  'app.slowStart': 'Calendar CE is taking longer than usual to start',
 
   // The page shown while the app runs in another tab or window of this browser
-  'app.otherTab.title': 'Calendar is open in another tab',
+  'app.otherTab.title': 'Calendar CE is open in another tab',
   'app.otherTab.body': 'The app runs in one tab or window at a time, so that one never undoes what the other saved. It starts here by itself once the other one is closed.',
   'app.otherTab.useHere': 'Use here',
   'app.otherTab.switching': 'Switching to this tab…',
@@ -459,11 +459,11 @@ export const en = {
   'settings.download': 'Download',
   'settings.chooseFile': 'Choose file',
   'settings.resetSettings': 'Reset settings',
-  'settings.about.text': 'Calendar for the web and Android, community edition. Your events and tasks stay on this device or on a CalDAV server of your choice.',
+  'settings.about.text': 'Calendar CE for the web and Android, the self-hosted edition. Your events and tasks stay on this device or on a CalDAV server of your choice.',
   'settings.about.copyright': '© 2026 <home>patryk.pro</home>. Free software under the <license>GNU AGPL-3.0</license>, without any warranty.',
   'settings.about.source': 'Source code',
   'settings.about.licenses': 'Open-source licences',
-  'settings.about.licensesIntro': 'Calendar includes the open-source components listed here. Each of them remains under its own licence.',
+  'settings.about.licensesIntro': 'Calendar CE includes the open-source components listed here. Each of them remains under its own licence.',
   'settings.about.licensesLoading': 'Loading the licences…',
   'settings.about.licensesError': 'The licences could not be loaded.',
   'settings.about.licensesRetry': 'Try again',
