@@ -81,6 +81,9 @@
   shows the years ("Anna's birthday (36)", "10th anniversary")
 - **Hidden events**: the eye beside the title keeps an event's name off the screen; views, search and reminders show
   *Hidden event* until you open it
+- **Persistent notifications**: an event's or a task's reminder can stay until you dismiss it or mark the task done.
+  Completing, deleting or moving the item takes it down too. In a browser it asks to stay on screen where the browser
+  allows that; on Android it is pinned (below)
 - A one-click **Join** button for Zoom, Teams, Jitsi, Webex and other meeting links
 - **Public holidays** for 19 countries, computed on the device (nothing is downloaded)
 - Undo for every change, keyboard shortcuts, search that ignores diacritics
@@ -103,6 +106,8 @@
 **Android**
 - Native CalDAV client (no proxy, no CORS issues)
 - Reminders fire even when the app is closed: exact alarms, rescheduled after a reboot, and CalDAV calendars refreshed hourly in the background
+- Persistent notifications stay pinned: a swipe brings one back at once, without a sound, and so do a restart and an
+  app update. **Dismiss** and **Snooze 10 min** end it, and a task's **Done** opens the app and marks the task done
 
 <p align="center">
   <img src="docs/images/new-event.png" width="49%" alt="Creating an event in place">
