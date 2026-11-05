@@ -81,6 +81,11 @@ export async function seedDemo() {
     ev(family.id, 'Dinner at parents', at(5, 17, 0), at(5, 20, 0)),
     ev(family.id, 'Weekend in the mountains', addDays(week, 5), addDays(week, 7), { allDay: true, alarms: [], busy: false }),
     ev(family.id, "Mom's birthday", addDays(week, 9), addDays(week, 10), { allDay: true, rrule: { freq: 'YEARLY', interval: 1 }, alarms: [900] }),
+    // A birth date and a wedding day: the views show the age and the anniversary.
+    ev(family.id, "Anna's birthday", addDays(week, 3), addDays(week, 4), { allDay: true, rrule: { freq: 'YEARLY', interval: 1 }, alarms: [900], busy: false, since: new Date(week.getFullYear() - 36, week.getMonth(), week.getDate() + 3) }),
+    ev(family.id, 'Wedding anniversary', addDays(week, 6), addDays(week, 7), { allDay: true, rrule: { freq: 'YEARLY', interval: 1 }, alarms: [900], busy: false, since: new Date(week.getFullYear() - 10, week.getMonth(), week.getDate() + 6) }),
+    // Shown as "Hidden event" until it is opened.
+    ev(personal, 'Doctor’s appointment', at(4, 16, 30), at(4, 17, 30), { hidden: true, location: 'Medical centre' }),
     ev(personal, 'Concert', at(11, 20, 0), at(11, 23, 0), { location: 'Stodoła' }),
     ev(work.id, 'Quarterly review', at(15, 10, 0), at(15, 12, 0)),
     ev(personal, 'Yoga', atM(2, 19, 0), atM(2, 20, 0), { rrule: { freq: 'WEEKLY', interval: 1, byDay: ['WE'] } }),

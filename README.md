@@ -23,9 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/calendar-tour.webp" width="100%" alt="A 44-second tour of Calendar: views, creating events, tasks, themes, the Android app and where your data is kept">
-  <br>
-  <sub>44-second tour · <a href="docs/media/calendar-promo.mp4">download the full-quality MP4</a></sub>
+  <img src="docs/media/calendar-tour.webp" width="100%" alt="A tour of Calendar: views, creating events, tasks, themes, the Android app and where your data is kept">
 </p>
 
 <p align="center">
@@ -43,7 +41,9 @@
       <b>On this device</b> to try every feature without an account.<br><br>
       <b>Don't want to run a server?</b> The hosted edition, <b>E2EE Calendar</b>, is the same app plus an
       <b>end-to-end encrypted cloud</b> that keeps your phone, tablet and computer in sync. Nobody but you can read your
-      calendar, not even the service. Using it supports the development of this free edition.
+      calendar, not even the service. Calendars on the device and on CalDAV servers are free there too; only the
+      cloud is paid, after 14 free days (<a href="#community-edition-or-the-hosted-e2ee-calendar">compare</a>). Using
+      it supports the development of this free edition.
     </td>
     <td align="center" width="230">
       <a href="https://calendar.patryk.pro"><img src="https://img.shields.io/badge/Open_the_live_demo-1e2227?style=for-the-badge" alt="Open the live demo" width="200"></a>
@@ -89,19 +89,41 @@
 - Undo for every change, keyboard shortcuts, search that ignores diacritics
 - Subscribe to `.ics` / `webcal://` feeds. Import and export `.ics` files
 
+<p align="center">
+  <img src="docs/media/features/feature-views.png" width="100%" alt="Every view you need: the month view on a computer and the day view on a phone">
+</p>
+<p align="center">
+  <img src="docs/media/features/feature-events.png" width="100%" alt="Everything an event needs: the event editor on a computer and an event with a Join Jitsi button on a phone">
+</p>
+<p align="center">
+  <img src="docs/media/features/feature-birthdays.png" width="100%" alt="Birthdays that count the years: Anna's birthday shows that she turns 36, and a hidden event reads Hidden event">
+</p>
+
 **Tasks**
 - A tasks drawer grouped into Overdue, Today, Tomorrow, Upcoming, No date and Completed
 - Quick add with natural-language dates in English and Polish (`Call Anna tomorrow`, `Gym fri`)
 - Due dates, priorities, progress, notes, recurrence, reminders and subtasks
+
+<p align="center">
+  <img src="docs/media/features/feature-tasks.png" width="100%" alt="Tasks right beside your days: the tasks drawer next to the week on a computer, and quick add on a phone">
+</p>
 
 **Storage**
 - **On this device**: no account and no server. Works offline
 - **CalDAV**: Nextcloud, Radicale, Baïkal, Fastmail, iCloud, mailbox.org, Posteo, Synology and more. Incremental sync (RFC 6578), conflict-safe writes, creating calendars and task lists
 - Use several CalDAV accounts side by side. **Move my data…** copies or moves calendars between places and checks every item before anything is deleted
 
+<p align="center">
+  <img src="docs/media/features/feature-storage.png" width="100%" alt="Your server, or no server: connecting a Nextcloud server on a computer, and the welcome screen on a phone">
+</p>
+
 **Look and languages**
 - Five themes (Daylight, Linen, Graphite, Night, High contrast), your own accent colour, four event styles, 12 bundled fonts, two densities and five text sizes
 - Interface in English, Polish, German, Spanish, French, Italian, Portuguese (Brazil), Ukrainian, Czech and Dutch
+
+<p align="center">
+  <img src="docs/media/features/feature-look.png" width="100%" alt="Make it yours: the Night theme on a computer and the month view in Polish on a phone">
+</p>
 
 **Android**
 - Native CalDAV client (no proxy, no CORS issues)
@@ -109,6 +131,9 @@
 - Persistent notifications stay pinned: a swipe brings one back at once, without a sound, and so do a restart and an
   app update. **Dismiss** and **Snooze 10 min** end it, and a task's **Done** opens the app and marks the task done
 
+<details>
+<summary><b>More screenshots</b></summary>
+<br>
 <p align="center">
   <img src="docs/images/new-event.png" width="49%" alt="Creating an event in place">
   <img src="docs/images/popover.png" width="49%" alt="Invitation with reply buttons">
@@ -123,19 +148,42 @@
   <img src="docs/images/mobile-dark-agenda.png" width="24%" alt="Agenda on a phone, dark">
   <img src="docs/images/mobile-welcome.png" width="24%" alt="Welcome screen on a phone">
 </p>
+</details>
 
 ## Community Edition or the hosted E2EE Calendar?
 
-|                                              | Community Edition (this repo) | [E2EE Calendar](https://calendar.patryk.pro) |
-| -------------------------------------------- | :---------------------------: | :-------------------------------------------: |
-| Calendars on the device                      | ✓                             | ✓                                             |
-| CalDAV accounts                              | ✓                             | ✓                                             |
-| Web app and Android app                      | ✓ (you host them; ready-made Docker image) | ✓ (hosted, on Google Play)       |
-| End-to-end encrypted sync between devices    | –                             | ✓                                             |
-| Settings that follow you to every device     | –                             | ✓                                             |
-| Encrypted profile picture, Recovery Kit      | –                             | ✓                                             |
-| Server to run and update                     | yours                         | none                                          |
-| Price                                        | free, AGPL-3.0                | 14 days free, then a plan                     |
+Both are the same calendar app. The **Community Edition** is this repository: you run the web app yourself and build
+the Android app from it. **[E2EE Calendar](https://calendar.patryk.pro)** is the hosted edition, ready on the web and
+on Google Play. It adds an **end-to-end encrypted cloud** that keeps your devices in sync.
+
+**What is free:** in both editions, calendars and tasks **on the device** and on **CalDAV servers**, with no account
+and no time limit. **What is paid:** only the hosted edition's cloud, after a **14-day free trial**.
+
+|                                                  | Community Edition (this repo)            | [E2EE Calendar](https://calendar.patryk.pro) (hosted)        |
+| ------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------ |
+| Calendars and tasks on the device, no account    | ✓ free                                   | ✓ free                                                       |
+| CalDAV accounts (Nextcloud, Radicale, iCloud, …) | ✓ free                                   | ✓ free                                                       |
+| End-to-end encrypted cloud that syncs your devices | –                                      | ✓ 14 days free, then a monthly or yearly plan                |
+| Settings that follow you to every device         | –                                        | ✓ with the cloud                                             |
+| Encrypted profile picture, Recovery Kit          | –                                        | ✓ with the cloud                                             |
+| Web app                                          | you host it: [Docker image](#self-hosting-with-docker) or Node | ready at [calendar.patryk.pro](https://calendar.patryk.pro) |
+| Android app                                      | you [build it](#android-app) from this repo | [Google Play](https://play.google.com/store/apps/details?id=pro.patryk.calendar) |
+| Account                                          | none                                     | only for the cloud: an e-mail address and a password         |
+| Ads                                              | none                                     | none on the web. The Google Play app shows one small banner when it is used without a cloud plan; an optional subscription in the app removes it |
+| Server to run and update                         | yours                                    | none                                                         |
+| Price                                            | free and open source (AGPL-3.0)          | free on the device and with CalDAV; the cloud after its 14-day trial: a monthly or yearly plan |
+
+**How the cloud plan works**
+
+- The trial starts with a new cloud account and lasts 14 days. No payment details are needed for it, and it is given
+  once per e-mail address.
+- Plans are monthly or yearly, bought in the Android app from Google Play, which shows the price for your country.
+  A plan covers every device signed in to the account, the web app included.
+- When the trial or a plan ends, the cloud becomes read-only on every device: your calendars stay visible and can
+  be exported, or moved to the device or a CalDAV server. Their data is deleted from the server 120 days later, after
+  a warning at day 90. A plan bought in the meantime brings writing back at once.
+- Calendars on the device and on CalDAV servers are not affected by any of this: they keep working, free, with or
+  without a plan.
 
 <p>
   <a href="https://calendar.patryk.pro"><img src="https://img.shields.io/badge/Try_E2EE_Calendar-d93033?style=for-the-badge" alt="Try E2EE Calendar" height="36"></a>
