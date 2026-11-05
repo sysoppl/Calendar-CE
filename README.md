@@ -301,9 +301,10 @@ sudo docker compose up -d
 sudo docker image prune -f   # removes the previous image
 ```
 
-New releases are listed under the repository's [tags](https://github.com/sysoppl/Calendar-CE/tags). Every image carries
-its version and the commit it was built from (`org.opencontainers.image.version` and `.revision` labels), plus an SBOM
-and build provenance.
+Releases are published on the [releases page](https://github.com/sysoppl/Calendar-CE/releases), with notes of what changed
+since the one before and the image to pull. A version is released only after the full test run has passed for its
+tag. Every image carries its version and the commit it was built from (`org.opencontainers.image.version` and
+`.revision` labels), plus an SBOM and build provenance.
 
 ### Without Compose
 

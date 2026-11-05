@@ -30,7 +30,13 @@ npm run build
 
 For Android changes also run `npm run android:sync` and `cd android && ./gradlew testDebugUnitTest`.
 
+Every pull request gets the full test run in GitHub Actions (`.github/workflows/test.yml`): these commands, the
+checks of the Gradle wrapper and the third-party notices, the Content-Security-Policy of the build and a start of the
+server on it. The same run has to pass before a version tag gets its Docker image and its release.
+
 - Keep the change focused and add tests for new behaviour.
+- **Commit titles** follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`,
+  `test:`, `ci:`, `chore:`, with an optional scope: `fix(proxy): ...`). The release notes are made from them.
 - **Interface text:** add every new key to `src/i18n/en.ts` (or the matching `*.en.ts` file) and to all other
   languages (`pl`, and `src/i18n/locales/<lang>.ts`). The tests check that all 10 languages have the same keys and
   placeholders. A machine translation is fine as a start; say so in the pull request.
