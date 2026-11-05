@@ -147,14 +147,16 @@ public final class SecretVault {
         synchronized (LOCK) {
             String stored = values.getString(name);
             if (stored == null) return null;
+            // A damaged value is dropped before any cipher is set up, so the IV
+            // is only ever the one that was stored with the value.
             byte[] sealed;
             try {
                 sealed = Encoding.fromBase64(stored);
             } catch (IllegalArgumentException e) {
-                sealed = new byte[0];
+                sealed = null;
             }
-            int ivLength = sealed.length > 2 ? sealed[1] & 0xff : 0;
-            if (sealed.length < 2 || sealed[0] != FORMAT || ivLength == 0 || sealed.length < 2 + ivLength + TAG_LENGTH) {
+            int ivLength = sealed != null && sealed.length > 2 ? sealed[1] & 0xff : 0;
+            if (sealed == null || sealed.length < 2 || sealed[0] != FORMAT || ivLength == 0 || sealed.length < 2 + ivLength + TAG_LENGTH) {
                 values.remove(name);
                 return null;
             }
