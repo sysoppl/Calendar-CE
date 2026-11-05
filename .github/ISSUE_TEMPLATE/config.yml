@@ -3,6 +3,6 @@ contact_links:
   - name: Report a security vulnerability
     url: https://github.com/sysoppl/Calendar-CE/security/advisories/new
     about: Please report security problems privately, not in a public issue.
-  - name: E2EE Calendar (hosted edition)
+  - name: Calendar CE, hosted edition
     url: https://calendar.patryk.pro
     about: End-to-end encrypted sync across all your devices, no server to run.

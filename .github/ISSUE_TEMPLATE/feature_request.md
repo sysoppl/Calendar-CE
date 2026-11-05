@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for the Community Edition
+about: Suggest an idea for the self-hosted edition
 labels: enhancement
 ---
 

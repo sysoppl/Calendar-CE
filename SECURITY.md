@@ -13,7 +13,7 @@ unless you'd rather not be.
 
 ## Scope
 
-This repository is the self-hostable Community Edition: the web app, its Node server with the DAV proxy, and the
+This repository is the self-hosted edition of Calendar CE: the web app, its Node server with the DAV proxy, and the
 Android app. Reports about these are in scope, for example:
 
 - script injection or a way around the Content-Security-Policy
@@ -21,7 +21,7 @@ Android app. Reports about these are in scope, for example:
 - CalDAV credentials stored or sent where they shouldn't be
 - the end-to-end encryption in `src/lib/crypto/` (see `docs/ENCRYPTION.md`), which the hosted edition uses
 
-The hosted E2EE Calendar at calendar.patryk.pro is a separate service and isn't part of this repository. Please
+The hosted edition at calendar.patryk.pro is a separate service and isn't part of this repository. Please
 report anything about it the same private way, and don't test it in ways that could affect other people's
 accounts or data.
 

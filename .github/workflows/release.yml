@@ -82,12 +82,12 @@ jobs:
             type=sha,enable=${{ github.ref_type != 'tag' }}
           labels: |
             org.opencontainers.image.title=Calendar CE
-            org.opencontainers.image.description=Calendar Community Edition: calendar and tasks kept on the device or on your own CalDAV server
+            org.opencontainers.image.description=Calendar CE, self-hosted: calendar and tasks kept on the device or on your own CalDAV server
             org.opencontainers.image.licenses=AGPL-3.0-only
             org.opencontainers.image.vendor=patryk.pro
           annotations: |
             org.opencontainers.image.title=Calendar CE
-            org.opencontainers.image.description=Calendar Community Edition: calendar and tasks kept on the device or on your own CalDAV server
+            org.opencontainers.image.description=Calendar CE, self-hosted: calendar and tasks kept on the device or on your own CalDAV server
             org.opencontainers.image.licenses=AGPL-3.0-only
 
       - name: Sign in to the GitHub Container Registry

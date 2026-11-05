@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/icons/icon.svg" width="96" height="96" alt="Calendar icon: a month on paper">
+  <img src="public/icons/icon.svg" width="96" height="96" alt="Calendar CE icon: a month on paper">
 </p>
 
-<h1 align="center">Calendar · Community Edition</h1>
+<h1 align="center">Calendar CE</h1>
 
 <p align="center">
   A private calendar and task manager for the web and Android.<br>
@@ -17,13 +17,13 @@
 
 <p align="center">
   <a href="https://calendar.patryk.pro"><b>Live demo</b></a> ·
-  <a href="#community-edition-or-the-hosted-e2ee-calendar">Hosted edition</a> ·
+  <a href="#self-hosted-or-hosted">Hosted edition</a> ·
   <a href="#self-hosting-with-docker">Self-host</a> ·
   <a href="#how-end-to-end-encryption-works-in-the-hosted-edition">How E2EE works</a>
 </p>
 
 <p align="center">
-  <img src="docs/media/calendar-tour.webp" width="100%" alt="A tour of Calendar: views, creating events, tasks, themes, the Android app and where your data is kept">
+  <img src="docs/media/calendar-tour.webp" width="100%" alt="A tour of Calendar CE: views, creating events, tasks, themes, the Android app and where your data is kept">
 </p>
 
 <p align="center">
@@ -39,10 +39,10 @@
       <b>Try it now, nothing to install.</b> The hosted app at
       <a href="https://calendar.patryk.pro"><b>calendar.patryk.pro</b></a> is the live demo: open it and choose
       <b>On this device</b> to try every feature without an account.<br><br>
-      <b>Don't want to run a server?</b> The hosted edition, <b>E2EE Calendar</b>, is the same app plus an
+      <b>Don't want to run a server?</b> The <b>hosted edition</b> at calendar.patryk.pro is the same app plus an
       <b>end-to-end encrypted cloud</b> that keeps your phone, tablet and computer in sync. Nobody but you can read your
       calendar, not even the service. Calendars on the device and on CalDAV servers are free there too; only the
-      cloud is paid, after 14 free days (<a href="#community-edition-or-the-hosted-e2ee-calendar">compare</a>). Using
+      cloud is paid, after 14 free days (<a href="#self-hosted-or-hosted">compare</a>). Using
       it supports the development of this free edition.
     </td>
     <td align="center" width="230">
@@ -56,7 +56,7 @@
 ## Contents
 
 - [Features](#features)
-- [Community Edition or the hosted E2EE Calendar?](#community-edition-or-the-hosted-e2ee-calendar)
+- [Self-hosted or hosted?](#self-hosted-or-hosted)
 - [How end-to-end encryption works in the hosted edition](#how-end-to-end-encryption-works-in-the-hosted-edition)
 - [Self-hosting with Docker](#self-hosting-with-docker)
 - [Configuration](#configuration)
@@ -150,16 +150,16 @@
 </p>
 </details>
 
-## Community Edition or the hosted E2EE Calendar?
+## Self-hosted or hosted?
 
-Both are the same calendar app. The **Community Edition** is this repository: you run the web app yourself and build
-the Android app from it. **[E2EE Calendar](https://calendar.patryk.pro)** is the hosted edition, ready on the web and
-on Google Play. It adds an **end-to-end encrypted cloud** that keeps your devices in sync.
+Both are the same calendar app, Calendar CE. The **self-hosted edition** is this repository: you run the web app
+yourself and build the Android app from it. The **[hosted edition](https://calendar.patryk.pro)** is ready on the web
+and on Google Play. It adds an **end-to-end encrypted cloud** that keeps your devices in sync.
 
 **What is free:** in both editions, calendars and tasks **on the device** and on **CalDAV servers**, with no account
 and no time limit. **What is paid:** only the hosted edition's cloud, after a **14-day free trial**.
 
-|                                                  | Community Edition (this repo)            | [E2EE Calendar](https://calendar.patryk.pro) (hosted)        |
+|                                                  | Self-hosted (this repo)                  | [Hosted](https://calendar.patryk.pro) (calendar.patryk.pro)  |
 | ------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------ |
 | Calendars and tasks on the device, no account    | ✓ free                                   | ✓ free                                                       |
 | CalDAV accounts (Nextcloud, Radicale, iCloud, …) | ✓ free                                   | ✓ free                                                       |
@@ -186,15 +186,15 @@ and no time limit. **What is paid:** only the hosted edition's cloud, after a **
   without a plan.
 
 <p>
-  <a href="https://calendar.patryk.pro"><img src="https://img.shields.io/badge/Try_E2EE_Calendar-d93033?style=for-the-badge" alt="Try E2EE Calendar" height="36"></a>
+  <a href="https://calendar.patryk.pro"><img src="https://img.shields.io/badge/Try_the_hosted_edition-d93033?style=for-the-badge" alt="Try the hosted edition" height="36"></a>
   &nbsp;
   <a href="https://play.google.com/store/apps/details?id=pro.patryk.calendar"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="54"></a>
 </p>
 
 ## How end-to-end encryption works in the hosted edition
 
-The Community Edition never sends your calendar to anyone but the CalDAV server you choose. The hosted
-**[E2EE Calendar](https://calendar.patryk.pro)** adds a cloud that syncs your devices, and it's built so that the
+The self-hosted edition never sends your calendar to anyone but the CalDAV server you choose. The
+**[hosted edition](https://calendar.patryk.pro)** adds a cloud that syncs your devices, and it's built so that the
 cloud can store your calendar **without being able to read it**.
 
 ```mermaid
@@ -235,7 +235,7 @@ flowchart LR
 | Your profile picture | Your signed-in devices |
 
 **Read the code.** The client-side encryption is published in [`src/lib/crypto/`](src/lib/crypto) with fixed test vectors,
-and [`docs/ENCRYPTION.md`](docs/ENCRYPTION.md) specifies it byte for byte. The Community Edition doesn't use it; it's
+and [`docs/ENCRYPTION.md`](docs/ENCRYPTION.md) specifies it byte for byte. The self-hosted edition doesn't use it; it's
 there so anyone can verify how the hosted cloud protects data.
 
 The hosted web app is loaded from the server at each start, so for the strongest guarantee use the
@@ -481,7 +481,7 @@ A signed release build (`./gradlew assembleRelease`) reads its keystore from the
 `android/keystore.properties` (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`). Without one, the release APK
 is left unsigned.
 
-Prefer a ready-made app? **[Calendar on Google Play](https://play.google.com/store/apps/details?id=pro.patryk.calendar)**.
+Prefer a ready-made app? **[Calendar CE on Google Play](https://play.google.com/store/apps/details?id=pro.patryk.calendar)**.
 
 ## Development
 
@@ -521,7 +521,7 @@ Contributions are welcome: bug reports, translations, fixes and features that fi
 
 Before your first pull request is merged, the CLA Assistant bot asks you to sign the
 [Contributor License Agreement](CLA.md) once. You keep the copyright in your work; the agreement lets the maintainer
-also use it in other editions of Calendar, such as the hosted one, and keeps everything merged here open source.
+also use it in other editions of Calendar CE, such as the hosted one, and keeps everything merged here open source.
 
 ## Security
 
@@ -531,7 +531,7 @@ Please don't report security issues in public issues. See [SECURITY.md](SECURITY
 
 Copyright © 2026 [patryk.pro](https://patryk.pro).
 
-Calendar Community Edition is free software: you can redistribute it and/or modify it under the terms of the
+Calendar CE is free software: you can redistribute it and/or modify it under the terms of the
 [GNU Affero General Public License, version 3 only](LICENSE) (AGPL-3.0-only). It comes without any warranty. If you
 run a modified version for other people over a network, you must offer them its source code (the app's
 **Settings → About → Source code** link points at the release it was built from; point it at your fork). Third-party
@@ -545,9 +545,9 @@ which brings Node.js, npm and Alpine Linux packages, each under its own licence.
 (the branch matching `/etc/alpine-release`). Every published image lists its packages and their licences in an SBOM:
 `docker buildx imagetools inspect ghcr.io/sysoppl/calendar-ce:1.11.1 --format '{{ json .SBOM }}'`.
 
-**Names.** The AGPL-3.0 grants no rights to the names *patryk.pro* and *E2EE Calendar* or to the Calendar icon as
+**Names.** The AGPL-3.0 grants no rights to the names *patryk.pro* and *Calendar CE* or to the Calendar CE icon as
 marks: please give a build you publish a name and icon of your own. Other product names belong to their owners and are
-only used to name the services Calendar works with. Google Play and the Google Play logo are trademarks of Google LLC.
+only used to name the services Calendar CE works with. Google Play and the Google Play logo are trademarks of Google LLC.
 
 <p align="center">
   Made by <a href="https://patryk.pro">patryk.pro</a> · Hosted edition: <a href="https://calendar.patryk.pro"><b>calendar.patryk.pro</b></a>

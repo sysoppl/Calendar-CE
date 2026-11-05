@@ -1,4 +1,4 @@
-# Contributing to Calendar Community Edition
+# Contributing to Calendar CE
 
 Thanks for helping! Bug reports, translations, fixes and features that fit a local-first calendar are all welcome.
 
