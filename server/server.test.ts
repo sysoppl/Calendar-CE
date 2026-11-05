@@ -569,41 +569,94 @@ describe('deployment kit', () => {
       .join('\n');
 
     it('only runs the tests: no secrets, nothing deployed or published, no write access', () => {
-      expect(steps).not.toMatch(/secrets\.|deploy|publish|release|upload-artifact|ssh /i);
+      expect(steps).not.toMatch(/secrets\.|deploy|publish|release|upload-artifact|ssh |docker /i);
       expect(workflow).toMatch(/^permissions:\n {2}contents: read$/m);
-      for (const step of ['npm run typecheck', 'npx vitest run', 'node scripts/third-party-notices.mjs --check', 'npm run build', './gradlew --no-daemon testDebugUnitTest']) expect(workflow).toContain(step);
     });
 
-    it('runs no install script', () => {
+    it('runs every check of the full test run, on pushes to main and on pull requests', () => {
+      expect(workflow).toMatch(/^on:\n {2}push:\n {4}branches: \[main\]\n {2}pull_request:$/m);
+      for (const step of [
+        'distributionSha256Sum',
+        "curl -fsSL \"https://services.gradle.org/distributions/gradle-$candidate-wrapper.jar.sha256\"",
+        'node scripts/third-party-notices.mjs --check',
+        'npm run typecheck',
+        'npx vitest run',
+        'npm run build',
+        `grep -q 'http-equiv="Content-Security-Policy"' dist/index.html`,
+        'node server/server.mjs &',
+        "r.headers.has('content-security-policy')",
+        'npm run android:sync',
+        './gradlew --no-daemon testDebugUnitTest',
+      ]) {
+        expect(steps, step).toContain(step);
+      }
+    });
+
+    it('runs no install script and keeps no token in a checkout', () => {
       const installs = [...workflow.matchAll(/npm ci[^\n]*/g)].map((m) => m[0]);
       expect(installs.length).toBeGreaterThanOrEqual(2);
       for (const install of installs) expect(install).toContain('--ignore-scripts');
+      expect(workflow.match(/persist-credentials: false/g)).toHaveLength((workflow.match(/actions\/checkout@/g) ?? []).length);
     });
 
-    it('can be run by the Docker workflow', () => {
+    it('can be run by the release workflow', () => {
       expect(workflow).toMatch(/^ {2}workflow_call:$/m);
     });
   });
 
-  describe('the Docker workflow', () => {
-    const workflow = read('.github/workflows/docker.yml');
+  describe('the release workflow', () => {
+    const workflow = read('.github/workflows/release.yml');
+    /** The text of one job, from its key to the next job's, without comments. */
+    const job = (name: string) => {
+      const start = workflow.search(new RegExp(`^ {2}${name}:$`, 'm'));
+      const rest = workflow.slice(start + 1);
+      const next = rest.search(/^ {2}[a-z-]+:$/m);
+      return (next === -1 ? rest : rest.slice(0, next)).replace(/^\s*#.*$/gm, '');
+    };
 
-    it('publishes for version tags only, after the tests, with the one write permission it needs', () => {
+    it('runs for version tags only: the version check, then the tests, then the image, then the release', () => {
       expect(workflow).toMatch(/^ {2}push:\n {4}tags: \['v\[0-9\]\+\.\[0-9\]\+\.\[0-9\]\+'\]$/m);
       expect(workflow).not.toMatch(/^ {4}branches:/m);
       expect(workflow).toMatch(/^permissions:\n {2}contents: read$/m);
-      expect(workflow).toMatch(/^ {4}needs: tests$/m);
-      expect(workflow).toContain('uses: ./.github/workflows/test.yml');
+      // A tag that does not match the app's version builds nothing.
+      expect(job('version')).toContain("require('./package.json').version");
+      expect(job('version')).toContain("if: github.ref_type == 'tag'");
+      expect(job('tests')).toMatch(/^ {4}needs: version$/m);
+      expect(job('tests')).toContain('uses: ./.github/workflows/test.yml');
+      expect(job('image')).toMatch(/^ {4}needs: tests$/m);
+      expect(job('release')).toMatch(/^ {4}needs: image$/m);
+    });
+
+    it('publishes the image for tags only, for both platforms, with the one write permission it needs', () => {
+      const image = job('image');
       expect([...workflow.matchAll(/packages: write/g)]).toHaveLength(1);
-      expect(workflow).toContain("push: ${{ github.ref_type == 'tag' }}");
-      expect(workflow).toContain("if: github.ref_type == 'tag'");
-      // A tag that does not match the app's version publishes nothing.
-      expect(workflow).toContain("require('./package.json').version");
-      expect(workflow).toContain('platforms: linux/amd64,linux/arm64');
+      expect(image).toContain('packages: write');
+      expect(image).toContain("push: ${{ github.ref_type == 'tag' }}");
+      expect(image).toMatch(/- name: Sign in to the GitHub Container Registry\n\s+if: github\.ref_type == 'tag'/);
+      expect(image).toContain('platforms: linux/amd64,linux/arm64');
+    });
+
+    it('creates the release for tags only, with notes from the whole history, and never replaces one', () => {
+      const release = job('release');
+      expect([...workflow.matchAll(/contents: write/g)]).toHaveLength(1);
+      expect(release).toContain('contents: write');
+      expect(release).toMatch(/fetch-depth: 0/);
+      expect(release).toContain('node scripts/release-notes.mjs "$tag" --out release-notes.md');
+      expect(release).toContain('docker pull $image:$version');
+      // The token only in the step that publishes, and that step only for a tag.
+      expect(release.match(/github\.token|secrets\./g)).toHaveLength(1);
+      expect(release).toMatch(/- name: Publish the release\n\s+if: github\.ref_type == 'tag'\n\s+env:\n\s+GH_TOKEN: \$\{\{ github\.token \}\}/);
+      expect(release).toContain('gh release view "$GITHUB_REF_NAME"');
+      expect(release).toContain('gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag');
+      expect(release).toContain('--notes-file release-notes.md');
+    });
+
+    it('keeps no token in a checkout', () => {
+      expect(workflow.match(/persist-credentials: false/g)).toHaveLength((workflow.match(/actions\/checkout@/g) ?? []).length);
     });
 
     it('pins every action to a commit', () => {
-      for (const file of ['docker.yml', 'test.yml']) {
+      for (const file of ['release.yml', 'test.yml']) {
         const uses = [...read(`.github/workflows/${file}`).matchAll(/^\s*(?:- )?uses: (\S+)/gm)].map((m) => m[1]).filter((u) => !u.startsWith('./'));
         expect(uses.length, file).toBeGreaterThan(0);
         for (const action of uses) expect(action, file).toMatch(/^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/);

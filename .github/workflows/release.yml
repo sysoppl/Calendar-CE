@@ -1,10 +1,17 @@
-# Publishes the Docker image to the GitHub Container Registry for every
-# version tag vX.Y.Z: ghcr.io/<owner>/calendar-ce with the tags X.Y.Z, X.Y, X
-# and latest, for linux/amd64 and linux/arm64. The tests run first and the
-# tag has to match the version in package.json; nothing is published
-# otherwise. Started by hand (workflow_dispatch), it builds both platforms
-# without publishing anything.
-name: Docker image
+# Releases a version tag vX.Y.Z, one step after the other, each only when the
+# one before passed:
+#   1. the tag has to match the version in package.json;
+#   2. the full test run (test.yml, as on every pull request);
+#   3. the Docker image on the GitHub Container Registry,
+#      ghcr.io/<owner>/calendar-ce with the tags X.Y.Z, X.Y, X and latest, for
+#      linux/amd64 and linux/arm64;
+#   4. a GitHub release of the tag, with notes of what changed since the
+#      version tag before (scripts/release-notes.mjs).
+# Started by hand (workflow_dispatch) on a branch, it runs the tests, builds
+# both platforms and writes the notes of the newest version tag into the run's
+# summary, and publishes nothing. Started by hand on a tag, it does what the
+# push of the tag does (for a push event that never arrived).
+name: Release
 
 on:
   push:
@@ -15,13 +22,31 @@ permissions:
   contents: read
 
 concurrency:
-  group: docker-${{ github.ref }}
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
 # Third-party actions are pinned to a commit; the comment names its release.
 jobs:
+  version:
+    name: The tag matches the app version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: The tag matches the version in package.json
+        if: github.ref_type == 'tag'
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match the version in package.json ($version)."
+            exit 1
+          fi
+
   tests:
     name: Tests
+    needs: version
     uses: ./.github/workflows/test.yml
 
   image:
@@ -36,15 +61,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - name: The tag matches the app version
-        if: github.ref_type == 'tag'
-        run: |
-          version="$(node -p "require('./package.json').version")"
-          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match the version in package.json ($version)."
-            exit 1
-          fi
 
       # Registry names are lower case, whatever the owner's name looks like.
       - name: Image name
@@ -97,3 +113,70 @@ jobs:
           cache-from: type=gha
           # A cache that cannot be saved slows the next build, it does not fail this one.
           cache-to: type=gha,mode=max,ignore-error=true
+
+  release:
+    name: GitHub release with release notes
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # The whole history and every tag: the notes go back to the tag before.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      # git only, nothing installed, no token. A failure costs the notes, not
+      # the release: the file then links the tag's commits.
+      - name: Write the release notes
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            tag=$GITHUB_REF_NAME
+          else
+            # A manual run on a branch: the newest version tag it has, to look at only.
+            tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || true)
+            if [ -z "$tag" ]; then
+              echo "::notice::No version tag on this branch: no release notes to show"
+              exit 0
+            fi
+          fi
+          if ! node scripts/release-notes.mjs "$tag" --out release-notes.md; then
+            echo "::warning::The release notes could not be written; the release links the commits instead"
+            printf 'The changes are in the [commits up to %s](%s/%s/commits/%s).\n' "$tag" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$tag" > release-notes.md
+          fi
+          version=${tag#v}
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/calendar-ce"
+          {
+            echo
+            echo '### Docker image'
+            echo
+            echo '```bash'
+            echo "docker pull $image:$version"
+            echo '```'
+            echo
+            echo "Also tagged \`${version%.*}\`, \`${version%%.*}\` and \`latest\`, for linux/amd64 and linux/arm64. Setting it up: [Self-hosting with Docker]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/tree/$tag#self-hosting-with-docker)."
+          } >> release-notes.md
+          {
+            echo "## Release notes of $tag"
+            echo
+            cat release-notes.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # A release that exists already is left as it is (a re-run): delete it
+      # by hand to publish the tag again.
+      - name: Publish the release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::notice::The release of $GITHUB_REF_NAME exists already: it is left as it is"
+            exit 0
+          fi
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "Calendar CE $GITHUB_REF_NAME" --notes-file release-notes.md
