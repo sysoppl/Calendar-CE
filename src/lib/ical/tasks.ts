@@ -2,6 +2,7 @@
 import ICAL from 'ical.js';
 import { addMissingTimezones, relatedToEnd } from './events';
 import { cloneRoot, errorKind, newUid, wrapCalendar, type ParsedObject } from './parse';
+import { readPersistent, writePersistent } from '../persistent';
 import { applyRecurrence, budgetRecurrence, readRecurrence, recurToIcal } from './recurrence';
 import { dateToIcal, nowUtc, setTextProp, setTimeProp, startOfLocalDay, zoneOf } from './time';
 import { localTimezone } from './timezone';
@@ -76,6 +77,7 @@ export function readTaskData(comp: ICAL.Component): TaskData {
     parentUid: related ? String(related.getFirstValue()) : undefined,
     ...readRecurrence(comp),
     alarms,
+    persistent: readPersistent(comp),
     created: timeValue(comp, 'created')?.toJSDate(),
     modified: timeValue(comp, 'last-modified')?.toJSDate(),
   };
@@ -158,6 +160,7 @@ function applyTaskData(comp: ICAL.Component, data: TaskData) {
   if (data.parentUid) comp.addPropertyWithValue('related-to', data.parentUid);
 
   for (const a of comp.getAllSubcomponents('valarm')) if (shownAlarms.has(a)) comp.removeSubcomponent(a);
+  writePersistent(comp, data.persistent);
   if (data.due) {
     for (const minutes of data.alarms) {
       const alarm = new ICAL.Component('valarm');
