@@ -9,4 +9,5 @@ export const remindersPl: Record<keyof typeof remindersEn, string> = {
   // The title of a notification whose item's own title is too long to show.
   'reminders.title.event': 'Przypomnienie o wydarzeniu',
   'reminders.title.task': 'Przypomnienie o zadaniu',
+  'reminders.done.missing': 'Nie znaleziono zadania, więc jego powiadomienie zostało zamknięte.',
 };

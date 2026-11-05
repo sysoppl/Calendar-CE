@@ -10,6 +10,7 @@
     <string name="reminder_channel_description">Event and task reminders</string>
     <string name="reminder_snooze">Snooze 10 min</string>
     <string name="reminder_dismiss">Dismiss</string>
+    <string name="reminder_done">Done</string>
     <string name="reminder_missed">Missed</string>
     <string name="reminder_no_title">(no title)</string>
     <string name="reminder_hidden_title">Hidden event</string>

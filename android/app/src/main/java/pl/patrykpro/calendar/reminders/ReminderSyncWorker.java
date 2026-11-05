@@ -120,6 +120,8 @@ public class ReminderSyncWorker extends Worker {
         }
 
         ReminderScheduler.rescheduleAll(context);
+        // Hourly: a persistent notification that went some other way (a cleaner app) goes up again.
+        ReminderNotifier.restoreStanding(context);
         // Stopped (replaced by a newer run, or out of time): what was fetched is in place, the record is left to a whole run.
         if (isStopped()) return Result.retry();
         store.recordWorkerRun(errors.isEmpty() ? null : String.join("\n", errors));
@@ -206,23 +208,27 @@ public class ReminderSyncWorker extends Worker {
      * named {@code hiddenTitle}, without its place. Hiding belongs to a series:
      * the web app writes it on the master only, and a server that expands
      * copies it onto the instances it makes but not onto stored overrides, so
-     * any VEVENT of a UID that carries it hides all of that UID's.
+     * any VEVENT of a UID that carries it hides all of that UID's. So it is
+     * with a persistent notification (X-PATRYKPRO-PERSISTENT:TRUE,
+     * src/lib/persistent.ts).
      */
     static boolean collectEvents(String calendarKey, String ics, long from, long to, String untitled, String hiddenTitle, List<Reminder> out) {
         boolean expanded = true;
         List<IcsMini.Component> calendars = IcsMini.parse(ics);
         Set<String> hidden = new HashSet<>();
+        Set<String> persistent = new HashSet<>();
         for (IcsMini.Component cal : calendars) {
             for (IcsMini.Component ev : cal.all("VEVENT")) {
-                String flag = ev.text("X-PATRYKPRO-HIDDEN");
-                if (flag != null && flag.trim().equalsIgnoreCase("TRUE")) hidden.add(String.valueOf(ev.text("UID")));
+                if (flagged(ev, "X-PATRYKPRO-HIDDEN")) hidden.add(String.valueOf(ev.text("UID")));
+                if (flagged(ev, "X-PATRYKPRO-PERSISTENT")) persistent.add(String.valueOf(ev.text("UID")));
             }
         }
         for (IcsMini.Component cal : calendars) {
             for (IcsMini.Component ev : cal.all("VEVENT")) {
                 if (ev.prop("RRULE") != null) expanded = false;
+                String uid = String.valueOf(ev.text("UID"));
                 try {
-                    collectEvent(calendarKey, ev, from, to, hidden.contains(String.valueOf(ev.text("UID"))) ? hiddenTitle : null, untitled, out);
+                    collectEvent(calendarKey, ev, from, to, hidden.contains(uid) ? hiddenTitle : null, persistent.contains(uid), untitled, out);
                 } catch (RuntimeException e) {
                     // One odd event costs its own reminders, not the calendar's.
                 }
@@ -231,8 +237,14 @@ public class ReminderSyncWorker extends Worker {
         return expanded;
     }
 
+    /** Whether a component carries {@code name}:TRUE, in any case. */
+    static boolean flagged(IcsMini.Component comp, String name) {
+        String flag = comp.text(name);
+        return flag != null && flag.trim().equalsIgnoreCase("TRUE");
+    }
+
     /** {@code hiddenTitle} names a hidden event (no place then); null for one that is not. */
-    private static void collectEvent(String calendarKey, IcsMini.Component ev, long from, long to, String hiddenTitle, String untitled, List<Reminder> out) {
+    private static void collectEvent(String calendarKey, IcsMini.Component ev, long from, long to, String hiddenTitle, boolean persistent, String untitled, List<Reminder> out) {
         if ("CANCELLED".equalsIgnoreCase(ev.text("STATUS"))) return;
         IcsMini.Time start = IcsMini.parseTime(ev.prop("DTSTART"));
         if (start == null) return;
@@ -263,7 +275,7 @@ public class ReminderSyncWorker extends Worker {
             String key = calendarKey + "|" + uid + "|" + start.millis + "|" + (at - start.millis);
             // A key too long to be read back would never fire; it is not made at all.
             if (!Reminder.keyFits(key)) continue;
-            out.add(new Reminder(key, at, title, place, start.floating && !absoluteTrigger(alarm), start.millis, start.allDay));
+            out.add(new Reminder(key, at, title, place, start.floating && !absoluteTrigger(alarm), start.millis, start.allDay, persistent, false));
         }
     }
 
@@ -296,6 +308,7 @@ public class ReminderSyncWorker extends Worker {
         if (title == null || title.isEmpty() || title.length() > MAX_REMINDER_TEXT) title = untitled;
         String uid = todo.text("UID");
         if (uid != null && uid.length() > MAX_UID) return;
+        boolean persistent = flagged(todo, "X-PATRYKPRO-PERSISTENT");
         List<IcsMini.Component> alarms = todo.all("VALARM");
         Set<Long> kept = keptOffsets(alarms, startMs, dueMs, dueMs);
         for (int i = 0; i < alarms.size() && i < MAX_ALARMS_PER_ITEM; i++) {
@@ -305,7 +318,7 @@ public class ReminderSyncWorker extends Worker {
             if (at == null || !kept.remove(at - dueMs) || at < from || at >= to) continue;
             String key = calendarKey + "|" + uid + "|" + dueMs + "|" + (at - dueMs);
             if (!Reminder.keyFits(key)) continue;
-            out.add(new Reminder(key, at, title, "", floating && !absoluteTrigger(alarm), dueMs, dueAllDay));
+            out.add(new Reminder(key, at, title, "", floating && !absoluteTrigger(alarm), dueMs, dueAllDay, persistent, true));
         }
     }
 

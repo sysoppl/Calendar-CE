@@ -321,6 +321,23 @@ export async function toggleTask(task: Task) {
   }
 }
 
+/**
+ * Marks a task done (a repeating one moves on to its next date), with the
+ * same Undo as ticking it. False when it is done already or the calendar
+ * refused the change, which the toast then says.
+ */
+export async function markTaskDone(task: Task): Promise<boolean> {
+  const obj = getParsedObject(task.objectUrl);
+  if (!obj || task.completed) return false;
+  try {
+    await applyWithUndo([{ type: 'update', url: obj.url, etag: obj.etag, data: setTaskCompleted(obj, true) }], t('toast.taskCompleted'));
+    return true;
+  } catch (err) {
+    toast(errorMessage(err), 'error');
+    return false;
+  }
+}
+
 export async function deleteTask(task: Task): Promise<boolean> {
   const ok = await useUi.getState().confirm({
     title: t('confirm.deleteTaskTitle'),

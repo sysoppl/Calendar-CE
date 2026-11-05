@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { IconRow as Row, SegmentedControl, Toggle } from '@/components/ui/Controls';
 import { DateField, TimeField } from '@/components/ui/DateTimeFields';
 import { RecurrenceFields } from '@/components/events/RecurrenceFields';
-import { AlarmFields } from '@/components/events/AlarmFields';
+import { AlarmFields, PersistentField } from '@/components/events/AlarmFields';
 import { TaskItem } from './TaskItem';
 
 export function TaskEditor() {
@@ -218,7 +218,12 @@ function TaskForm({ state }: { state: TaskEditorState }) {
 
         {data.due && (
           <Row icon={<Bell size={18} />}>
-            <AlarmFields alarms={data.alarms} allDay={data.dueAllDay} onChange={(alarms) => set({ alarms })} />
+            <AlarmFields alarms={data.alarms} allDay={data.dueAllDay} onChange={(alarms) => set({ alarms, ...(alarms.length || !data.persistent ? {} : { persistent: false }) })} />
+            {data.alarms.length > 0 && (
+              <div className="mt-2">
+                <PersistentField checked={!!data.persistent} task onChange={(persistent) => set({ persistent })} />
+              </div>
+            )}
           </Row>
         )}
 

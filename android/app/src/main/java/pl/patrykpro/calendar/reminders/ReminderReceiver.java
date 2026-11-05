@@ -7,7 +7,10 @@ import android.util.Log;
 
 import pl.patrykpro.calendar.vault.VaultException;
 
-/** Fires a reminder alarm, or snoozes or dismisses a shown reminder. */
+/**
+ * Fires a reminder alarm, or snoozes or dismisses a shown reminder, or puts
+ * a persistent one that was swiped away up again.
+ */
 public class ReminderReceiver extends BroadcastReceiver {
     private static final String TAG = "CalendarReminders";
     /** An alarm this far ahead of the stored time belongs to a reminder that was moved after the alarm was set. */
@@ -20,10 +23,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         final Context app = context.getApplicationContext();
         final String action = intent.getAction();
 
-        if (ReminderNotifier.ACTION_DISMISS.equals(action)) {
-            ReminderNotifier.cancel(app, key);
-            return;
-        }
+        if (ReminderNotifier.ACTION_DISMISS.equals(action)) ReminderNotifier.cancel(app, key);
 
         final long at = intent.getLongExtra("at", System.currentTimeMillis());
         // The texts are in the encrypted store, and reading it calls into the
@@ -31,7 +31,9 @@ public class ReminderReceiver extends BroadcastReceiver {
         final PendingResult pending = goAsync();
         new Thread(() -> {
             try {
-                if (ReminderNotifier.ACTION_SNOOZE.equals(action)) snooze(app, key);
+                if (ReminderNotifier.ACTION_DISMISS.equals(action)) unkeep(app, key);
+                else if (ReminderNotifier.ACTION_SWIPED.equals(action)) swiped(app, key);
+                else if (ReminderNotifier.ACTION_SNOOZE.equals(action)) snooze(app, key);
                 else fire(app, key, at);
             } catch (RuntimeException e) {
                 Log.w(TAG, "Handling a reminder failed: " + e.getClass().getSimpleName());
@@ -74,11 +76,34 @@ public class ReminderReceiver extends BroadcastReceiver {
         ReminderScheduler.rescheduleAll(app);
     }
 
-    private static void snooze(Context app, String key) {
-        Reminder r = null;
+    /** Dismissed: a persistent one is no longer kept up. */
+    private static Reminder unkeep(Context app, String key) {
         try {
-            r = ReminderStore.get(app).find(key);
-        } catch (VaultException ignored) {
+            return ReminderStore.get(app).removeStanding(key);
+        } catch (VaultException e) {
+            return null;
+        }
+    }
+
+    /** A persistent notification was swiped away: it is put up again while it is kept. */
+    private static void swiped(Context app, String key) {
+        ReminderStore store = ReminderStore.get(app);
+        try {
+            Reminder kept = store.isEnabled() ? store.findStanding(key) : null;
+            if (kept != null) ReminderNotifier.repost(app, kept);
+        } catch (VaultException e) {
+            Log.w(TAG, "Reminder store unavailable, a swiped persistent notification stays away");
+        }
+    }
+
+    private static void snooze(Context app, String key) {
+        // What is on screen, persistent or not: a persistent one comes back persistent.
+        Reminder r = unkeep(app, key);
+        if (r == null) {
+            try {
+                r = ReminderStore.get(app).find(key);
+            } catch (VaultException ignored) {
+            }
         }
         if (r == null) r = ReminderNotifier.shown(app, key);
         ReminderNotifier.cancel(app, key);

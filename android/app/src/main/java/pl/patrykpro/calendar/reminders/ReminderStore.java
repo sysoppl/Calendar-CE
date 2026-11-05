@@ -39,8 +39,9 @@ import pl.patrykpro.calendar.vault.VaultException;
  * the app knows about.
  *
  * Everything that names an event or a server (the sets with their titles,
- * the sync configuration with its passwords, snoozed reminders, the last
- * worker error) is kept in the {@link SecretVault}. The preferences file
+ * the sync configuration with its passwords, snoozed reminders, the
+ * notifications that stay up, the last worker error) is kept in the
+ * {@link SecretVault}. The preferences file
  * holds bookkeeping only. Methods that read the vault throw
  * {@link VaultException} when the Keystore fails: callers must tell "there
  * are no reminders" from "the reminders cannot be read right now".
@@ -51,6 +52,7 @@ public class ReminderStore {
     private static final String VAULT_SETS = "reminders.sets";
     private static final String VAULT_CONFIG = "reminders.config";
     private static final String VAULT_EXTRA = "reminders.extra";
+    private static final String VAULT_STANDING = "reminders.standing";
     private static final String VAULT_WORKER_ERROR = "reminders.workerError";
 
     private static final String KEY_SCHEDULED = "scheduled";
@@ -70,6 +72,12 @@ public class ReminderStore {
     private static final long FIRED_RETENTION_MS = 3L * 24 * 3600 * 1000;
     /** Snoozed and test reminders are kept this long after their time, for the check after a reboot. */
     private static final long EXTRA_RETENTION_MS = 24L * 3600 * 1000;
+    /**
+     * Notifications that stay up kept at most, the newest ones. The system
+     * keeps some 50 notifications of an app; an older one beyond these stays
+     * where it is but is no longer put up again.
+     */
+    static final int MAX_STANDING = 24;
 
     /**
      * One lock for the whole process. The app, the worker and the receivers
@@ -85,6 +93,7 @@ public class ReminderStore {
     private boolean migrated;
     private Map<String, ReminderSet> sets;
     private List<Reminder> extras;
+    private List<Reminder> standing;
     private Map<String, Long> fired;
     private String configJson;
     private String workerError;
@@ -205,6 +214,7 @@ public class ReminderStore {
 
     private static boolean same(Reminder a, Reminder b) {
         return a.at == b.at && a.floating == b.floating && a.start == b.start && a.allDay == b.allDay
+            && a.persistent == b.persistent && a.task == b.task
             && a.key.equals(b.key) && a.title.equals(b.title) && a.body.equals(b.body);
     }
 
@@ -374,6 +384,97 @@ public class ReminderStore {
                 return;
             }
             extras = next;
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Notifications that stay up (persistent reminders that were shown), one
+    // per item, oldest first: put up again after a swipe, a restart or an
+    // update, until Done, Snooze or Dismiss, or the app clears them.
+
+    private List<Reminder> loadStanding() throws VaultException {
+        if (standing != null) return standing;
+        migrate();
+        List<Reminder> out = new ArrayList<>();
+        String json = vault.getString(VAULT_STANDING);
+        if (json != null) {
+            try {
+                out = parseItems(new JSONArray(json));
+            } catch (JSONException ignored) {
+            }
+        }
+        standing = out;
+        return out;
+    }
+
+    private void writeStanding(List<Reminder> next) throws VaultException {
+        try {
+            if (next.isEmpty()) vault.remove(VAULT_STANDING);
+            else vault.putString(VAULT_STANDING, itemsJson(next).toString());
+        } catch (JSONException e) {
+            return;
+        }
+        standing = next;
+    }
+
+    /**
+     * Keeps a shown persistent reminder up, in place of the one of its item
+     * shown before. Returns those that gave way to it beyond {@link #MAX_STANDING}.
+     */
+    public List<Reminder> addStanding(Reminder reminder) throws VaultException {
+        synchronized (LOCK) {
+            String item = reminder.item();
+            List<Reminder> next = new ArrayList<>();
+            for (Reminder r : loadStanding()) {
+                if (!r.item().equals(item)) next.add(r);
+            }
+            next.add(reminder);
+            List<Reminder> dropped = new ArrayList<>();
+            while (next.size() > MAX_STANDING) dropped.add(next.remove(0));
+            writeStanding(next);
+            return dropped;
+        }
+    }
+
+    /** The notification kept up for the item of {@code key}, or null. */
+    public Reminder findStanding(String key) throws VaultException {
+        synchronized (LOCK) {
+            String item = Reminder.itemOf(key);
+            for (Reminder r : loadStanding()) {
+                if (r.item().equals(item)) return r;
+            }
+            return null;
+        }
+    }
+
+    /** Stops keeping up the notification of the item of {@code key}; the one that was kept, or null. */
+    public Reminder removeStanding(String key) throws VaultException {
+        synchronized (LOCK) {
+            String item = Reminder.itemOf(key);
+            List<Reminder> next = new ArrayList<>();
+            Reminder removed = null;
+            for (Reminder r : loadStanding()) {
+                if (r.item().equals(item)) removed = r;
+                else next.add(r);
+            }
+            if (removed != null) writeStanding(next);
+            return removed;
+        }
+    }
+
+    /** Every notification kept up, oldest first. */
+    public List<Reminder> standing() throws VaultException {
+        synchronized (LOCK) {
+            return new ArrayList<>(loadStanding());
+        }
+    }
+
+    /** Stops keeping up all of them (reminders turned off); the ones that were kept. */
+    public List<Reminder> clearStanding() throws VaultException {
+        synchronized (LOCK) {
+            List<Reminder> all = new ArrayList<>(loadStanding());
+            if (!all.isEmpty()) writeStanding(new ArrayList<>());
+            return all;
         }
     }
 

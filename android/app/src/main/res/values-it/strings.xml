@@ -8,6 +8,7 @@
     <string name="reminder_channel_description">Promemoria di eventi e attività</string>
     <string name="reminder_snooze">Posticipa 10 min</string>
     <string name="reminder_dismiss">Ignora</string>
+    <string name="reminder_done">Fatto</string>
     <string name="reminder_missed">Perso</string>
     <string name="reminder_no_title">(senza titolo)</string>
     <string name="reminder_hidden_title">Evento nascosto</string>

@@ -8,6 +8,7 @@
     <string name="reminder_channel_description">Lembretes de eventos e tarefas</string>
     <string name="reminder_snooze">Adiar 10 min</string>
     <string name="reminder_dismiss">Dispensar</string>
+    <string name="reminder_done">Concluído</string>
     <string name="reminder_missed">Perdido</string>
     <string name="reminder_no_title">(sem título)</string>
     <string name="reminder_hidden_title">Evento oculto</string>

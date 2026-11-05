@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { IconRow as Row } from '@/components/ui/Controls';
 import { CalendarRow, DateTimeRow, DescriptionRow, LocationRow, MilestoneRow, ParticipantsRow, TitleRow } from './EventFields';
 import { RecurrenceFields } from './RecurrenceFields';
-import { AlarmFields } from './AlarmFields';
+import { AlarmFields, PersistentField } from './AlarmFields';
 
 export function EventEditor() {
   const state = useUi((s) => s.eventEditor);
@@ -172,9 +172,15 @@ function EditorForm({ state }: { state: EventEditorState }) {
             allDay={data.allDay}
             onChange={(alarms) => {
               setAlarmsTouched(true);
-              set({ alarms });
+              // Without a notification there is nothing to keep.
+              set({ alarms, ...(alarms.length || !data.persistent ? {} : { persistent: false }) });
             }}
           />
+          {data.alarms.length > 0 && (
+            <div className="mt-2">
+              <PersistentField checked={!!data.persistent} task={false} onChange={(persistent) => set({ persistent })} />
+            </div>
+          )}
         </Row>
 
         <DescriptionRow data={data} set={set} rows={3} />

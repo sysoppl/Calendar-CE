@@ -13,6 +13,10 @@
 // gets the day alone. The place goes on a second line. The Android engine
 // words it the same way (reminders/RelativeWhen.java), so it gets the item's
 // time rather than a text.
+//
+// A reminder of an item that keeps its notification (src/lib/persistent.ts)
+// is marked `persistent`; what takes such a notification down again is
+// src/lib/standingReminders.ts.
 import { differenceInCalendarDays } from 'date-fns';
 import { t, resolveLang, translate } from '@/i18n';
 import { useData, type Calendar } from '@/store/data';
@@ -26,6 +30,7 @@ import { readTask } from './ical/tasks';
 import { selfEmailsByAccount } from './identity';
 import { isNative } from './platform';
 import { NativeReminders, type NativeReminder } from './nativeReminders';
+import { completeFromReminder, finishedStanding, noteStandingWoke } from './standingReminders';
 
 export interface Reminder {
   id: number;
@@ -43,6 +48,8 @@ export interface Reminder {
   location?: string;
   /** A task: `start` and `end` are both its due time. */
   task?: boolean;
+  /** Its notification stays until it is dealt with (src/lib/persistent.ts). */
+  persistent?: boolean;
   /**
    * Wall-clock time rather than an instant: the item's time names no zone
    * (all-day events, date-only task dues, times without TZID or UTC) and the
@@ -165,6 +172,7 @@ export function computeReminders(now: Date, horizonMs: number, only?: (calendar:
               allDay: occ.allDay,
               location: (!occ.hidden && occ.location.length <= MAX_REMINDER_TEXT && occ.location) || undefined,
               floating: occ.floating && !occ.fixedAlarms?.includes(minutes),
+              ...(occ.persistent ? { persistent: true } : {}),
             };
             if (!occ.fixedAlarms?.includes(minutes)) out.push(reminder);
             else {
@@ -192,6 +200,7 @@ export function computeReminders(now: Date, horizonMs: number, only?: (calendar:
             allDay: task.dueAllDay,
             task: true,
             floating: !!task.dueFloating,
+            ...(task.persistent ? { persistent: true } : {}),
           });
         }
       }
@@ -241,6 +250,8 @@ export function toNativeReminder(r: Reminder): NativeReminder {
   const item: NativeReminder = { key: r.key, at: r.at.getTime(), title: r.title, body: r.location ?? '', start: r.start.getTime() };
   if (r.allDay) item.allDay = true;
   if (r.floating) item.floating = true;
+  if (r.task) item.task = true;
+  if (r.persistent) item.persistent = true;
   return item;
 }
 
@@ -272,16 +283,58 @@ export async function requestNotificationPermission(): Promise<PermissionState> 
 export const NOTIFICATION_ICON = '/icons/icon-192.png';
 export const NOTIFICATION_BADGE = '/icons/badge-96.png';
 
-function show(title: string, body: string) {
+/**
+ * The notifications this page put up that stay (`requireInteraction`), by
+ * reminder key, until they are clicked, closed or dealt with in the calendar.
+ */
+const webStanding = new Map<string, Notification>();
+
+/** The tag of a reminder's notification that stays: one per item, the newest of its reminders replaces the one before. */
+export function standingTag(key: string): string {
+  return `standing:${key.replace(/\|snooze\d+$/, '').replace(/\|-?\d+$/, '')}`;
+}
+
+function show(title: string, body: string, standingKey?: string) {
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     try {
-      new Notification(title, { body, icon: NOTIFICATION_ICON, badge: NOTIFICATION_BADGE, tag: title });
+      if (!standingKey) {
+        new Notification(title, { body, icon: NOTIFICATION_ICON, badge: NOTIFICATION_BADGE, tag: title });
+        return;
+      }
+      const tag = standingTag(standingKey);
+      for (const [key, n] of webStanding) {
+        if (standingTag(key) !== tag) continue;
+        webStanding.delete(key);
+        n.close();
+      }
+      // Stays until it is clicked or closed, in the browsers that let it (not every one does).
+      const n = new Notification(title, { body, icon: NOTIFICATION_ICON, badge: NOTIFICATION_BADGE, tag, requireInteraction: true });
+      webStanding.set(standingKey, n);
+      n.addEventListener('close', () => {
+        if (webStanding.get(standingKey) === n) webStanding.delete(standingKey);
+      });
       return;
     } catch {
       /* some browsers only allow notifications from a service worker */
     }
   }
   useUi.getState().toast(`${title} — ${body.split('\n')[0]}`, 'info');
+}
+
+/** Closes the notifications this page keeps up whose items were dealt with, or all of them when reminders are off. */
+function settleWeb(enabled: boolean) {
+  const done = enabled ? finishedStanding([...webStanding.keys()]) : [...webStanding.keys()];
+  for (const key of done) {
+    webStanding.get(key)?.close();
+    webStanding.delete(key);
+  }
+}
+
+/** Takes down the native engine's standing notifications whose items were dealt with. */
+async function settleNative() {
+  const { keys } = await NativeReminders.listStanding();
+  const done = finishedStanding(keys);
+  if (done.length) await NativeReminders.clearStanding({ keys: done });
 }
 
 export async function showTestNotification() {
@@ -303,6 +356,7 @@ let webSince: number | undefined;
 function scheduleWeb(enabled: boolean) {
   for (const timer of timers.values()) clearTimeout(timer);
   timers.clear();
+  settleWeb(enabled);
   if (!enabled) return;
   const now = new Date();
   webSince ??= now.getTime();
@@ -313,7 +367,7 @@ function scheduleWeb(enabled: boolean) {
       setTimeout(() => {
         fired.add(r.key);
         // Worded now: set up last night, "Tomorrow" is "Today" by the time it shows.
-        show(r.title, reminderText(r, new Date()));
+        show(r.title, reminderText(r, new Date()), r.persistent ? r.key : undefined);
       }, Math.max(0, r.at.getTime() - Date.now())),
     );
   }
@@ -330,6 +384,8 @@ async function scheduleNative(enabled: boolean) {
     for (const r of computeReminders(new Date(), NATIVE_HORIZON_DAYS * 86400000)) sets[r.calendarId].push(toNativeReminder(r));
   }
   await NativeReminders.setReminders({ sets, enabled });
+  // Turned off, the engine has taken them all down itself.
+  if (enabled) await settleNative();
 }
 
 /** Gives the native background worker what it needs to refresh server calendars. */
@@ -367,6 +423,10 @@ async function pushSyncConfig() {
 
 let debounce: ReturnType<typeof setTimeout> | undefined;
 
+/** How often the page notes that it runs, and the gap between two notes that counts as not having run. */
+const BEAT_MS = 20_000;
+const SLEPT_MS = 3 * 60_000;
+
 /** Recomputes reminders; call whenever data or settings change. */
 export function rescheduleReminders() {
   clearTimeout(debounce);
@@ -392,6 +452,12 @@ export function startReminders(): () => void {
     if (s.revision !== prev.revision || s.calendars !== prev.calendars) rescheduleReminders();
     if (isNative && (s.accounts !== prev.accounts || s.calendars !== prev.calendars || s.hydrated !== prev.hydrated)) void pushSyncConfig().catch(() => {});
   });
+  // Done on a task's notification (Android): the app opens and marks it done.
+  const doneListener = isNative
+    ? NativeReminders.addListener('reminderDone', ({ key }) => {
+        void completeFromReminder(key, (keys) => NativeReminders.clearStanding({ keys }));
+      })
+    : undefined;
   const unsubSettings = useSettings.subscribe((s, prev) => {
     if (s.notificationsEnabled !== prev.notificationsEnabled || s.language !== prev.language || s.deviceLanguage !== prev.deviceLanguage || s.timeFormat !== prev.timeFormat || s.myEmails !== prev.myEmails) {
       rescheduleReminders();
@@ -399,9 +465,20 @@ export function startReminders(): () => void {
     }
   });
   const hourly = setInterval(rescheduleReminders, 3600000);
+  // A page that did not run for a while (a device that slept, a tab the
+  // browser froze) wakes with data that may be behind: a notification that
+  // stays is not taken down on what it holds until a sync brings it up to date.
+  let beat = Date.now();
+  const heart = setInterval(() => {
+    const now = Date.now();
+    if (now - beat > SLEPT_MS) noteStandingWoke(now);
+    beat = now;
+  }, BEAT_MS);
   return () => {
     unsubData();
     unsubSettings();
     clearInterval(hourly);
+    clearInterval(heart);
+    void doneListener?.then((l) => l.remove()).catch(() => {});
   };
 }

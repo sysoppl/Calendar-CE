@@ -2,6 +2,7 @@
 import ICAL from 'ical.js';
 import { normalizeItemColor } from '../color';
 import { readHidden, writeHidden } from '../hidden';
+import { readPersistent, writePersistent } from '../persistent';
 import { readSince, writeSince } from '../milestone';
 import { cloneRoot, newUid, wrapCalendar, type ParsedObject } from './parse';
 import { applyRecurrence, budgetExpansion, budgetRecurrence, keepsRule, readRecurrence } from './recurrence';
@@ -161,6 +162,7 @@ export function readEventData(comp: ICAL.Component, start?: ICAL.Time, end?: ICA
     categories: readCategories(comp),
     since: readSince(comp),
     hidden: readHidden(comp),
+    persistent: readPersistent(comp),
   };
 }
 
@@ -229,6 +231,7 @@ function toOccurrence(
     // A series' date and choice: an override (a moved instance) does not carry its own.
     since: readSince(master ?? comp),
     hidden: readHidden(master ?? comp),
+    persistent: readPersistent(master ?? comp),
   };
 }
 
@@ -444,6 +447,7 @@ export function eventDataFor(obj: ParsedObject, occ: Pick<Occurrence, 'recurrenc
       ruleAsWritten,
       since: readSince(master),
       hidden: readHidden(master),
+      persistent: readPersistent(master),
       start: occ.start,
       end: occ.end,
     };
@@ -542,6 +546,7 @@ export function applyEventData(comp: ICAL.Component, data: EventData, opts: { rr
   // A series' master carries them; updateEvent leaves them off an override of one (see `since`).
   writeSince(comp, data.since);
   writeHidden(comp, data.hidden);
+  writePersistent(comp, data.persistent);
   touch(comp);
 }
 
@@ -725,13 +730,15 @@ export function updateEvent(
 
   if (scope === 'single') {
     // The override drops the copies of the master's date and choice ensureException made.
-    applyEventData(ensureException(root, master, rid), { ...data, rrule: undefined, since: undefined, hidden: undefined }, { rrule: false });
-    // The date counted from and hiding are the series': changed on one instance, they change on all.
+    applyEventData(ensureException(root, master, rid), { ...data, rrule: undefined, since: undefined, hidden: undefined, persistent: undefined }, { rrule: false });
+    // The date counted from, hiding and persistent notifications are the series': changed on one instance, they change on all.
     const sinceChanged = !sameSince(readSince(master), data.since);
     const hiddenChanged = readHidden(master) !== !!data.hidden;
+    const persistentChanged = readPersistent(master) !== !!data.persistent;
     if (sinceChanged) writeSince(master, data.since);
     if (hiddenChanged) writeHidden(master, data.hidden);
-    if (sinceChanged || hiddenChanged) touch(master, false);
+    if (persistentChanged) writePersistent(master, data.persistent);
+    if (sinceChanged || hiddenChanged || persistentChanged) touch(master, false);
     return [{ type: 'update', url: obj.url, etag: obj.etag, data: serialize(root) }];
   }
 

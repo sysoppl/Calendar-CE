@@ -28,10 +28,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import pl.patrykpro.calendar.R;
 import pl.patrykpro.calendar.vault.VaultException;
@@ -41,12 +44,21 @@ import pl.patrykpro.calendar.vault.VaultException;
  *
  * The web app pushes the reminders it computed (it knows every calendar,
  * including device-only ones) and the CalDAV account configuration the background
- * worker needs to refresh server calendars on its own.
+ * worker needs to refresh server calendars on its own. It also tells which
+ * persistent notifications have been dealt with in the calendar
+ * ({@code listStanding}, {@code clearStanding}), and hears of Done on one
+ * ({@code reminderDone}).
  */
 // The notification permission is asked for by NotificationPrompt, not through Capacitor's permission
 // requests, so the annotation declares none.
 @CapacitorPlugin(name = "Reminders")
 public class RemindersPlugin extends Plugin {
+    /**
+     * Done taps this process has passed on. The activity's intent is handed
+     * to the page again when the activity is made anew (a turn of the
+     * screen); a task reopened since must not be marked done once more.
+     */
+    private static final Set<String> doneHandled = Collections.synchronizedSet(new HashSet<>());
 
     @Override
     public void load() {
@@ -55,7 +67,38 @@ public class RemindersPlugin extends Plugin {
         NotificationPrompt.register(getActivity());
         ReminderNotifier.ensureChannel(context);
         ReminderSyncWorker.ensurePeriodic(context);
-        new Thread(() -> ReminderScheduler.rescheduleAll(context)).start();
+        new Thread(() -> {
+            ReminderScheduler.rescheduleAll(context);
+            // Force-stopping the app takes its notifications away too.
+            ReminderNotifier.restoreStanding(context);
+        }).start();
+        if (getActivity() != null) passOnDone(getActivity().getIntent());
+    }
+
+    @Override
+    protected void handleOnNewIntent(Intent intent) {
+        super.handleOnNewIntent(intent);
+        passOnDone(intent);
+    }
+
+    /**
+     * Done on a task's persistent notification opened the app: the page marks
+     * the task done (src/lib/standingReminders.ts) and then clears the
+     * notification. Kept until the page listens, which a page that is still
+     * starting does a moment later. Not from the list of recent apps, which
+     * starts the app again with the intent it was opened with.
+     */
+    static boolean isDone(String action, int flags) {
+        return ReminderNotifier.ACTION_DONE.equals(action) && (flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0;
+    }
+
+    private void passOnDone(Intent intent) {
+        if (intent == null || !isDone(intent.getAction(), intent.getFlags())) return;
+        String key = intent.getStringExtra("key");
+        if (key == null || !doneHandled.add(key + "|" + intent.getLongExtra(ReminderNotifier.EXTRA_POSTED, 0))) return;
+        JSObject data = new JSObject();
+        data.put("key", key);
+        notifyListeners("reminderDone", data, true);
     }
 
     @PluginMethod
@@ -81,6 +124,8 @@ public class RemindersPlugin extends Plugin {
                 store.setEnabled(enabled);
                 store.replaceAllSets(parsed, "app");
                 int scheduled = ReminderScheduler.rescheduleAll(context);
+                // Reminders turned off take the persistent notifications down with them.
+                if (!enabled) ReminderNotifier.restoreStanding(context);
                 JSObject res = new JSObject();
                 res.put("scheduled", scheduled);
                 call.resolve(res);
@@ -266,6 +311,43 @@ public class RemindersPlugin extends Plugin {
         long at = System.currentTimeMillis() + delay * 1000L;
         ReminderScheduler.scheduleOne(getContext(), new Reminder("test|" + at, at, title, body));
         call.resolve();
+    }
+
+    /** The reminder keys of the persistent notifications kept up, oldest first (src/lib/standingReminders.ts). */
+    @PluginMethod
+    public void listStanding(PluginCall call) {
+        Context context = getContext();
+        getBridge().execute(() -> {
+            JSArray keys = new JSArray();
+            try {
+                for (Reminder r : ReminderStore.get(context).standing()) keys.put(r.key);
+            } catch (VaultException e) {
+                // None that can be named: nothing is cleared.
+            }
+            JSObject res = new JSObject();
+            res.put("keys", keys);
+            call.resolve(res);
+        });
+    }
+
+    /** Takes down, for good, the persistent notifications of the items of these keys: the app found them dealt with. */
+    @PluginMethod
+    public void clearStanding(PluginCall call) {
+        JSArray keys = call.getArray("keys", new JSArray());
+        Context context = getContext();
+        getBridge().execute(() -> {
+            try {
+                List<String> list = new ArrayList<>();
+                for (int i = 0; i < keys.length(); i++) {
+                    Object key = keys.opt(i);
+                    if (key instanceof String) list.add((String) key);
+                }
+                ReminderNotifier.clearStanding(context, list);
+                call.resolve();
+            } catch (VaultException e) {
+                call.reject(e.getMessage());
+            }
+        });
     }
 
     @PluginMethod

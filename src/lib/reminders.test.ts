@@ -89,6 +89,29 @@ describe('computeReminders', () => {
   });
 });
 
+describe('reminders whose notification stays', () => {
+  it('are marked so, for events and tasks, and reach the native engine with it', () => {
+    const at = new Date(Date.now() + 2 * 3600_000);
+    const pinned = createEventIcs({ uid: 'pills', title: 'Take the pills', description: '', location: '', start: at, end: at, allDay: false, timezone: 'UTC', alarms: [10], busy: true, attendees: [], categories: [], persistent: true });
+    const plain = createEventIcs({ uid: 'call', title: 'Call', description: '', location: '', start: at, end: at, allDay: false, timezone: 'UTC', alarms: [5], busy: true, attendees: [], categories: [] });
+    const task = createTaskIcs(emptyTask({ uid: 'rent', title: 'Pay rent', due: at, dueAllDay: false, alarms: [0], persistent: true }));
+    useData.setState({
+      calendars: [calendar('local|events', ['VEVENT']), calendar('local|tasks', ['VTODO'])],
+      objects: { 'local|events': { pills: raw('local|events', 'pills', pinned), call: raw('local|events', 'call', plain) }, 'local|tasks': { rent: raw('local|tasks', 'rent', task) } },
+    });
+    const reminders = computeReminders(new Date(), 3 * 3600_000);
+    expect(reminders.map((r) => [r.title, !!r.persistent])).toEqual([
+      ['Take the pills', true],
+      ['Call', false],
+      ['Pay rent', true],
+    ]);
+    expect(toNativeReminder(reminders[0])).toMatchObject({ persistent: true });
+    expect(toNativeReminder(reminders[0])).not.toHaveProperty('task');
+    expect(toNativeReminder(reminders[2])).toMatchObject({ persistent: true, task: true });
+    expect(toNativeReminder(reminders[1])).not.toHaveProperty('persistent');
+  });
+});
+
 describe('the key of a reminder', () => {
   const at = (hours: number) => new Date(Math.ceil((Date.now() + hours * 3600_000) / 60_000) * 60_000);
   const meeting = (start: Date, extra = '') =>
@@ -356,6 +379,41 @@ describe('a notification in the browser', () => {
     rescheduleReminders();
     await vi.advanceTimersByTimeAsync(2000);
     expect(shown).toHaveLength(1);
+  });
+
+  it('asks one that stays to stay on screen, and closes it once its task is done', async () => {
+    vi.useFakeTimers({ now: new Date(2026, 9, 20, 9, 50), toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+    const open: { title: string; tag?: string; requireInteraction?: boolean; closed: boolean }[] = [];
+    vi.stubGlobal(
+      'Notification',
+      class {
+        static permission = 'granted';
+        entry: (typeof open)[number];
+        constructor(title: string, options: NotificationOptions) {
+          this.entry = { title, tag: options.tag, requireInteraction: options.requireInteraction, closed: false };
+          open.push(this.entry);
+        }
+        addEventListener() {}
+        close() {
+          this.entry.closed = true;
+        }
+      },
+    );
+    const due = new Date(2026, 9, 20, 10, 0);
+    const task = (completed: boolean) => createTaskIcs(emptyTask({ uid: 'rent', title: 'Pay rent', due, dueAllDay: false, alarms: [5], persistent: true, completed }));
+    useSettings.setState({ notificationsEnabled: true, language: 'en', timeFormat: '24h' });
+    useData.setState({ hydrated: true, accounts: [], calendars: [calendar('local|tasks', ['VTODO'])], objects: { 'local|tasks': { rent: raw('local|tasks', 'rent', task(false)) } } });
+    rescheduleReminders();
+    await vi.advanceTimersByTimeAsync(6 * 60_000);
+    expect(open).toEqual([{ title: 'Pay rent', tag: expect.stringMatching(/^standing:rent\|/), requireInteraction: true, closed: false }]);
+    // Still wanted: the next recomputation leaves it.
+    rescheduleReminders();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(open[0].closed).toBe(false);
+    useData.setState((s) => ({ revision: s.revision + 1, objects: { 'local|tasks': { rent: raw('local|tasks', 'rent', task(true)) } } }));
+    rescheduleReminders();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(open[0].closed).toBe(true);
   });
 
   it('carries the app icon and its badge, which the icon renderer writes', async () => {

@@ -134,6 +134,9 @@ const messages: Record<MessageKey, string> = {
   'editor.notifications': 'Сповіщення',
   'editor.addNotification': 'Додати сповіщення',
   'editor.notificationsMax': 'Подія або завдання може мати не більше {n} сповіщень.',
+  'editor.persistent': 'Постійне сповіщення',
+  'editor.persistentHint.event': 'Сповіщення залишається, доки його не закрито.',
+  'editor.persistentHint.task': 'Сповіщення залишається, доки його не закрито або завдання не виконано.',
   'editor.calendar': 'Календар',
   'editor.description': 'Додати опис',
   'editor.showAs': 'Показувати мене як',
@@ -764,6 +767,7 @@ const messages: Record<MessageKey, string> = {
   'reminders.when.at': '{day} о {time}',
   'reminders.title.event': 'Нагадування про подію',
   'reminders.title.task': 'Нагадування про завдання',
+  'reminders.done.missing': 'Завдання не знайдено, тому його сповіщення закрито.',
 };
 
 const holidays: Record<string, string> = {

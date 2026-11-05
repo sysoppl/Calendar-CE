@@ -55,12 +55,12 @@ export function Toggle({
 }
 
 /** Checkbox with a label, filled with the accent colour when ticked. */
-export function Checkbox({ checked, onChange, children, id }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode; id?: string }) {
+export function Checkbox({ checked, onChange, children, id, describedBy }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode; id?: string; describedBy?: string }) {
   return (
     // `relative`: the hidden input stays inside the label. Placed anywhere else, the WebView
     // scrolls the page to it when a tap on the label focuses it (a jump on large screens).
     <label className={`relative flex cursor-pointer items-center gap-2 select-none ${TOUCH_MIN_H}`}>
-      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" />
+      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} aria-describedby={describedBy} className="peer sr-only" />
       <span
         className={`peer-focus-visible:outline-primary flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-1 ${
           checked ? 'bg-primary border-primary text-primary-contrast' : 'border-border bg-bg'

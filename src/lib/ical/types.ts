@@ -86,6 +86,8 @@ export interface EventData {
   since?: Date;
   /** The calendar shows "Hidden event" until it is opened (X-PATRYKPRO-HIDDEN, src/lib/hidden.ts); the series', as `since`. */
   hidden?: boolean;
+  /** Its notifications stay until they are dealt with (X-PATRYKPRO-PERSISTENT, src/lib/persistent.ts); the series', as `hidden`. */
+  persistent?: boolean;
 }
 
 export interface Occurrence {
@@ -122,6 +124,8 @@ export interface Occurrence {
   since?: Date;
   /** Its name is not shown until it is opened (EventData.hidden). */
   hidden?: boolean;
+  /** Its notifications stay until they are dealt with (EventData.persistent). */
+  persistent?: boolean;
 }
 
 export type TaskStatus = 'NEEDS-ACTION' | 'IN-PROCESS' | 'COMPLETED' | 'CANCELLED';
@@ -145,6 +149,8 @@ export interface TaskData {
   /** Set instead of `rrule` for a recurrence the editor cannot show; `rrule`, when set, replaces it. */
   ruleAsWritten?: RuleAsWritten;
   alarms: number[];
+  /** Its notifications stay until it is done or they are dismissed (X-PATRYKPRO-PERSISTENT, src/lib/persistent.ts). */
+  persistent?: boolean;
   created?: Date;
   modified?: Date;
 }

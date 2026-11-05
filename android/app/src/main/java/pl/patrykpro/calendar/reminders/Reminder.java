@@ -48,6 +48,15 @@ public class Reminder {
     public final long start;
     /** The item takes whole days: its time is a day (midnight on the device's clock), not a time of day. */
     public final boolean allDay;
+    /**
+     * The notification stays until it is dealt with (src/lib/persistent.ts):
+     * pinned, put up again when it is swiped away, after a restart and after an
+     * update, until Done, Snooze or Dismiss, or until the app says the item
+     * was dealt with ({@link ReminderStore#standing}).
+     */
+    public final boolean persistent;
+    /** A task's reminder: a persistent notification of one offers Done. */
+    public final boolean task;
 
     public Reminder(String key, long at, String title, String body) {
         this(key, at, title, body, false);
@@ -58,6 +67,10 @@ public class Reminder {
     }
 
     public Reminder(String key, long at, String title, String body, boolean floating, long start, boolean allDay) {
+        this(key, at, title, body, floating, start, allDay, false, false);
+    }
+
+    public Reminder(String key, long at, String title, String body, boolean floating, long start, boolean allDay, boolean persistent, boolean task) {
         this.key = key == null ? "" : key;
         this.at = at;
         this.title = clip(title, MAX_TITLE);
@@ -65,6 +78,8 @@ public class Reminder {
         this.floating = floating;
         this.start = start;
         this.allDay = start != NO_START && allDay;
+        this.persistent = persistent;
+        this.task = task;
     }
 
     /**
@@ -84,12 +99,12 @@ public class Reminder {
     /** The same reminder at another time, for an item that starts at another time too (moved with the clock). */
     public Reminder moved(long time, long itemStart) {
         if (time == at && itemStart == start) return this;
-        return new Reminder(key, time, title, body, floating, hasStart() ? itemStart : NO_START, allDay);
+        return new Reminder(key, time, title, body, floating, hasStart() ? itemStart : NO_START, allDay, persistent, task);
     }
 
-    /** A copy under another key at another, fixed moment: what a snooze shows again. */
+    /** A copy under another key at another, fixed moment: what a snooze shows again (persistent when this one is). */
     public Reminder snoozed(String snoozedKey, long time) {
-        return new Reminder(snoozedKey, time, title, body, false, start, allDay);
+        return new Reminder(snoozedKey, time, title, body, false, start, allDay, persistent, task);
     }
 
     /**
@@ -129,6 +144,11 @@ public class Reminder {
         return idFor(itemOf(key));
     }
 
+    /** The item (an event's instance, a task at its due time) this reminder is one of; all of its reminders share one notification. */
+    public String item() {
+        return itemOf(key);
+    }
+
     /**
      * The key without its lead time: every key ends in "|" and the minutes
      * (the app) or the offset (the worker), and a snoozed
@@ -161,6 +181,8 @@ public class Reminder {
             o.put("start", start);
             if (allDay) o.put("allDay", true);
         }
+        if (persistent) o.put("persistent", true);
+        if (task) o.put("task", true);
         return o;
     }
 
@@ -176,6 +198,7 @@ public class Reminder {
         Object start = o.opt("start");
         // Written by the app, the worker or an earlier version (which had no start and a whole text).
         long itemStart = start instanceof Number ? ((Number) start).longValue() : NO_START;
-        return new Reminder(key, o.optLong("at"), text(o, "title"), text(o, "body"), o.optBoolean("floating", false), itemStart, o.optBoolean("allDay", false));
+        return new Reminder(key, o.optLong("at"), text(o, "title"), text(o, "body"), o.optBoolean("floating", false), itemStart, o.optBoolean("allDay", false),
+            o.optBoolean("persistent", false), o.optBoolean("task", false));
     }
 }
