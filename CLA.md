@@ -1,20 +1,24 @@
 # Calendar CE Contributor License Agreement
 
-Version 1.0, 4 November 2026
+Version 1.1, 5 November 2026 (version 1.0 of 4 November 2026 with the product's new name; the terms are the same)
 
-Thank you for contributing to Calendar Community Edition ("Calendar CE"). This agreement lets the maintainer use
-your contribution in Calendar CE and in other editions of Calendar, including the hosted edition, while you keep the
-copyright in it. You sign it once, by following the instructions of the CLA Assistant bot on your first pull request;
-it then covers all your contributions.
+Thank you for contributing to Calendar CE. This agreement lets the maintainer use your contribution in the
+self-hosted edition published in this repository and in the other editions of Calendar CE, including the hosted
+edition, while you keep the copyright in it. You sign it once, by following the instructions of the CLA Assistant bot
+on your first pull request; it then covers all your contributions.
 
 ## 1. Definitions
 
 - **"You"** means the person or the legal entity that signs this agreement. If you contribute on behalf of an
   employer or another organisation, "You" means that organisation, and you confirm that you may sign for it.
-- **"Maintainer"** means the person who owns the GitHub account `sysoppl` and publishes Calendar CE at
-  <https://github.com/sysoppl/Calendar-CE> and Calendar at <https://patryk.pro>, together with their successors and
-  anyone to whom they transfer the rights in Calendar.
-- **"Contribution"** means any work You submit to the Maintainer for inclusion in Calendar CE: code, documentation,
+- **"Calendar CE"** means the calendar app the Maintainer publishes under that name, until November 2026 also as
+  "Calendar" and "E2EE Calendar", in all its editions: the self-hosted edition in the repository
+  <https://github.com/sysoppl/Calendar-CE> (the **"Repository"**), and the hosted edition at
+  <https://calendar.patryk.pro> with its apps.
+- **"Maintainer"** means the person who owns the GitHub account `sysoppl` and publishes the Repository and
+  Calendar CE at <https://patryk.pro>, together with their successors and anyone to whom they transfer the rights in
+  Calendar CE.
+- **"Contribution"** means any work You submit to the Maintainer for inclusion in the Repository: code, documentation,
   translations, images or other material, sent through a pull request, a patch, an issue or in any other way, unless
   You mark it in writing as "Not a Contribution" when You submit it.
 
@@ -33,12 +37,12 @@ to use each Contribution and works derived from it, in all of the following fiel
 6. granting sublicences in any of these fields, under any licence terms, including open-source licences and
    proprietary terms.
 
-This licence covers editions of Calendar that are not published under the GNU Affero General Public License. The
-Maintainer may exercise it through others, and may transfer it together with the rights in Calendar.
+This licence covers editions of Calendar CE that are not published under the GNU Affero General Public License. The
+Maintainer may exercise it through others, and may transfer it together with the rights in Calendar CE.
 
 ## 3. Patent licence
 
-You grant the Maintainer, and everyone who receives Calendar or a work based on it from the Maintainer, a perpetual,
+You grant the Maintainer, and everyone who receives Calendar CE or a work based on it from the Maintainer, a perpetual,
 worldwide, non-exclusive, free of charge, royalty-free and irrevocable patent licence to make, have made, use, sell,
 offer for sale, import and otherwise transfer each Contribution, alone or combined with the work it was submitted to.
 This licence covers only the patent claims You can license that are necessarily infringed by the Contribution alone
@@ -69,10 +73,10 @@ You will tell the Maintainer if any of this stops being true.
 You provide your Contributions "as is", without any warranty or condition, express or implied, except for the
 promises in section 5. The Maintainer does not have to use, merge or publish any Contribution.
 
-## 7. The community edition stays open
+## 7. The self-hosted edition stays open
 
-A Contribution merged into Calendar CE stays available in Calendar CE under the GNU Affero General Public License,
-version 3, or under another licence approved by the Open Source Initiative.
+A Contribution merged into the Repository stays available in the Repository under the GNU Affero General Public
+License, version 3, or under another licence approved by the Open Source Initiative.
 
 ## 8. Final provisions
 
