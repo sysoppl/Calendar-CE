@@ -219,12 +219,22 @@ function ipv6Groups(address) {
   return [...head, ...Array(halves.length === 2 ? missing : 0).fill('0'), ...tail].map((g) => parseInt(g, 16));
 }
 
+/**
+ * The address without its zone index ("fe80::1%eth0" names an interface of
+ * this host, not another host). indexOf, not a regex: addresses can come from
+ * a request, and a pattern like /%.*$/ backtracks on a long run of "%".
+ */
+function withoutZone(address) {
+  const zone = address.indexOf('%');
+  return zone === -1 ? address : address.slice(0, zone);
+}
+
 /** True for addresses that are not publicly routable (or not addresses at all). */
 export function isPrivateAddress(address) {
   const family = isIP(address);
   if (family === 4) return PRIVATE_RANGES.check(address, 'ipv4');
   if (family !== 6) return true;
-  const groups = ipv6Groups(address.replace(/%.*$/, ''));
+  const groups = ipv6Groups(withoutZone(address));
   if (!groups) return true;
   // IPv4-mapped (::ffff:a.b.c.d) and IPv4-compatible (::a.b.c.d) addresses.
   if (groups.slice(0, 5).every((g) => g === 0) && (groups[5] === 0xffff || groups[5] === 0)) {
@@ -235,7 +245,7 @@ export function isPrivateAddress(address) {
   // ::ffff:0:a.b.c.d, ULA, link-local, multicast, the unassigned rest) is not
   // a DAV server on the internet.
   if ((groups[0] & 0xe000) !== 0x2000) return true;
-  return PRIVATE_RANGES.check(address.replace(/%.*$/, ''), 'ipv6');
+  return PRIVATE_RANGES.check(withoutZone(address), 'ipv6');
 }
 
 /** Suffixes that never resolve on the public internet (RFC 6761, 6762, 8375; ICANN's .internal; the common .lan). */
@@ -411,7 +421,7 @@ function normaliseAddress(value) {
   const bracketed = /^\[([^\]]+)\](?::\d+)?$/.exec(address);
   if (bracketed) address = bracketed[1];
   else if (/^\d+\.\d+\.\d+\.\d+:\d+$/.test(address)) address = address.slice(0, address.lastIndexOf(':'));
-  address = address.replace(/%.*$/, '');
+  address = withoutZone(address);
   // Dual-stack sockets report IPv4 peers as ::ffff:a.b.c.d.
   const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
   if (mapped) address = mapped[1];
@@ -635,22 +645,26 @@ function readBody(req, limit, signal, hold) {
       reject(err);
       req.resume();
     };
-    const declared = Number(req.headers['content-length']);
-    const known = /^\d+$/.test(req.headers['content-length'] ?? '') && declared <= limit;
+    const length = req.headers['content-length'];
+    const declared = typeof length === 'string' && /^\d+$/.test(length) ? Number(length) : -1;
     let buffer = null;
     const chunks = [];
     let size = 0;
     try {
-      if (known) {
+      // The length is the client's word: it is checked against the limit
+      // right here, before anything of that size is allocated.
+      if (declared >= 0 && declared <= limit) {
         hold(declared);
         buffer = Buffer.allocUnsafe(declared);
       }
     } catch (err) {
       return fail(err);
     }
+    // No more than was declared, or than the limit without a usable length.
+    const most = buffer ? buffer.length : limit;
     req.on('data', (c) => {
       if (failed) return;
-      if (size + c.length > (known ? declared : limit)) return fail(new ProxyError(413, 'too-large', 'Request body too large'));
+      if (size + c.length > most) return fail(new ProxyError(413, 'too-large', 'Request body too large'));
       if (buffer) {
         c.copy(buffer, size);
       } else {

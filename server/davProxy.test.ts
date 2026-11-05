@@ -194,6 +194,19 @@ describe('clientAddress', () => {
     expect(clientAddress(from('10.0.0.1', 'x\r\ny=1'), 1)).toBe('10.0.0.1');
     expect(clientAddress(from('10.0.0.1'), 1)).toBe('10.0.0.1');
   });
+
+  it('drops a zone index, and takes no longer for a long run of percent signs', () => {
+    expect(clientAddress(from('10.0.0.1', 'fe80::1%eth0'), 1)).toBe('fe80::1');
+    expect(clientAddress(from('10.0.0.1', 'fe80::1%eth0%1'), 1)).toBe('fe80::1');
+    expect(clientAddress(from('10.0.0.1', '%eth0'), 1)).toBe('10.0.0.1');
+    // A pattern that backtracked (/%.*$/ before a line break) would need
+    // minutes for these; they have to be instant.
+    const started = performance.now();
+    expect(clientAddress(from('10.0.0.1', `203.0.113.9${'%'.repeat(200_000)}\nx`), 1)).toBe('203.0.113.9');
+    expect(clientAddress(from('10.0.0.1', `${'%'.repeat(200_000)}\nx`), 1)).toBe('10.0.0.1');
+    expect(clientAddress(from(`::1${'%'.repeat(200_000)}\nx`))).toBe('::1');
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
 });
 
 describe('handleDavProxy', () => {
@@ -590,6 +603,20 @@ describe('handleDavProxy', () => {
     });
     expect(res.status).toBe(413);
     expect(seen).toHaveLength(0);
+  });
+
+  it('takes a body of exactly the limit, with or without a stated length, and refuses one byte more', async () => {
+    proxyOptions = { allowPrivate: true };
+    const limit = 10 * 1024 * 1024;
+    for (const headers of [{}, { 'transfer-encoding': 'chunked' }] as Record<string, string>[]) {
+      const full = await call({ method: 'PUT', headers: { ...target('/full.ics'), ...headers }, body: 'x'.repeat(limit) });
+      expect(full.status).toBe(207);
+      expect(seen.at(-1)?.body).toHaveLength(limit);
+      const over = await call({ method: 'PUT', headers: { ...target('/over.ics'), ...headers }, body: 'x'.repeat(limit + 1) });
+      expect(over.status).toBe(413);
+      expect(seen.at(-1)?.url).toBe('/full.ics');
+    }
+    expect(seen).toHaveLength(2);
   });
 
   it('reports unreachable servers without leaking details', async () => {

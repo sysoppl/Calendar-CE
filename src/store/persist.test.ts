@@ -10,6 +10,8 @@ import type { DavRequest, Transport } from '@/lib/dav/transport';
 // also compiles them, which takes a while on a busy machine.
 vi.setConfig({ testTimeout: 30_000 });
 
+// The CalDAV password of the fixtures. The tests look for it in localStorage,
+// where it must not stay once it can be wrapped.
 const PASSWORD = 'correct horse zażółć';
 
 type Answer = { status: number; body?: string; headers?: Record<string, string> };
@@ -68,7 +70,9 @@ const V1 = {
         name: 'Work',
         serverUrl: 'https://dav.example.com/',
         username: 'alice',
-        password: PASSWORD,
+        // PASSWORD, spelled out: this is the text version 1 wrote to disk.
+        // 'an install of version 1' checks that the two are the same.
+        password: 'correct horse zażółć',
         principalUrl: 'https://dav.example.com/alice/',
         homeUrl: 'https://dav.example.com/alice/',
         email: 'alice@example.com',
