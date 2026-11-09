@@ -130,6 +130,9 @@
 - Reminders fire even when the app is closed: exact alarms, rescheduled after a reboot, and CalDAV calendars refreshed hourly in the background
 - Persistent notifications stay pinned: a swipe brings one back at once, without a sound, and so do a restart and an
   app update. **Dismiss** and **Snooze 10 min** end it, and a task's **Done** opens the app and marks the task done
+- The round **+** button adds an event, or, as *Settings → General → Round + button* chooses, a task or a small menu of
+  the two
+- No ads, no trackers, no analytics and no consent pop-ups
 
 <details>
 <summary><b>More screenshots</b></summary>

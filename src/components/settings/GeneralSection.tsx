@@ -1,7 +1,8 @@
 import { useId, useMemo } from 'react';
-import { MAX_CUSTOM_DAYS, MIN_CUSTOM_DAYS, useSettings, VIEWS, type ViewType } from '@/store/settings';
+import { MAX_CUSTOM_DAYS, MIN_CUSTOM_DAYS, useSettings, VIEWS, type FabAction, type ViewType } from '@/store/settings';
 import { LANGS, LANGUAGE_NAMES, languageChoice, useT, type Lang } from '@/i18n';
 import { useFormat } from '@/hooks/useFormat';
+import { useIsMobile } from '@/hooks/useMediaQuery';
 import { describeAlarm } from '@/lib/describe';
 import { localTimezone } from '@/lib/ical/timezone';
 import { changeSettings, resetSettings } from '@/lib/saveFeedback';
@@ -25,6 +26,7 @@ export function GeneralSection() {
   const s = useSettings();
   const weekStartId = useId();
   const timezones = useMemo(allTimezones, []);
+  const mobile = useIsMobile();
   const alarmOptions = [0, 5, 10, 15, 30, 60, 1440];
   const allDayOptions = [-540, -480, 900, 1440];
 
@@ -117,6 +119,16 @@ export function GeneralSection() {
       </SettingGroup>
 
       <SettingGroup title={t('settings.group.newEvents')}>
+        {/* Only where the round + button is: phones and narrow windows. */}
+        {mobile && (
+          <SettingRow label={t('settings.fab')} hint={t('settings.fab.hint')} htmlFor="set-fab">
+            <select id="set-fab" className={SELECT} value={s.fabAction} onChange={(e) => changeSettings({ fabAction: e.target.value as FabAction })}>
+              <option value="event">{t('sidebar.newEvent')}</option>
+              <option value="task">{t('sidebar.newTask')}</option>
+              <option value="choose">{t('settings.fab.choose')}</option>
+            </select>
+          </SettingRow>
+        )}
         <SettingRow inline label={t('settings.defaultDuration')} htmlFor="set-dur">
           <select id="set-dur" className={SELECT_INLINE} value={s.defaultEventDuration} onChange={(e) => changeSettings({ defaultEventDuration: Number(e.target.value) })}>
             {[15, 30, 45, 60, 90, 120].map((m) => (

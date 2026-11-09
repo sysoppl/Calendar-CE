@@ -33,6 +33,9 @@ export type DeviceLanguage = '' | ExtraLang;
  * it into the factor in use.
  */
 export type TextSize = 'system' | number;
+/** What the round + button over the calendar on phones starts: a new event, a new task, or a choice of the two. */
+export type FabAction = 'event' | 'task' | 'choose';
+export const FAB_ACTIONS: readonly FabAction[] = ['event', 'task', 'choose'];
 
 /**
  * A calendar's own default notifications (minutes before the start, as
@@ -76,6 +79,8 @@ export interface Settings {
   /** Number of days in the custom "N days" view. */
   customDays: number;
   showWeekNumbers: boolean;
+  /** What the round + button starts (phones and narrow windows, `Fab`). */
+  fabAction: FabAction;
   showWeekends: boolean;
   dimPastEvents: boolean;
   showDeclinedEvents: boolean;
@@ -123,6 +128,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultView: 'week',
   customDays: 4,
   showWeekNumbers: false,
+  fabAction: 'event',
   showWeekends: true,
   dimPastEvents: true,
   showDeclinedEvents: true,

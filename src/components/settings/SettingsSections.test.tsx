@@ -148,6 +148,31 @@ describe('General', () => {
     expect(document.querySelector('[data-scope]')).toBeNull();
   });
 
+  it('lets a phone choose what the round + button starts, a new event by default', async () => {
+    phone = true;
+    await render(h(GeneralSection));
+    const select = document.getElementById('set-fab') as HTMLSelectElement;
+    expect(select.value).toBe('event');
+    expect([...select.options].map((o) => [o.value, o.textContent])).toEqual([
+      ['event', en['sidebar.newEvent']],
+      ['task', en['sidebar.newTask']],
+      ['choose', en['settings.fab.choose']],
+    ]);
+    expect(select.closest('.border-b')!.textContent).toContain(en['settings.fab.hint']);
+    select.value = 'choose';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(useSettings.getState().fabAction).toBe('choose');
+    select.value = 'task';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(useSettings.getState().fabAction).toBe('task');
+  });
+
+  it('shows the round + button choice only where the button is', async () => {
+    await render(h(GeneralSection));
+    expect(document.getElementById('set-fab')).toBeNull();
+    expect(text()).not.toContain(en['settings.fab']);
+  });
+
   it('resets the settings with a way back', async () => {
     useSettings.setState({ showWeekends: false });
     await render(h(GeneralSection));
