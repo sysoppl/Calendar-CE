@@ -22,6 +22,10 @@ describe('settings defaults', () => {
     for (const ok of ['system', 0.75, 0.85, 1, 1.1, 1.5]) expect(isTextSize(ok), String(ok)).toBe(true);
     for (const bad of ['auto', '1.1', 0.5, 1.6, Number.NaN, Number.POSITIVE_INFINITY, null, undefined, {}]) expect(isTextSize(bad), String(bad)).toBe(false);
   });
+
+  it('have the round + button start a new event, as before the setting', () => {
+    expect(DEFAULT_SETTINGS.fabAction).toBe('event');
+  });
 });
 
 describe('migrateSettings', () => {

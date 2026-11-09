@@ -1,7 +1,7 @@
 {
   "name": "calendar-ce",
   "private": true,
-  "version": "1.13.1",
+  "version": "1.14.0",
   "description": "Calendar and tasks for the web and Android, kept on the device or on your own CalDAV server",
   "license": "AGPL-3.0-only",
   "author": "patryk.pro (https://patryk.pro)",
