@@ -19,7 +19,8 @@
   <a href="https://calendar.patryk.pro"><b>Live demo</b></a> ·
   <a href="#self-hosted-or-hosted">Hosted edition</a> ·
   <a href="#self-hosting-with-docker">Self-host</a> ·
-  <a href="#how-end-to-end-encryption-works-in-the-hosted-edition">How E2EE works</a>
+  <a href="#how-end-to-end-encryption-works-in-the-hosted-edition">How E2EE works</a> ·
+  <a href="#sponsor">Sponsor</a>
 </p>
 
 <p align="center">
@@ -65,6 +66,7 @@
 - [Connecting to CalDAV servers](#connecting-to-caldav-servers)
 - [Android app](#android-app)
 - [Development](#development)
+- [Sponsor](#sponsor)
 - [Contributing](#contributing)
 - [Security](#security)
 - [License](#license)
@@ -512,6 +514,18 @@ In development the proxy may reach a CalDAV server on your own machine (e.g. Rad
 | `android/`         | The Android shell, native CalDAV client and reminders                |
 | `deploy/`          | Reverse proxy and systemd examples                                   |
 | `scripts/`         | Build helpers, screenshots, end-to-end checks                        |
+
+## Sponsor
+
+Calendar CE is free and open source, with no ads and no trackers. If it is useful to you, you can support its
+development on [GitHub Sponsors](https://github.com/sponsors/sysoppl). Sponsorships pay for the time that goes into
+fixes, new features and translations.
+
+<p align="center">
+  <a href="https://github.com/sponsors/sysoppl"><img src="https://img.shields.io/badge/Sponsor_on_GitHub-1e2227?style=for-the-badge&logo=githubsponsors&logoColor=ea4aaa" alt="Sponsor on GitHub"></a>
+</p>
+
+Using the [hosted edition](#self-hosted-or-hosted) supports the project too.
 
 ## Contributing
 
