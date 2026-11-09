@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Tasks widget in the widget picker before Android 12. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    <path
+        android:fillColor="#FFE3E3DF"
+        android:pathData="M16,0h168q16,0 16,16v168q0,16 -16,16h-168q-16,0 -16,-16v-168q0,-16 16,-16z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M16,1h168q15,0 15,15v168q0,15 -15,15h-168q-15,0 -15,-15v-168q0,-15 15,-15z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M17,16h44q3,0 3,3v4q0,3 -3,3h-44q-3,0 -3,-3v-4q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M177,14h2v6h6v2h-6v6h-2v-6h-6v-2h6z" />
+    <path
+        android:fillColor="#FFE3E3DF"
+        android:pathData="M12,40h176v1h-176z" />
+    <path
+        android:fillColor="#FF7A4FC2"
+        android:pathData="M24,62m-8,0a8,8 0 1,0 16,0a8,8 0 1,0 -16,0zM24,62m-6,0a6,6 0 1,1 12,0a6,6 0 1,1 -12,0z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M43,58h84q3,0 3,3v2q0,3 -3,3h-84q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FFD93033"
+        android:pathData="M153,58h28q3,0 3,3v2q0,3 -3,3h-28q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FF1D6CD6"
+        android:pathData="M24,92m-8,0a8,8 0 1,0 16,0a8,8 0 1,0 -16,0zM24,92m-6,0a6,6 0 1,1 12,0a6,6 0 1,1 -12,0z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M43,88h104q3,0 3,3v2q0,3 -3,3h-104q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FFB9BEC3"
+        android:pathData="M163,88h18q3,0 3,3v2q0,3 -3,3h-18q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FF1B8037"
+        android:pathData="M24,122m-8,0a8,8 0 1,0 16,0a8,8 0 1,0 -16,0zM24,122m-6,0a6,6 0 1,1 12,0a6,6 0 1,1 -12,0z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M43,118h70q3,0 3,3v2q0,3 -3,3h-70q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FF1D6CD6"
+        android:pathData="M24,152m-8,0a8,8 0 1,0 16,0a8,8 0 1,0 -16,0zM24,152m-6,0a6,6 0 1,1 12,0a6,6 0 1,1 -12,0z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M43,148h90q3,0 3,3v2q0,3 -3,3h-90q-3,0 -3,-3v-2q0,-3 3,-3z" />
+</vector>

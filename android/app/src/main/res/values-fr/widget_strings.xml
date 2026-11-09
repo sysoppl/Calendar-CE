@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_agenda_label">Planning</string>
+    <string name="widget_agenda_description">Les prochains jours, jour après jour</string>
+    <string name="widget_today_label">Aujourd’hui</string>
+    <string name="widget_today_description">La date du jour et ce qui vient ensuite</string>
+    <string name="widget_month_label">Mois</string>
+    <string name="widget_month_description">Le mois en un coup d’œil, avec vos événements</string>
+    <string name="widget_tasks_label">Tâches</string>
+    <string name="widget_tasks_description">Les tâches ouvertes, terminées d’une touche</string>
+
+    <string name="widget_no_data">Ouvrez Calendrier CE pour afficher votre agenda ici</string>
+    <string name="widget_refresh">Ouvrez l’application pour actualiser</string>
+    <string name="widget_today">Aujourd’hui</string>
+    <string name="widget_tomorrow">Demain</string>
+    <string name="widget_all_day">Toute la journée</string>
+    <string name="widget_from_time">À partir de %1$s</string>
+    <string name="widget_until_time">Jusqu’à %1$s</string>
+    <plurals name="widget_nothing_planned">
+        <item quantity="one">Rien de prévu sur %d jour</item>
+        <item quantity="many">Rien de prévu sur les %d prochains jours</item>
+        <item quantity="other">Rien de prévu sur les %d prochains jours</item>
+    </plurals>
+    <string name="widget_nothing_else_today">Plus rien aujourd’hui</string>
+    <string name="widget_tomorrow_item">Demain : %1$s</string>
+    <string name="widget_no_tasks">Aucune tâche ouverte</string>
+    <string name="widget_tasks_title">Tâches</string>
+    <string name="widget_new_event">Nouvel événement</string>
+    <string name="widget_new_task">Nouvelle tâche</string>
+    <string name="widget_previous_month">Mois précédent</string>
+    <string name="widget_next_month">Mois suivant</string>
+    <string name="widget_mark_done">Marquer comme terminée</string>
+
+    <string name="widget_config_title">Réglages du widget</string>
+    <string name="widget_config_calendars">Agendas</string>
+    <string name="widget_config_task_lists">Listes de tâches</string>
+    <string name="widget_config_same_as_app">Comme dans l’application (les agendas affichés)</string>
+    <string name="widget_config_same_as_app_lists">Comme dans l’application (les listes affichées)</string>
+    <string name="widget_config_all_calendars">Tous les agendas, même masqués</string>
+    <string name="widget_config_all_lists">Toutes les listes de tâches, même masquées</string>
+    <string name="widget_config_choose">Choisir les agendas</string>
+    <string name="widget_config_choose_lists">Choisir les listes de tâches</string>
+    <string name="widget_config_no_calendars">Ouvrez Calendrier CE une fois pour pouvoir choisir vos agendas ici.</string>
+    <string name="widget_config_days">Jours affichés</string>
+    <string name="widget_config_tasks">Afficher les tâches avec échéance</string>
+    <string name="widget_config_place">Afficher le lieu</string>
+    <string name="widget_config_undated">Inclure les tâches sans échéance</string>
+    <string name="widget_config_look">Apparence</string>
+    <string name="widget_config_theme_system">Suivre le système</string>
+    <string name="widget_config_theme_light">Clair</string>
+    <string name="widget_config_theme_dark">Sombre</string>
+    <string name="widget_config_opacity">Arrière-plan</string>
+    <string name="widget_config_percent">%1$d %%</string>
+    <string name="widget_config_cancel">Annuler</string>
+    <string name="widget_config_save">Enregistrer</string>
+
+    <string name="widget_sample_weekday">Lundi</string>
+    <string name="widget_sample_date">9 novembre</string>
+    <string name="widget_sample_month">Novembre 2026</string>
+    <string name="widget_sample_event_1">Réunion d’équipe</string>
+    <string name="widget_sample_event_2">Dentiste</string>
+    <string name="widget_sample_event_3">Dîner entre amis</string>
+    <string name="widget_sample_task_1">Acheter du lait</string>
+    <string name="widget_sample_task_2">Appeler le plombier</string>
+</resources>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_agenda_label">Agenda</string>
+    <string name="widget_agenda_description">Os próximos dias, dia a dia</string>
+    <string name="widget_today_label">Hoje</string>
+    <string name="widget_today_description">A data de hoje e o que vem a seguir</string>
+    <string name="widget_month_label">Mês</string>
+    <string name="widget_month_description">O mês de relance, com seus eventos</string>
+    <string name="widget_tasks_label">Tarefas</string>
+    <string name="widget_tasks_description">Tarefas abertas, concluídas com um toque</string>
+
+    <string name="widget_no_data">Abra o Calendário CE para ver seu calendário aqui</string>
+    <string name="widget_refresh">Abra o app para atualizar</string>
+    <string name="widget_today">Hoje</string>
+    <string name="widget_tomorrow">Amanhã</string>
+    <string name="widget_all_day">Dia inteiro</string>
+    <string name="widget_from_time">A partir de %1$s</string>
+    <string name="widget_until_time">Até %1$s</string>
+    <plurals name="widget_nothing_planned">
+        <item quantity="one">Nada planejado para o próximo %d dia</item>
+        <item quantity="many">Nada planejado para os próximos %d dias</item>
+        <item quantity="other">Nada planejado para os próximos %d dias</item>
+    </plurals>
+    <string name="widget_nothing_else_today">Mais nada hoje</string>
+    <string name="widget_tomorrow_item">Amanhã: %1$s</string>
+    <string name="widget_no_tasks">Nenhuma tarefa aberta</string>
+    <string name="widget_tasks_title">Tarefas</string>
+    <string name="widget_new_event">Novo evento</string>
+    <string name="widget_new_task">Nova tarefa</string>
+    <string name="widget_previous_month">Mês anterior</string>
+    <string name="widget_next_month">Próximo mês</string>
+    <string name="widget_mark_done">Marcar como concluída</string>
+
+    <string name="widget_config_title">Configurações do widget</string>
+    <string name="widget_config_calendars">Calendários</string>
+    <string name="widget_config_task_lists">Listas de tarefas</string>
+    <string name="widget_config_same_as_app">Como no app (os calendários exibidos)</string>
+    <string name="widget_config_same_as_app_lists">Como no app (as listas exibidas)</string>
+    <string name="widget_config_all_calendars">Todos os calendários, inclusive os ocultos</string>
+    <string name="widget_config_all_lists">Todas as listas de tarefas, inclusive as ocultas</string>
+    <string name="widget_config_choose">Escolher calendários</string>
+    <string name="widget_config_choose_lists">Escolher listas de tarefas</string>
+    <string name="widget_config_no_calendars">Abra o Calendário CE uma vez para poder escolher seus calendários aqui.</string>
+    <string name="widget_config_days">Dias à frente</string>
+    <string name="widget_config_tasks">Mostrar tarefas com prazo</string>
+    <string name="widget_config_place">Mostrar o local</string>
+    <string name="widget_config_undated">Incluir tarefas sem prazo</string>
+    <string name="widget_config_look">Aparência</string>
+    <string name="widget_config_theme_system">Seguir o sistema</string>
+    <string name="widget_config_theme_light">Claro</string>
+    <string name="widget_config_theme_dark">Escuro</string>
+    <string name="widget_config_opacity">Fundo</string>
+    <string name="widget_config_percent">%1$d%%</string>
+    <string name="widget_config_cancel">Cancelar</string>
+    <string name="widget_config_save">Salvar</string>
+
+    <string name="widget_sample_weekday">Segunda-feira</string>
+    <string name="widget_sample_date">9 de novembro</string>
+    <string name="widget_sample_month">Novembro de 2026</string>
+    <string name="widget_sample_event_1">Reunião da equipe</string>
+    <string name="widget_sample_event_2">Dentista</string>
+    <string name="widget_sample_event_3">Jantar com amigos</string>
+    <string name="widget_sample_task_1">Comprar leite</string>
+    <string name="widget_sample_task_2">Ligar para o encanador</string>
+</resources>

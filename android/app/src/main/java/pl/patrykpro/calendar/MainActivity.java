@@ -8,6 +8,7 @@ import androidx.core.splashscreen.SplashScreen;
 import com.getcapacitor.BridgeActivity;
 
 import pl.patrykpro.calendar.reminders.RemindersPlugin;
+import pl.patrykpro.calendar.widgets.WidgetsPlugin;
 
 public class MainActivity extends BridgeActivity {
     /**
@@ -28,10 +29,16 @@ public class MainActivity extends BridgeActivity {
         webReady = false;
         long until = SystemClock.uptimeMillis() + SPLASH_MAX_MS;
         splash.setKeepOnScreenCondition(() -> !webReady && SystemClock.uptimeMillis() < until);
+        // A tap on a widget that started this activity is passed on to the page only on a fresh start,
+        // not when the activity is made again from saved state with the same intent (WidgetsPlugin).
+        WidgetsPlugin.activityCreated(savedInstanceState == null);
         // Local plugins must be registered before the bridge starts.
         registerPlugin(DavHttpPlugin.class);
         registerPlugin(RemindersPlugin.class);
         registerPlugin(DisplayPlugin.class);
+        // The home screen widgets (snapshot from the page, taps back to it) and saving files the page made.
+        registerPlugin(WidgetsPlugin.class);
+        registerPlugin(FilesPlugin.class);
         // In place of Capacitor's own "WebView" plugin, which would let the page change where the app is served from.
         registerPlugin(WebViewGuardPlugin.class);
         super.onCreate(savedInstanceState);

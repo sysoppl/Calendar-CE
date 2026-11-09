@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_agenda_label">Terminliste</string>
+    <string name="widget_agenda_description">Die nächsten Tage, Tag für Tag</string>
+    <string name="widget_today_label">Heute</string>
+    <string name="widget_today_description">Das heutige Datum und was als Nächstes kommt</string>
+    <string name="widget_month_label">Monat</string>
+    <string name="widget_month_description">Der Monat auf einen Blick, mit Ihren Terminen</string>
+    <string name="widget_tasks_label">Aufgaben</string>
+    <string name="widget_tasks_description">Offene Aufgaben, mit einem Tippen erledigt</string>
+
+    <string name="widget_no_data">Öffnen Sie Kalender CE, um Ihren Kalender hier zu sehen</string>
+    <string name="widget_refresh">Zum Aktualisieren die App öffnen</string>
+    <string name="widget_today">Heute</string>
+    <string name="widget_tomorrow">Morgen</string>
+    <string name="widget_all_day">Ganztägig</string>
+    <string name="widget_from_time">Ab %1$s</string>
+    <string name="widget_until_time">Bis %1$s</string>
+    <plurals name="widget_nothing_planned">
+        <item quantity="one">Für %d Tag nichts geplant</item>
+        <item quantity="other">In den nächsten %d Tagen nichts geplant</item>
+    </plurals>
+    <string name="widget_nothing_else_today">Heute nichts mehr</string>
+    <string name="widget_tomorrow_item">Morgen: %1$s</string>
+    <string name="widget_no_tasks">Keine offenen Aufgaben</string>
+    <string name="widget_tasks_title">Aufgaben</string>
+    <string name="widget_new_event">Neuer Termin</string>
+    <string name="widget_new_task">Neue Aufgabe</string>
+    <string name="widget_previous_month">Vorheriger Monat</string>
+    <string name="widget_next_month">Nächster Monat</string>
+    <string name="widget_mark_done">Als erledigt markieren</string>
+
+    <string name="widget_config_title">Widget-Einstellungen</string>
+    <string name="widget_config_calendars">Kalender</string>
+    <string name="widget_config_task_lists">Aufgabenlisten</string>
+    <string name="widget_config_same_as_app">Wie in der App (die angezeigten Kalender)</string>
+    <string name="widget_config_same_as_app_lists">Wie in der App (die angezeigten Listen)</string>
+    <string name="widget_config_all_calendars">Alle Kalender, auch ausgeblendete</string>
+    <string name="widget_config_all_lists">Alle Aufgabenlisten, auch ausgeblendete</string>
+    <string name="widget_config_choose">Kalender auswählen</string>
+    <string name="widget_config_choose_lists">Aufgabenlisten auswählen</string>
+    <string name="widget_config_no_calendars">Öffnen Sie Kalender CE einmal, dann können Sie Ihre Kalender hier auswählen.</string>
+    <string name="widget_config_days">Tage im Voraus</string>
+    <string name="widget_config_tasks">Aufgaben mit Fälligkeit anzeigen</string>
+    <string name="widget_config_place">Ort anzeigen</string>
+    <string name="widget_config_undated">Auch Aufgaben ohne Fälligkeit</string>
+    <string name="widget_config_look">Aussehen</string>
+    <string name="widget_config_theme_system">System folgen</string>
+    <string name="widget_config_theme_light">Hell</string>
+    <string name="widget_config_theme_dark">Dunkel</string>
+    <string name="widget_config_opacity">Hintergrund</string>
+    <string name="widget_config_percent">%1$d %%</string>
+    <string name="widget_config_cancel">Abbrechen</string>
+    <string name="widget_config_save">Speichern</string>
+
+    <string name="widget_sample_weekday">Montag</string>
+    <string name="widget_sample_date">9. November</string>
+    <string name="widget_sample_month">November 2026</string>
+    <string name="widget_sample_event_1">Teambesprechung</string>
+    <string name="widget_sample_event_2">Zahnarzt</string>
+    <string name="widget_sample_event_3">Abendessen mit Freunden</string>
+    <string name="widget_sample_task_1">Milch kaufen</string>
+    <string name="widget_sample_task_2">Klempner anrufen</string>
+</resources>

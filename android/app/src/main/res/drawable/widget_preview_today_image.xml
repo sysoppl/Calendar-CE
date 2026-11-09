@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Today widget in the widget picker before Android 12. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="150dp"
+    android:height="150dp"
+    android:viewportWidth="150"
+    android:viewportHeight="150">
+    <path
+        android:fillColor="#FFE3E3DF"
+        android:pathData="M16,0h118q16,0 16,16v118q0,16 -16,16h-118q-16,0 -16,-16v-118q0,-16 16,-16z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M16,1h118q15,0 15,15v118q0,15 -15,15h-118q-15,0 -15,-15v-118q0,-15 15,-15z" />
+    <path
+        android:fillColor="#FFD93033"
+        android:pathData="M18,16h18q4,0 4,4v22q0,4 -4,4h-18q-4,0 -4,-4v-22q0,-4 4,-4z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M51,18h54q3,0 3,3v3q0,3 -3,3h-54q-3,0 -3,-3v-3q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FFB9BEC3"
+        android:pathData="M51,34h38q3,0 3,3v2q0,3 -3,3h-38q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FF1D6CD6"
+        android:pathData="M18,66m-4,0a4,4 0 1,0 8,0a4,4 0 1,0 -8,0z" />
+    <path
+        android:fillColor="#FFB9BEC3"
+        android:pathData="M31,62h20q3,0 3,3v2q0,3 -3,3h-20q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M63,62h64q3,0 3,3v2q0,3 -3,3h-64q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FF1B8037"
+        android:pathData="M18,86m-4,0a4,4 0 1,0 8,0a4,4 0 1,0 -8,0z" />
+    <path
+        android:fillColor="#FFB9BEC3"
+        android:pathData="M31,82h20q3,0 3,3v2q0,3 -3,3h-20q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M63,82h50q3,0 3,3v2q0,3 -3,3h-50q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FFD12E2C"
+        android:pathData="M18,106m-4,0a4,4 0 1,0 8,0a4,4 0 1,0 -8,0z" />
+    <path
+        android:fillColor="#FFB9BEC3"
+        android:pathData="M31,102h20q3,0 3,3v2q0,3 -3,3h-20q-3,0 -3,-3v-2q0,-3 3,-3z" />
+    <path
+        android:fillColor="#FF1E2227"
+        android:pathData="M63,102h58q3,0 3,3v2q0,3 -3,3h-58q-3,0 -3,-3v-2q0,-3 3,-3z" />
+</vector>

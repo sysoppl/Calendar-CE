@@ -50,6 +50,8 @@ public final class SecretVault {
 
     private static final Object LOCK = new Object();
     private static SecretVault instance;
+    /** The one Keystore key source of the app's vaults: one handle, and one record of the key's state. */
+    private static KeystoreKeys keystore;
 
     private final KeyValues values;
     private final KeySource keys;
@@ -62,9 +64,25 @@ public final class SecretVault {
     /** The vault of this app, on the Keystore key. */
     public static SecretVault get(Context context) {
         synchronized (LOCK) {
-            if (instance == null) instance = new SecretVault(new SharedPrefsValues(context, PREFS), new KeystoreKeys(new SharedPrefsValues(context, PREFS + "_keys")));
+            if (instance == null) instance = new SecretVault(new SharedPrefsValues(context, PREFS), keystore(context));
             return instance;
         }
+    }
+
+    /**
+     * A vault whose values are kept in {@code values} rather than with those
+     * of {@link #get}, on the same Keystore key: for values too big to share
+     * a preferences file with the others (the widgets' snapshot).
+     */
+    public static SecretVault on(Context context, KeyValues values) {
+        synchronized (LOCK) {
+            return new SecretVault(values, keystore(context));
+        }
+    }
+
+    private static KeystoreKeys keystore(Context context) {
+        if (keystore == null) keystore = new KeystoreKeys(new SharedPrefsValues(context, PREFS + "_keys"));
+        return keystore;
     }
 
     private static byte[] aad(String name) {

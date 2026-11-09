@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widgets' ground: tinted for the fixed looks and made see-through by the opacity option (widgets/Look.java). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/widget_ground" />
+    <corners android:radius="@dimen/widget_radius" />
+</shape>

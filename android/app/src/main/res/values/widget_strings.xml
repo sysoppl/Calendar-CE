@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The home screen widgets (widgets/). The widgets' texts are taken in the app's language, which
+     may differ from the phone's (widgets/Texts.java); the names in the widget picker follow the phone. -->
+<resources>
+    <!-- In the launcher's widget picker -->
+    <string name="widget_agenda_label">Agenda</string>
+    <string name="widget_agenda_description">The coming days, day by day</string>
+    <string name="widget_today_label">Today</string>
+    <string name="widget_today_description">Today\'s date and what comes next</string>
+    <string name="widget_month_label">Month</string>
+    <string name="widget_month_description">The month at a glance, with your events</string>
+    <string name="widget_tasks_label">Tasks</string>
+    <string name="widget_tasks_description">Open tasks, done with a tap</string>
+
+    <!-- On the widgets -->
+    <string name="widget_no_data">Open Calendar CE to show your calendar here</string>
+    <string name="widget_refresh">Open the app to refresh</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_tomorrow">Tomorrow</string>
+    <string name="widget_all_day">All day</string>
+    <!-- The first day of an event that goes on past midnight: "From 22:00". -->
+    <string name="widget_from_time">From %1$s</string>
+    <!-- The last day of an event that began on an earlier day: "Until 10:00". -->
+    <string name="widget_until_time">Until %1$s</string>
+    <string name="widget_time_range" translatable="false">%1$s – %2$s</string>
+    <plurals name="widget_nothing_planned">
+        <item quantity="one">Nothing planned in the next %d day</item>
+        <item quantity="other">Nothing planned in the next %d days</item>
+    </plurals>
+    <string name="widget_nothing_else_today">Nothing else today</string>
+    <!-- Tomorrow's first item, when nothing is left today: "Tomorrow: 09:00 Dentist". -->
+    <string name="widget_tomorrow_item">Tomorrow: %1$s</string>
+    <string name="widget_no_tasks">No open tasks</string>
+    <string name="widget_tasks_title">Tasks</string>
+    <string name="widget_new_event">New event</string>
+    <string name="widget_new_task">New task</string>
+    <string name="widget_previous_month">Previous month</string>
+    <string name="widget_next_month">Next month</string>
+    <string name="widget_mark_done">Mark as done</string>
+
+    <!-- The widget's settings -->
+    <string name="widget_config_title">Widget settings</string>
+    <string name="widget_config_calendars">Calendars</string>
+    <string name="widget_config_task_lists">Task lists</string>
+    <string name="widget_config_same_as_app">Same as the app (the shown calendars)</string>
+    <string name="widget_config_same_as_app_lists">Same as the app (the shown lists)</string>
+    <string name="widget_config_all_calendars">All calendars, hidden ones too</string>
+    <string name="widget_config_all_lists">All task lists, hidden ones too</string>
+    <string name="widget_config_choose">Choose calendars</string>
+    <string name="widget_config_choose_lists">Choose task lists</string>
+    <string name="widget_config_no_calendars">Open Calendar CE once so that your calendars can be chosen here.</string>
+    <string name="widget_config_days">Days ahead</string>
+    <string name="widget_config_tasks">Show tasks with a due date</string>
+    <string name="widget_config_place">Show the place</string>
+    <string name="widget_config_undated">Include tasks without a due date</string>
+    <string name="widget_config_look">Look</string>
+    <string name="widget_config_theme_system">Follow the system</string>
+    <string name="widget_config_theme_light">Light</string>
+    <string name="widget_config_theme_dark">Dark</string>
+    <string name="widget_config_opacity">Background</string>
+    <!-- The background's opacity: "100%". -->
+    <string name="widget_config_percent">%1$d%%</string>
+    <string name="widget_config_cancel">Cancel</string>
+    <string name="widget_config_save">Save</string>
+
+    <!-- Sample content of the previews in the widget picker -->
+    <string name="widget_sample_weekday">Monday</string>
+    <string name="widget_sample_date">9 November</string>
+    <string name="widget_sample_month">November 2026</string>
+    <string name="widget_sample_event_1">Team meeting</string>
+    <string name="widget_sample_event_2">Dentist</string>
+    <string name="widget_sample_event_3">Dinner with friends</string>
+    <string name="widget_sample_task_1">Buy milk</string>
+    <string name="widget_sample_task_2">Call the plumber</string>
+    <string name="widget_sample_time_1" translatable="false">09:00 – 10:00</string>
+    <string name="widget_sample_time_2" translatable="false">14:30 – 15:15</string>
+    <string name="widget_sample_time_3" translatable="false">19:00 – 21:00</string>
+    <string name="widget_sample_start_1" translatable="false">09:00</string>
+    <string name="widget_sample_start_2" translatable="false">14:30</string>
+    <string name="widget_sample_start_3" translatable="false">19:00</string>
+    <string name="widget_sample_day" translatable="false">9</string>
+</resources>

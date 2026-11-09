@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Tasks widget (widgets/TasksWidget.java): 3 x 3 cells, resizable down to 2 x 2.
+     Added with the defaults from Android 12 on (configuration_optional) and set up later through the
+     widget's settings (reconfigurable); before 12 the settings open when it is placed.
+     updatePeriodMillis is only a slow safety net (6 hours): the widgets' own alarm keeps them current
+     (widgets/NextRefresh.java). Sizes: minWidth/minHeight before Android 12, the cells from 12 on. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:configure="pl.patrykpro.calendar.widgets.WidgetConfigActivity"
+    android:description="@string/widget_tasks_description"
+    android:initialLayout="@layout/widget_loading"
+    android:minWidth="180dp"
+    android:minHeight="180dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:previewImage="@drawable/widget_preview_tasks_image"
+    android:previewLayout="@layout/widget_preview_tasks"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="3"
+    android:targetCellHeight="3"
+    android:updatePeriodMillis="21600000"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable|configuration_optional"
+    tools:targetApi="31" />

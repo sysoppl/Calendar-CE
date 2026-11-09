@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Agenda widget (widgets/AgendaWidget.java): 4 x 3 cells, resizable down to 3 x 2.
+     Added with the defaults from Android 12 on (configuration_optional) and set up later through the
+     widget's settings (reconfigurable); before 12 the settings open when it is placed.
+     updatePeriodMillis is only a slow safety net (6 hours): the widgets' own alarm keeps them current
+     (widgets/NextRefresh.java). Sizes: minWidth/minHeight before Android 12, the cells from 12 on. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:configure="pl.patrykpro.calendar.widgets.WidgetConfigActivity"
+    android:description="@string/widget_agenda_description"
+    android:initialLayout="@layout/widget_loading"
+    android:minWidth="250dp"
+    android:minHeight="180dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="110dp"
+    android:previewImage="@drawable/widget_preview_agenda_image"
+    android:previewLayout="@layout/widget_preview_agenda"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="4"
+    android:targetCellHeight="3"
+    android:updatePeriodMillis="21600000"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable|configuration_optional"
+    tools:targetApi="31" />

@@ -4,6 +4,7 @@ import { brandPl } from './brand.pl';
 import { phonePl } from './phone.pl';
 import { syncPl } from './sync.pl';
 import { remindersPl } from './reminders.pl';
+import { storagePl } from './storage.pl';
 import type { MessageKey } from './en';
 
 export const pl: Record<MessageKey, string> = {
@@ -608,4 +609,5 @@ export const pl: Record<MessageKey, string> = {
   ...phonePl,
   ...syncPl,
   ...remindersPl,
+  ...storagePl,
 };

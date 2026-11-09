@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_agenda_label">Agenda</string>
+    <string name="widget_agenda_description">Los próximos días, día a día</string>
+    <string name="widget_today_label">Hoy</string>
+    <string name="widget_today_description">La fecha de hoy y lo que viene</string>
+    <string name="widget_month_label">Mes</string>
+    <string name="widget_month_description">El mes de un vistazo, con tus eventos</string>
+    <string name="widget_tasks_label">Tareas</string>
+    <string name="widget_tasks_description">Tareas pendientes, completadas con un toque</string>
+
+    <string name="widget_no_data">Abre Calendario CE para ver aquí tu calendario</string>
+    <string name="widget_refresh">Abre la aplicación para actualizar</string>
+    <string name="widget_today">Hoy</string>
+    <string name="widget_tomorrow">Mañana</string>
+    <string name="widget_all_day">Todo el día</string>
+    <string name="widget_from_time">Desde %1$s</string>
+    <string name="widget_until_time">Hasta %1$s</string>
+    <plurals name="widget_nothing_planned">
+        <item quantity="one">Nada previsto en el próximo %d día</item>
+        <item quantity="many">Nada previsto en los próximos %d días</item>
+        <item quantity="other">Nada previsto en los próximos %d días</item>
+    </plurals>
+    <string name="widget_nothing_else_today">Nada más por hoy</string>
+    <string name="widget_tomorrow_item">Mañana: %1$s</string>
+    <string name="widget_no_tasks">No hay tareas pendientes</string>
+    <string name="widget_tasks_title">Tareas</string>
+    <string name="widget_new_event">Nuevo evento</string>
+    <string name="widget_new_task">Nueva tarea</string>
+    <string name="widget_previous_month">Mes anterior</string>
+    <string name="widget_next_month">Mes siguiente</string>
+    <string name="widget_mark_done">Marcar como completada</string>
+
+    <string name="widget_config_title">Ajustes del widget</string>
+    <string name="widget_config_calendars">Calendarios</string>
+    <string name="widget_config_task_lists">Listas de tareas</string>
+    <string name="widget_config_same_as_app">Como en la aplicación (los calendarios visibles)</string>
+    <string name="widget_config_same_as_app_lists">Como en la aplicación (las listas visibles)</string>
+    <string name="widget_config_all_calendars">Todos los calendarios, también los ocultos</string>
+    <string name="widget_config_all_lists">Todas las listas de tareas, también las ocultas</string>
+    <string name="widget_config_choose">Elegir calendarios</string>
+    <string name="widget_config_choose_lists">Elegir listas de tareas</string>
+    <string name="widget_config_no_calendars">Abre Calendario CE una vez para poder elegir aquí tus calendarios.</string>
+    <string name="widget_config_days">Días que mostrar</string>
+    <string name="widget_config_tasks">Mostrar tareas con fecha límite</string>
+    <string name="widget_config_place">Mostrar el lugar</string>
+    <string name="widget_config_undated">Incluir tareas sin fecha límite</string>
+    <string name="widget_config_look">Aspecto</string>
+    <string name="widget_config_theme_system">Seguir el sistema</string>
+    <string name="widget_config_theme_light">Claro</string>
+    <string name="widget_config_theme_dark">Oscuro</string>
+    <string name="widget_config_opacity">Fondo</string>
+    <string name="widget_config_percent">%1$d %%</string>
+    <string name="widget_config_cancel">Cancelar</string>
+    <string name="widget_config_save">Guardar</string>
+
+    <string name="widget_sample_weekday">Lunes</string>
+    <string name="widget_sample_date">9 de noviembre</string>
+    <string name="widget_sample_month">Noviembre de 2026</string>
+    <string name="widget_sample_event_1">Reunión de equipo</string>
+    <string name="widget_sample_event_2">Dentista</string>
+    <string name="widget_sample_event_3">Cena con amigos</string>
+    <string name="widget_sample_task_1">Comprar leche</string>
+    <string name="widget_sample_task_2">Llamar al fontanero</string>
+</resources>

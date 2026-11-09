@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_agenda_label">Agenda</string>
+    <string name="widget_agenda_description">De komende dagen, dag voor dag</string>
+    <string name="widget_today_label">Vandaag</string>
+    <string name="widget_today_description">De datum van vandaag en wat er komt</string>
+    <string name="widget_month_label">Maand</string>
+    <string name="widget_month_description">De maand in één oogopslag, met je afspraken</string>
+    <string name="widget_tasks_label">Taken</string>
+    <string name="widget_tasks_description">Open taken, afgevinkt met één tik</string>
+
+    <string name="widget_no_data">Open Kalender CE om je agenda hier te zien</string>
+    <string name="widget_refresh">Open de app om te vernieuwen</string>
+    <string name="widget_today">Vandaag</string>
+    <string name="widget_tomorrow">Morgen</string>
+    <string name="widget_all_day">Hele dag</string>
+    <string name="widget_from_time">Vanaf %1$s</string>
+    <string name="widget_until_time">Tot %1$s</string>
+    <plurals name="widget_nothing_planned">
+        <item quantity="one">Niets gepland voor de komende %d dag</item>
+        <item quantity="other">Niets gepland voor de komende %d dagen</item>
+    </plurals>
+    <string name="widget_nothing_else_today">Verder niets vandaag</string>
+    <string name="widget_tomorrow_item">Morgen: %1$s</string>
+    <string name="widget_no_tasks">Geen open taken</string>
+    <string name="widget_tasks_title">Taken</string>
+    <string name="widget_new_event">Nieuwe afspraak</string>
+    <string name="widget_new_task">Nieuwe taak</string>
+    <string name="widget_previous_month">Vorige maand</string>
+    <string name="widget_next_month">Volgende maand</string>
+    <string name="widget_mark_done">Markeren als voltooid</string>
+
+    <string name="widget_config_title">Widgetinstellingen</string>
+    <string name="widget_config_calendars">Agenda\'s</string>
+    <string name="widget_config_task_lists">Takenlijsten</string>
+    <string name="widget_config_same_as_app">Zoals in de app (de getoonde agenda\'s)</string>
+    <string name="widget_config_same_as_app_lists">Zoals in de app (de getoonde lijsten)</string>
+    <string name="widget_config_all_calendars">Alle agenda\'s, ook verborgen</string>
+    <string name="widget_config_all_lists">Alle takenlijsten, ook verborgen</string>
+    <string name="widget_config_choose">Agenda\'s kiezen</string>
+    <string name="widget_config_choose_lists">Takenlijsten kiezen</string>
+    <string name="widget_config_no_calendars">Open Kalender CE één keer om hier je agenda\'s te kunnen kiezen.</string>
+    <string name="widget_config_days">Dagen vooruit</string>
+    <string name="widget_config_tasks">Taken met een deadline tonen</string>
+    <string name="widget_config_place">Locatie tonen</string>
+    <string name="widget_config_undated">Ook taken zonder deadline</string>
+    <string name="widget_config_look">Weergave</string>
+    <string name="widget_config_theme_system">Systeem volgen</string>
+    <string name="widget_config_theme_light">Licht</string>
+    <string name="widget_config_theme_dark">Donker</string>
+    <string name="widget_config_opacity">Achtergrond</string>
+    <string name="widget_config_percent">%1$d%%</string>
+    <string name="widget_config_cancel">Annuleren</string>
+    <string name="widget_config_save">Opslaan</string>
+
+    <string name="widget_sample_weekday">Maandag</string>
+    <string name="widget_sample_date">9 november</string>
+    <string name="widget_sample_month">November 2026</string>
+    <string name="widget_sample_event_1">Teamoverleg</string>
+    <string name="widget_sample_event_2">Tandarts</string>
+    <string name="widget_sample_event_3">Etentje met vrienden</string>
+    <string name="widget_sample_task_1">Melk kopen</string>
+    <string name="widget_sample_task_2">Loodgieter bellen</string>
+</resources>

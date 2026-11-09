@@ -44,6 +44,84 @@
             </intent-filter>
         </receiver>
 
+        <!-- The home screen widgets (widgets/). Their providers are exported for the launcher and
+             the system's widget service; they only ever draw the widgets again. -->
+        <receiver
+            android:name=".widgets.AgendaWidget"
+            android:exported="true"
+            android:label="@string/widget_agenda_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_agenda_info" />
+        </receiver>
+        <receiver
+            android:name=".widgets.TodayWidget"
+            android:exported="true"
+            android:label="@string/widget_today_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_today_info" />
+        </receiver>
+        <receiver
+            android:name=".widgets.MonthWidget"
+            android:exported="true"
+            android:label="@string/widget_month_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_month_info" />
+        </receiver>
+        <receiver
+            android:name=".widgets.TasksWidget"
+            android:exported="true"
+            android:label="@string/widget_tasks_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_tasks_info" />
+        </receiver>
+
+        <!-- The rows of the Agenda and Tasks widgets; only the system may bind it. -->
+        <service
+            android:name=".widgets.WidgetListService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <!-- The widgets' refresh alarm and the Month widget's arrows: this app's own pending intents only. -->
+        <receiver
+            android:name=".widgets.WidgetsReceiver"
+            android:exported="false" />
+
+        <!-- Exported because the system sends these; all of them are broadcasts only the system may send.
+             The widgets are drawn again: another day, another zone or language, or the alarm gone. -->
+        <receiver
+            android:name=".widgets.WidgetsSystemReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- A widget's settings. The launcher starts it, so it is exported; it closes at once for an id
+             that is not one of this app's widgets. Not a screen of the app's own task, nor of the recents. -->
+        <activity
+            android:name=".widgets.WidgetConfigActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/widget_config_title"
+            android:taskAffinity=""
+            android:theme="@style/WidgetConfigTheme">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <!-- The system WebView sends no usage or crash reports about this app, even where the
              user allowed them for the device (the app has no analytics or crash reporting). -->
         <meta-data android:name="android.webkit.WebView.MetricsOptOut" android:value="true" />

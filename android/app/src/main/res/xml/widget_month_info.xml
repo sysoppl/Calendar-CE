@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Month widget (widgets/MonthWidget.java): 4 x 4 cells, resizable down to 3 x 3.
+     Added with the defaults from Android 12 on (configuration_optional) and set up later through the
+     widget's settings (reconfigurable); before 12 the settings open when it is placed.
+     updatePeriodMillis is only a slow safety net (6 hours): the widgets' own alarm keeps them current
+     (widgets/NextRefresh.java). Sizes: minWidth/minHeight before Android 12, the cells from 12 on. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:configure="pl.patrykpro.calendar.widgets.WidgetConfigActivity"
+    android:description="@string/widget_month_description"
+    android:initialLayout="@layout/widget_loading"
+    android:minWidth="250dp"
+    android:minHeight="250dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="180dp"
+    android:previewImage="@drawable/widget_preview_month_image"
+    android:previewLayout="@layout/widget_preview_month"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="4"
+    android:targetCellHeight="4"
+    android:updatePeriodMillis="21600000"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable|configuration_optional"
+    tools:targetApi="31" />
