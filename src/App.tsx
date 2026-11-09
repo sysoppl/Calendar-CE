@@ -11,6 +11,7 @@ import { useT } from '@/i18n';
 import { isNative } from '@/lib/platform';
 import { tellFirstScreen } from '@/lib/display';
 import { startReminders } from '@/lib/reminders';
+import { startWidgets } from '@/lib/widgets';
 import { startNotificationAccess } from '@/lib/notificationAccess';
 import { useAppearance } from '@/app/useAppearance';
 import { useAutoSync } from '@/app/useAutoSync';
@@ -187,6 +188,8 @@ function Shell() {
   useShellBackButton();
 
   useEffect(() => startReminders(), []);
+  // Android: keeps the home screen widgets' copy of the calendar current and opens what they ask for.
+  useEffect(() => startWidgets(), []);
   // Asks for the notification permission on the first run and keeps PermissionNotice in step.
   useEffect(() => startNotificationAccess(), []);
 

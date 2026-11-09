@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The quiet last line of a list that reaches past the snapshot: "Open the app to refresh". -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/row_note"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:attr/selectableItemBackground"
+    android:gravity="center"
+    android:padding="@dimen/widget_padding"
+    android:textColor="@color/widget_weak"
+    android:textSize="12sp"
+    tools:ignore="Overdraw" />

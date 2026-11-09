@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_agenda_label">Розклад</string>
+    <string name="widget_agenda_description">Найближчі дні, день за днем</string>
+    <string name="widget_today_label">Сьогодні</string>
+    <string name="widget_today_description">Сьогоднішня дата і що далі</string>
+    <string name="widget_month_label">Місяць</string>
+    <string name="widget_month_description">Увесь місяць з вашими подіями</string>
+    <string name="widget_tasks_label">Завдання</string>
+    <string name="widget_tasks_description">Відкриті завдання, виконані одним дотиком</string>
+
+    <string name="widget_no_data">Відкрийте Календар CE, щоб бачити тут свій календар</string>
+    <string name="widget_refresh">Відкрийте застосунок, щоб оновити</string>
+    <string name="widget_today">Сьогодні</string>
+    <string name="widget_tomorrow">Завтра</string>
+    <string name="widget_all_day">Увесь день</string>
+    <string name="widget_from_time">З %1$s</string>
+    <string name="widget_until_time">До %1$s</string>
+    <plurals name="widget_nothing_planned">
+        <item quantity="one">Нічого не заплановано на найближчий %d день</item>
+        <item quantity="few">Нічого не заплановано на найближчі %d дні</item>
+        <item quantity="many">Нічого не заплановано на найближчі %d днів</item>
+        <item quantity="other">Нічого не заплановано на найближчі %d дня</item>
+    </plurals>
+    <string name="widget_nothing_else_today">На сьогодні більше нічого</string>
+    <string name="widget_tomorrow_item">Завтра: %1$s</string>
+    <string name="widget_no_tasks">Немає відкритих завдань</string>
+    <string name="widget_tasks_title">Завдання</string>
+    <string name="widget_new_event">Нова подія</string>
+    <string name="widget_new_task">Нове завдання</string>
+    <string name="widget_previous_month">Попередній місяць</string>
+    <string name="widget_next_month">Наступний місяць</string>
+    <string name="widget_mark_done">Позначити як виконане</string>
+
+    <string name="widget_config_title">Налаштування віджета</string>
+    <string name="widget_config_calendars">Календарі</string>
+    <string name="widget_config_task_lists">Списки завдань</string>
+    <string name="widget_config_same_as_app">Як у застосунку (показані календарі)</string>
+    <string name="widget_config_same_as_app_lists">Як у застосунку (показані списки)</string>
+    <string name="widget_config_all_calendars">Усі календарі, зокрема приховані</string>
+    <string name="widget_config_all_lists">Усі списки завдань, зокрема приховані</string>
+    <string name="widget_config_choose">Вибрати календарі</string>
+    <string name="widget_config_choose_lists">Вибрати списки завдань</string>
+    <string name="widget_config_no_calendars">Відкрийте Календар CE хоча б раз, щоб вибрати тут свої календарі.</string>
+    <string name="widget_config_days">Днів наперед</string>
+    <string name="widget_config_tasks">Показувати завдання з терміном</string>
+    <string name="widget_config_place">Показувати місце</string>
+    <string name="widget_config_undated">Також завдання без терміну</string>
+    <string name="widget_config_look">Вигляд</string>
+    <string name="widget_config_theme_system">Як у системі</string>
+    <string name="widget_config_theme_light">Світлий</string>
+    <string name="widget_config_theme_dark">Темний</string>
+    <string name="widget_config_opacity">Тло</string>
+    <string name="widget_config_percent">%1$d%%</string>
+    <string name="widget_config_cancel">Скасувати</string>
+    <string name="widget_config_save">Зберегти</string>
+
+    <string name="widget_sample_weekday">Понеділок</string>
+    <string name="widget_sample_date">9 листопада</string>
+    <string name="widget_sample_month">Листопад 2026</string>
+    <string name="widget_sample_event_1">Нарада команди</string>
+    <string name="widget_sample_event_2">Стоматолог</string>
+    <string name="widget_sample_event_3">Вечеря з друзями</string>
+    <string name="widget_sample_task_1">Купити молоко</string>
+    <string name="widget_sample_task_2">Подзвонити сантехніку</string>
+</resources>

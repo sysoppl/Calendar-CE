@@ -99,6 +99,15 @@ export function calendarColor(color: string | undefined, fallback = DEFAULT_CALE
 }
 
 /**
+ * A colour `normalizeItemColor` keeps as plain `#rrggbb`, its alpha left out:
+ * for places that take nothing else (the Android home screen widgets).
+ */
+export function opaqueHex(color: string): string | undefined {
+  const parsed = parseColor(color);
+  return parsed ? `#${parsed.rgb.map((c) => c.toString(16).padStart(2, '0')).join('')}` : undefined;
+}
+
+/**
  * A colour as it shows over the page: one with an alpha channel mixed into
  * the background (`var(--bg)`), the way a dot of it looks there. For a block
  * of colour, which would otherwise let grid lines and text behind it through.

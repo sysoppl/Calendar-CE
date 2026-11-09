@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_agenda_label">Přehled</string>
+    <string name="widget_agenda_description">Nejbližší dny, den po dni</string>
+    <string name="widget_today_label">Dnes</string>
+    <string name="widget_today_description">Dnešní datum a co přijde dál</string>
+    <string name="widget_month_label">Měsíc</string>
+    <string name="widget_month_description">Celý měsíc s vašimi událostmi</string>
+    <string name="widget_tasks_label">Úkoly</string>
+    <string name="widget_tasks_description">Otevřené úkoly, splněné jedním klepnutím</string>
+
+    <string name="widget_no_data">Otevřete Kalendář CE a uvidíte tu svůj kalendář</string>
+    <string name="widget_refresh">Pro obnovení otevřete aplikaci</string>
+    <string name="widget_today">Dnes</string>
+    <string name="widget_tomorrow">Zítra</string>
+    <string name="widget_all_day">Celý den</string>
+    <string name="widget_from_time">Od %1$s</string>
+    <string name="widget_until_time">Do %1$s</string>
+    <plurals name="widget_nothing_planned">
+        <item quantity="one">Na nejbližší %d den nic v plánu</item>
+        <item quantity="few">Na nejbližší %d dny nic v plánu</item>
+        <item quantity="many">Na nejbližších %d dne nic v plánu</item>
+        <item quantity="other">Na nejbližších %d dní nic v plánu</item>
+    </plurals>
+    <string name="widget_nothing_else_today">Dnes už nic dalšího</string>
+    <string name="widget_tomorrow_item">Zítra: %1$s</string>
+    <string name="widget_no_tasks">Žádné otevřené úkoly</string>
+    <string name="widget_tasks_title">Úkoly</string>
+    <string name="widget_new_event">Nová událost</string>
+    <string name="widget_new_task">Nový úkol</string>
+    <string name="widget_previous_month">Předchozí měsíc</string>
+    <string name="widget_next_month">Další měsíc</string>
+    <string name="widget_mark_done">Označit jako dokončené</string>
+
+    <string name="widget_config_title">Nastavení widgetu</string>
+    <string name="widget_config_calendars">Kalendáře</string>
+    <string name="widget_config_task_lists">Seznamy úkolů</string>
+    <string name="widget_config_same_as_app">Jako v aplikaci (zobrazené kalendáře)</string>
+    <string name="widget_config_same_as_app_lists">Jako v aplikaci (zobrazené seznamy)</string>
+    <string name="widget_config_all_calendars">Všechny kalendáře, i skryté</string>
+    <string name="widget_config_all_lists">Všechny seznamy úkolů, i skryté</string>
+    <string name="widget_config_choose">Vybrat kalendáře</string>
+    <string name="widget_config_choose_lists">Vybrat seznamy úkolů</string>
+    <string name="widget_config_no_calendars">Otevřete jednou Kalendář CE, abyste tu mohli vybrat své kalendáře.</string>
+    <string name="widget_config_days">Dní dopředu</string>
+    <string name="widget_config_tasks">Zobrazit úkoly s termínem</string>
+    <string name="widget_config_place">Zobrazit místo</string>
+    <string name="widget_config_undated">Zahrnout úkoly bez termínu</string>
+    <string name="widget_config_look">Vzhled</string>
+    <string name="widget_config_theme_system">Podle systému</string>
+    <string name="widget_config_theme_light">Světlý</string>
+    <string name="widget_config_theme_dark">Tmavý</string>
+    <string name="widget_config_opacity">Pozadí</string>
+    <string name="widget_config_percent">%1$d %%</string>
+    <string name="widget_config_cancel">Zrušit</string>
+    <string name="widget_config_save">Uložit</string>
+
+    <string name="widget_sample_weekday">Pondělí</string>
+    <string name="widget_sample_date">9. listopadu</string>
+    <string name="widget_sample_month">Listopad 2026</string>
+    <string name="widget_sample_event_1">Porada týmu</string>
+    <string name="widget_sample_event_2">Zubař</string>
+    <string name="widget_sample_event_3">Večeře s přáteli</string>
+    <string name="widget_sample_task_1">Koupit mléko</string>
+    <string name="widget_sample_task_2">Zavolat instalatérovi</string>
+</resources>

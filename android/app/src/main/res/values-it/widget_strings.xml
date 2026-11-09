@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_agenda_label">Agenda</string>
+    <string name="widget_agenda_description">I prossimi giorni, giorno per giorno</string>
+    <string name="widget_today_label">Oggi</string>
+    <string name="widget_today_description">La data di oggi e cosa viene dopo</string>
+    <string name="widget_month_label">Mese</string>
+    <string name="widget_month_description">Il mese a colpo d’occhio, con i tuoi eventi</string>
+    <string name="widget_tasks_label">Attività</string>
+    <string name="widget_tasks_description">Attività aperte, completate con un tocco</string>
+
+    <string name="widget_no_data">Apri Calendario CE per vedere qui il tuo calendario</string>
+    <string name="widget_refresh">Apri l’app per aggiornare</string>
+    <string name="widget_today">Oggi</string>
+    <string name="widget_tomorrow">Domani</string>
+    <string name="widget_all_day">Tutto il giorno</string>
+    <string name="widget_from_time">Dalle %1$s</string>
+    <string name="widget_until_time">Fino alle %1$s</string>
+    <plurals name="widget_nothing_planned">
+        <item quantity="one">Niente in programma nel prossimo %d giorno</item>
+        <item quantity="many">Niente in programma nei prossimi %d giorni</item>
+        <item quantity="other">Niente in programma nei prossimi %d giorni</item>
+    </plurals>
+    <string name="widget_nothing_else_today">Nient’altro per oggi</string>
+    <string name="widget_tomorrow_item">Domani: %1$s</string>
+    <string name="widget_no_tasks">Nessuna attività aperta</string>
+    <string name="widget_tasks_title">Attività</string>
+    <string name="widget_new_event">Nuovo evento</string>
+    <string name="widget_new_task">Nuova attività</string>
+    <string name="widget_previous_month">Mese precedente</string>
+    <string name="widget_next_month">Mese successivo</string>
+    <string name="widget_mark_done">Segna come completata</string>
+
+    <string name="widget_config_title">Impostazioni del widget</string>
+    <string name="widget_config_calendars">Calendari</string>
+    <string name="widget_config_task_lists">Elenchi attività</string>
+    <string name="widget_config_same_as_app">Come nell’app (i calendari mostrati)</string>
+    <string name="widget_config_same_as_app_lists">Come nell’app (gli elenchi mostrati)</string>
+    <string name="widget_config_all_calendars">Tutti i calendari, anche quelli nascosti</string>
+    <string name="widget_config_all_lists">Tutti gli elenchi attività, anche quelli nascosti</string>
+    <string name="widget_config_choose">Scegli i calendari</string>
+    <string name="widget_config_choose_lists">Scegli gli elenchi attività</string>
+    <string name="widget_config_no_calendars">Apri Calendario CE una volta per poter scegliere qui i tuoi calendari.</string>
+    <string name="widget_config_days">Giorni da mostrare</string>
+    <string name="widget_config_tasks">Mostra le attività con scadenza</string>
+    <string name="widget_config_place">Mostra il luogo</string>
+    <string name="widget_config_undated">Includi le attività senza scadenza</string>
+    <string name="widget_config_look">Aspetto</string>
+    <string name="widget_config_theme_system">Segui il sistema</string>
+    <string name="widget_config_theme_light">Chiaro</string>
+    <string name="widget_config_theme_dark">Scuro</string>
+    <string name="widget_config_opacity">Sfondo</string>
+    <string name="widget_config_percent">%1$d%%</string>
+    <string name="widget_config_cancel">Annulla</string>
+    <string name="widget_config_save">Salva</string>
+
+    <string name="widget_sample_weekday">Lunedì</string>
+    <string name="widget_sample_date">9 novembre</string>
+    <string name="widget_sample_month">Novembre 2026</string>
+    <string name="widget_sample_event_1">Riunione di team</string>
+    <string name="widget_sample_event_2">Dentista</string>
+    <string name="widget_sample_event_3">Cena con gli amici</string>
+    <string name="widget_sample_task_1">Comprare il latte</string>
+    <string name="widget_sample_task_2">Chiamare l’idraulico</string>
+</resources>

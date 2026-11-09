@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The home screen widgets in the light look of the app (Daylight). values-night holds the dark one
+     (Graphite), which the launcher picks while the system is dark. widgets/Look.java keeps the same
+     values for the widgets set to always light or always dark; a unit test holds the two together. -->
+<resources>
+    <color name="widget_ground">#FFFFFF</color>
+    <color name="widget_text">#1E2227</color>
+    <color name="widget_weak">#5D646C</color>
+    <!-- Days of the months before and after, on the month's page. -->
+    <color name="widget_dim">#995D646C</color>
+    <color name="widget_divider">#E3E3DF</color>
+    <!-- Today and overdue. -->
+    <color name="widget_accent">#D93033</color>
+    <color name="widget_on_accent">#FFFFFF</color>
+</resources>
