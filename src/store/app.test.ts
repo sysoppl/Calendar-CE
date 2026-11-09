@@ -108,3 +108,27 @@ describe('without localStorage', () => {
     }
   });
 });
+
+describe('what the device knows about keeping calendars on it', () => {
+  it('is stored with the choice, only the facts there are', async () => {
+    const first = await import('./app');
+    first.useApp.getState().setOnboarded('local');
+    first.useApp.getState().updateDeviceStorage({ riskAcceptedAt: 10, keepingSince: 5 });
+    expect(stored('calendar.app').state).toEqual({ onboarded: true, storageMode: 'local', riskAcceptedAt: 10, keepingSince: 5 });
+
+    vi.resetModules();
+    const second = await import('./app');
+    expect(second.useApp.getState()).toMatchObject({ riskAcceptedAt: 10, keepingSince: 5 });
+    expect(second.useApp.getState().lastBackupAt).toBeUndefined();
+    second.useApp.getState().updateDeviceStorage({ lastBackupAt: 20, backupSnoozedUntil: undefined });
+    expect(stored('calendar.app').state).toEqual({ onboarded: true, storageMode: 'local', riskAcceptedAt: 10, keepingSince: 5, lastBackupAt: 20 });
+  });
+
+  it('drops stamps that are no numbers', async () => {
+    localStorage.setItem('calendar.app', JSON.stringify({ state: { onboarded: true, storageMode: 'local', riskAcceptedAt: 'yes', lastBackupAt: 7, riskNoticeClosedAt: null }, version: 1 }));
+    const { useApp } = await import('./app');
+    expect(useApp.getState()).toMatchObject({ onboarded: true, storageMode: 'local', lastBackupAt: 7 });
+    expect(useApp.getState().riskAcceptedAt).toBeUndefined();
+    expect(useApp.getState().riskNoticeClosedAt).toBeUndefined();
+  });
+});

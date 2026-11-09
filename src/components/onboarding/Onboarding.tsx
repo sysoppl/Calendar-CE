@@ -54,10 +54,22 @@ export function Onboarding() {
     }
   };
 
+  // A backup was restored onto this device: kept here from now on, with a calendar and a task list at least.
+  const restored = async () => {
+    setBusy('local');
+    try {
+      await useData.getState().setupLocalDefaults();
+      finish('local');
+    } catch (err) {
+      useUi.getState().toast(errorMessage(err), 'error');
+      setBusy(null);
+    }
+  };
+
   if (step === 'caldav') return <CalDavStep onBack={back} />;
   return (
     <OnboardingFrame brand={false} wide>
-      <Welcome busy={busy} onChoose={(mode) => void choose(mode)} />
+      <Welcome busy={busy} onChoose={(mode) => void choose(mode)} onRestored={restored} />
     </OnboardingFrame>
   );
 }

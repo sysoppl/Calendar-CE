@@ -22,6 +22,7 @@ import { AppRail } from '@/components/layout/AppRail';
 import { Fab } from '@/components/layout/Fab';
 import { ViewBar } from '@/components/layout/ViewBar';
 import { PermissionNotice } from '@/components/settings/PermissionNotice';
+import { DeviceStorageNotices, StorageRiskDialog } from '@/components/storage/DeviceStorage';
 import { CalendarView } from '@/components/views/CalendarView';
 import { SyncActivity } from '@/components/views/SyncActivity';
 import { EventPopover } from '@/components/events/EventPopover';
@@ -201,6 +202,7 @@ function Shell() {
           {/* Notices sit on top of the calendar, as wide as it. */}
           <div className="flex min-w-0 flex-1 flex-col">
             <PermissionNotice className={narrow ? 'mx-2' : ''} />
+            <DeviceStorageNotices className={narrow ? 'mx-2' : ''} />
             <main className={`bg-bg text-text border-border-weak relative min-h-0 min-w-0 flex-1 overflow-hidden border-t ${panel}`}>
               <SyncActivity />
               <CalendarView />
@@ -225,6 +227,7 @@ function Shell() {
       <HolidaysDialog />
       <SearchOverlay />
       <ShortcutsDialog />
+      <StorageRiskDialog />
     </div>
   );
 }

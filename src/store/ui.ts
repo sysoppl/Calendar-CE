@@ -123,7 +123,7 @@ export interface CalendarDialogState {
   kind: 'events' | 'tasks';
 }
 
-export type SettingsSection = 'account' | 'general' | 'appearance' | 'calendars' | 'tasks' | 'notifications' | 'import' | 'shortcuts' | 'about';
+export type SettingsSection = 'account' | 'general' | 'appearance' | 'calendars' | 'tasks' | 'notifications' | 'import' | 'backup' | 'shortcuts' | 'about';
 
 export interface OpenSettingsOptions {
   /** Phones: start on the list of sections rather than on `section` (the generic "Settings" entry). */

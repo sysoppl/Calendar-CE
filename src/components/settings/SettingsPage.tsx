@@ -1,18 +1,20 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { ArrowLeft, Settings as SettingsIcon, Palette, CalendarDays, ListTodo, Bell, FileUp, Keyboard, Info, UserRound } from 'lucide-react';
+import { ArrowLeft, Settings as SettingsIcon, Palette, CalendarDays, ListTodo, Bell, FileUp, Keyboard, Info, UserRound, DatabaseBackup } from 'lucide-react';
 import { useUi, errorMessage, type SettingsSection } from '@/store/ui';
 import { useSettings } from '@/store/settings';
 import { useData } from '@/store/data';
 import { useT, type MessageKey } from '@/i18n';
 import { useIsMobile } from '@/hooks/useMediaQuery';
 import { useKeyboardUi } from '@/hooks/useKeyboardUi';
-import { downloadText, mergeObjects, splitIcsFile } from '@/lib/importExport';
+import { mergeObjects, splitIcsFile } from '@/lib/importExport';
+import { fileNameFrom, saveTextFile } from '@/lib/files';
 import { NotificationsSection } from './NotificationsSection';
 import { LicensesDialog } from './LicensesDialog';
 import { GeneralSection } from './GeneralSection';
 import { AppearanceSection } from './AppearanceSection';
 import { CalendarsSection } from './CalendarsSection';
 import { TasksSection } from './TasksSection';
+import { BackupSection } from './BackupSection';
 import { SELECT } from './styles';
 import { LegalLinks } from '@/components/ui/LegalLinks';
 import { AccountSection } from '@/components/account/AccountSection';
@@ -34,6 +36,7 @@ const SECTIONS: { id: SettingsSection; icon: ReactNode; key: MessageKey }[] = [
   { id: 'tasks', icon: <ListTodo size={18} />, key: 'settings.section.tasks' },
   { id: 'notifications', icon: <Bell size={18} />, key: 'settings.section.notifications' },
   { id: 'import', icon: <FileUp size={18} />, key: 'settings.section.import' },
+  { id: 'backup', icon: <DatabaseBackup size={18} />, key: 'settings.section.backup' },
   { id: 'shortcuts', icon: <Keyboard size={18} />, key: 'settings.section.shortcuts' },
   { id: 'about', icon: <Info size={18} />, key: 'settings.section.about' },
 ];
@@ -186,6 +189,7 @@ function SettingsOverlay({ section, sections }: { section: SettingsSection; sect
               {section === 'tasks' && <TasksSection />}
               {section === 'notifications' && <NotificationsSection />}
               {section === 'import' && <ImportSection />}
+              {section === 'backup' && <BackupSection />}
               {section === 'shortcuts' && <ShortcutList />}
               {section === 'about' && <AboutSection />}
             </div>
@@ -223,11 +227,12 @@ function ImportSection() {
     }
   };
 
-  const exportCal = () => {
+  const exportCal = async () => {
     const cal = calendars.find((c) => c.id === exportId);
     if (!cal) return;
     const ics = mergeObjects(Object.values(objects[cal.id] ?? {}), cal.name);
-    downloadText(`${cal.name.replace(/[^\w\- ]+/g, '').trim() || 'calendar'}.ics`, ics);
+    // In the Android app the system's file picker asks where; a failure there is said.
+    if ((await saveTextFile(`${fileNameFrom(cal.name, 'calendar')}.ics`, ics, 'text/calendar')) === 'failed') ui.toast(t('files.saveFailed'), 'error');
   };
 
   return (
@@ -257,7 +262,7 @@ function ImportSection() {
               </option>
             ))}
           </select>
-          <Button onClick={exportCal}>{t('settings.download')}</Button>
+          <Button onClick={() => void exportCal()}>{t('settings.download')}</Button>
         </div>
       </SettingRow>
     </>

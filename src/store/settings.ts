@@ -106,6 +106,12 @@ export interface Settings {
   syncIntervalMinutes: number;
   notificationsEnabled: boolean;
   dayStartHour: number;
+  /**
+   * Days after the last backup at which a notice above the calendar asks for
+   * a new one, while calendars are kept on this device (lib/deviceStorage.ts);
+   * 0 turns the reminder off. About this device's data.
+   */
+  backupReminderDays: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -145,7 +151,16 @@ export const DEFAULT_SETTINGS: Settings = {
   syncIntervalMinutes: 5,
   notificationsEnabled: true,
   dayStartHour: 7,
+  backupReminderDays: 30,
 };
+
+/** The backup reminder's choices in Settings › Backup; any other whole number of days up to the maximum is "Custom". */
+export const BACKUP_REMINDER_PRESETS: readonly number[] = [7, 14, 30, 60, 90];
+export const MAX_BACKUP_REMINDER_DAYS = 365;
+
+export function isBackupReminderDays(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= MAX_BACKUP_REMINDER_DAYS;
+}
 
 /** Version of the stored settings; `migrateSettings` brings older ones up to it. */
 export const SETTINGS_VERSION = 4;

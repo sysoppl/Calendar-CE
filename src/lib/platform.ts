@@ -3,6 +3,8 @@ import { directTransport, proxyTransport, type Transport } from './dav/transport
 import { nativeTransport } from './nativeHttp';
 
 export const isNative = Capacitor.isNativePlatform();
+/** The Android app, the one with home screen widgets and a native file picker for saving files. */
+export const isAndroid = Capacitor.getPlatform() === 'android';
 
 /**
  * In the Android app, requests go through the native DavHttp plugin, which is not

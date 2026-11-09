@@ -5,6 +5,7 @@ import { brandEn } from './brand.en';
 import { phoneEn } from './phone.en';
 import { syncEn } from './sync.en';
 import { remindersEn } from './reminders.en';
+import { storageEn } from './storage.en';
 
 export const en = {
   'app.name': 'Calendar CE',
@@ -633,6 +634,7 @@ export const en = {
   ...phoneEn,
   ...syncEn,
   ...remindersEn,
+  ...storageEn,
 };
 
 export type MessageKey = keyof typeof en;

@@ -1,11 +1,12 @@
 import { useId, type ReactNode } from 'react';
-import { AlertCircle, ArrowLeftRight, ArrowRight, Check, ChevronRight, MonitorSmartphone, Server } from 'lucide-react';
+import { AlertCircle, ArchiveRestore, ArrowLeftRight, ArrowRight, Check, ChevronRight, MonitorSmartphone, Server } from 'lucide-react';
 import { useT, type MessageKey } from '@/i18n';
 import { isNative } from '@/lib/platform';
 import type { StorageMode } from '@/store/app';
 import { Button } from '@/components/ui/Button';
 import { CloudPromo } from '@/components/ui/CloudPromo';
 import { LogoMark } from '@/components/layout/Logo';
+import { RestoreBackup } from '@/components/storage/RestoreBackup';
 import { useTypeset } from './typeset';
 import { WeekPreview } from './WeekPreview';
 
@@ -48,7 +49,16 @@ export function caveatsOf(option: StorageOption, native = isNative): MessageKey[
  * The first screen of a new install: what the app is, and the places a
  * calendar can be kept, side by side. The choice can be changed later.
  */
-export function Welcome({ busy, onChoose }: { busy: StorageMode | null; onChoose: (mode: StorageMode) => void }) {
+export function Welcome({
+  busy,
+  onChoose,
+  onRestored,
+}: {
+  busy: StorageMode | null;
+  onChoose: (mode: StorageMode) => void;
+  /** After a backup file was restored onto this device: the calendars are kept here from then on. */
+  onRestored?: () => void | Promise<void>;
+}) {
   const t = useT();
   const ts = useTypeset();
   return (
@@ -77,6 +87,19 @@ export function Welcome({ busy, onChoose }: { busy: StorageMode | null; onChoose
           </li>
         ))}
       </ul>
+
+      {/* A device that lost its data (or a new one) starts from a backup file of the device storage. */}
+      {onRestored && (
+        <div className="mx-auto mt-4 flex w-full max-w-xl justify-center">
+          <RestoreBackup settingsByDefault onRestored={onRestored}>
+            {(open, reading) => (
+              <Button variant="frame" className="w-full sm:w-auto" icon={<ArchiveRestore size={16} />} loading={reading} disabled={busy !== null} onClick={open}>
+                <span className="truncate">{t('welcome.restore')}</span>
+              </Button>
+            )}
+          </RestoreBackup>
+        </div>
+      )}
 
       {/* The icon sits in the text, so it stays next to the first word however the line breaks. */}
       <p className="text-frame-weak mx-auto mt-6 max-w-xl text-center text-[0.875rem] text-balance lg:mt-5">

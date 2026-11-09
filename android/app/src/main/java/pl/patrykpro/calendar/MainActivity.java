@@ -32,6 +32,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(DavHttpPlugin.class);
         registerPlugin(RemindersPlugin.class);
         registerPlugin(DisplayPlugin.class);
+        // Saving files the page made (a backup, an .ics export): the WebView has no downloads.
+        registerPlugin(FilesPlugin.class);
         // In place of Capacitor's own "WebView" plugin, which would let the page change where the app is served from.
         registerPlugin(WebViewGuardPlugin.class);
         super.onCreate(savedInstanceState);

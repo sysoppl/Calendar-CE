@@ -11,7 +11,7 @@ import type { PartStat } from '@/lib/ical/types';
 import { describeAlarm, describeAsWritten, describeRule, splitLinks } from '@/lib/describe';
 import { deleteOccurrence, duplicateOccurrence, occurrenceIcs, openEditEvent, respondToOccurrence } from '@/lib/actions';
 import { isSameDay } from '@/lib/date';
-import { downloadText } from '@/lib/importExport';
+import { fileNameFrom, saveTextFile } from '@/lib/files';
 import { findMeetingLink, type MeetingLink } from '@/lib/meeting';
 import { describeMilestone, describeSince, milestoneOf, titleWithYears } from '@/lib/milestone';
 import { externalLink } from '@/lib/externalLink';
@@ -238,9 +238,11 @@ function PopoverBody({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const download = () => {
+  const download = async () => {
     const ics = occurrenceIcs(occ);
-    if (ics) downloadText(`${(data.title || 'event').replace(/[^\w\- ]+/g, '').slice(0, 60) || 'event'}.ics`, ics);
+    if (!ics) return;
+    // In the Android app the system's file picker asks where; a failure there is said.
+    if ((await saveTextFile(`${fileNameFrom(data.title, 'event')}.ics`, ics, 'text/calendar')) === 'failed') toast(t('files.saveFailed'), 'error');
   };
 
   return (
@@ -267,7 +269,7 @@ function PopoverBody({ onClose }: { onClose: () => void }) {
           }
           items={[
             { label: t('event.copyDetails'), icon: <ClipboardCopy size={16} />, onSelect: () => void copyDetails() },
-            { label: t('event.download'), icon: <Download size={16} />, onSelect: download },
+            { label: t('event.download'), icon: <Download size={16} />, onSelect: () => void download() },
           ]}
         />
         <span className="bg-border-weak mx-1.5 h-6 w-px" aria-hidden />
