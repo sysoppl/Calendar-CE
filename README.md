@@ -114,6 +114,10 @@
 - **On this device**: no account and no server. Works offline
 - **CalDAV**: Nextcloud, Radicale, Baïkal, Fastmail, iCloud, mailbox.org, Posteo, Synology and more. Incremental sync (RFC 6578), conflict-safe writes, creating calendars and task lists
 - Use several CalDAV accounts side by side. **Move my data…** copies or moves calendars between places and checks every item before anything is deleted
+- **Backup** (*Settings → Backup*): one file with every calendar and task list kept on the device, all their events and
+  tasks, your subscribed and holiday calendars and your settings. Restore it on the same device or another one, also
+  from the welcome screen; nothing on the device is deleted. A notice above the calendar asks for a new backup every
+  30 days (or as often as you choose), and the app says once which things can delete calendars kept on a device
 
 <p align="center">
   <img src="docs/media/features/feature-storage.png" width="100%" alt="Your server, or no server: connecting a Nextcloud server on a computer, and the welcome screen on a phone">
@@ -134,6 +138,8 @@
   app update. **Dismiss** and **Snooze 10 min** end it, and a task's **Done** opens the app and marks the task done
 - The round **+** button adds an event, or, as *Settings → General → Round + button* chooses, a task or a small menu of
   the two
+- **Home screen widgets**: Agenda, Today, Month and Tasks, each with its own calendars, look (the system's, light or
+  dark) and background. A tap opens the day, the event or the task, adds a new one, or marks a task done
 - No ads, no trackers, no analytics and no consent pop-ups
 
 <details>
