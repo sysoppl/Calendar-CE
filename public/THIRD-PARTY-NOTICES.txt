@@ -1,4 +1,4 @@
-Calendar CE (Kalendarz CE) 1.15.1: third-party notices
+Calendar CE (Kalendarz CE) 1.15.2: third-party notices
 Generated on 2026-11-12 by scripts/third-party-notices.mjs.
 
 Calendar CE is free software: Copyright (c) 2026 patryk.pro, licensed under
