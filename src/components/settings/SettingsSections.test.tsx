@@ -167,6 +167,23 @@ describe('General', () => {
     expect(useSettings.getState().fabAction).toBe('task');
   });
 
+  it('offers the lengths of the "N days" view that the bar of views offers, and says on a phone that the bar changes it too', async () => {
+    phone = true;
+    await render(h(GeneralSection));
+    const select = document.getElementById('set-days') as HTMLSelectElement;
+    expect([...select.options].map((o) => o.textContent)).toEqual(['2 days', '3 days', '4 days', '5 days', '6 days', '7 days']);
+    expect(select.closest('.border-b')!.textContent).toContain(en['settings.customDaysHintPhone']);
+    select.value = '3';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(useSettings.getState().customDays).toBe(3);
+    root!.unmount();
+    phone = false;
+    await render(h(GeneralSection));
+    const row = (document.getElementById('set-days') as HTMLSelectElement).closest('.border-b')!.textContent!;
+    expect(row).toContain(en['settings.customDaysHint']);
+    expect(row).not.toContain(en['settings.customDaysHintPhone']);
+  });
+
   it('shows the round + button choice only where the button is', async () => {
     await render(h(GeneralSection));
     expect(document.getElementById('set-fab')).toBeNull();

@@ -74,7 +74,8 @@
 ## Features
 
 **Calendar**
-- Day, week, month, year and agenda views, plus a custom view of 2–7 days
+- Day, week, month, year and agenda views, plus a custom view of 2–7 days. On phones all six views are one tap away
+  in a bar at the bottom, and a second tap on the custom view's tab chooses its number of days
 - Drag to create, move and resize events. On a touch screen, tap to open an event and long-press to pick it up
 - Create events in place, or open the full editor for time zones, custom repeat rules, reminders, busy/free and more
 - Recurring events: edit or delete *this event*, *this and future events* or *all events*

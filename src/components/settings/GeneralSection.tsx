@@ -1,5 +1,5 @@
 import { useId, useMemo } from 'react';
-import { MAX_CUSTOM_DAYS, MIN_CUSTOM_DAYS, useSettings, VIEWS, type FabAction, type ViewType } from '@/store/settings';
+import { CUSTOM_DAY_COUNTS, useSettings, VIEWS, type FabAction, type ViewType } from '@/store/settings';
 import { LANGS, LANGUAGE_NAMES, languageChoice, useT, type Lang } from '@/i18n';
 import { useFormat } from '@/hooks/useFormat';
 import { useIsMobile } from '@/hooks/useMediaQuery';
@@ -77,9 +77,10 @@ export function GeneralSection() {
             ))}
           </select>
         </SettingRow>
-        <SettingRow inline label={t('settings.customDays')} hint={t('settings.customDaysHint')} htmlFor="set-days">
+        {/* Where the bar of views is (phones and narrow windows), its "N days" tab changes the length too. */}
+        <SettingRow inline label={t('settings.customDays')} hint={t(mobile ? 'settings.customDaysHintPhone' : 'settings.customDaysHint')} htmlFor="set-days">
           <select id="set-days" className={SELECT_INLINE} value={s.customDays} onChange={(e) => changeSettings({ customDays: Number(e.target.value) })}>
-            {Array.from({ length: MAX_CUSTOM_DAYS - MIN_CUSTOM_DAYS + 1 }, (_, i) => i + MIN_CUSTOM_DAYS).map((n) => (
+            {CUSTOM_DAY_COUNTS.map((n) => (
               <option key={n} value={n}>
                 {t('view.days', { n })}
               </option>

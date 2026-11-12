@@ -7,7 +7,8 @@
 // - a chip in the month shows at least five letters of its title;
 // - nothing shows a keyboard shortcut (<kbd>) without a keyboard;
 // - the back button returns from a day opened in the month to that month;
-// - the week is seven days, and the views are in the bar at the bottom.
+// - the week is seven days, and the views are in the bar at the bottom, "N dni"
+//   among them, whose tab, tapped again, chooses how many days it shows.
 //
 //   node scripts/e2e-phone.mjs [baseUrl]
 //   SHOTS=some/folder node scripts/e2e-phone.mjs http://localhost:5173
@@ -73,7 +74,10 @@ async function phonePage(phone) {
   await page.addInitScript(() => {
     const state = { themeMode: 'fixed', theme: 'daylight', defaultView: 'month', language: 'pl', dayStartHour: 8, showWeekNumbers: true, myEmails: 'me@example.com' };
     localStorage.setItem('calendar.settings', JSON.stringify({ state, version: 4 }));
-    if (localStorage.getItem('calendar.app') === null) localStorage.setItem('calendar.app', JSON.stringify({ state: { onboarded: true, storageMode: 'local' }, version: 1 }));
+    // The risks of keeping calendars on the device accepted, its notice closed and a backup just made (1.15), so no dialog or line covers the calendar.
+    const now = Date.now();
+    const app = { onboarded: true, storageMode: 'local', riskAcceptedAt: now, riskNoticeClosedAt: now, lastBackupAt: now };
+    if (localStorage.getItem('calendar.app') === null) localStorage.setItem('calendar.app', JSON.stringify({ state: app, version: 1 }));
   });
   await page.goto(base);
   await page.waitForFunction(() => '__calendarSeed' in window);
@@ -115,9 +119,9 @@ async function swipe(page, from, to, steps = 8) {
 
 /** Closes an open menu with a tap beside it (a key press would show the app a keyboard). */
 async function tapBeside(page) {
-  const bar = page.locator('[role="tablist"]');
+  const bar = page.locator('nav:has([role="tablist"])');
   const box = (await bar.count()) ? await bar.boundingBox() : null;
-  // The edge of the bar of views, or without one the screen's bottom corner.
+  // The edge of the bar of views (left of its first tab), or without one the screen's bottom corner.
   if (box) await page.touchscreen.tap(box.x + 1, box.y + box.height / 2);
   else await page.touchscreen.tap(1, page.viewportSize().height - 2);
   await page.waitForTimeout(250);
@@ -217,7 +221,23 @@ for (const phone of PHONES) {
 
     // The views are a tap away in the bar at the bottom.
     const tabs = await page.locator('[role="tablist"] [role="tab"]').allTextContents();
-    check(phone, 'the bar at the bottom names the five views', tabs.join('|') === 'Agenda|Dzień|Tydzień|Miesiąc|Rok', tabs.join('|'));
+    check(phone, 'the bar at the bottom names the six views', tabs.join('|') === 'Agenda|Dzień|4 dni|Tydzień|Miesiąc|Rok', tabs.join('|'));
+
+    // "4 dni" shows four days; another tap on its tab chooses how many.
+    const daysTab = page.locator('[role="tab"][data-view="days"]');
+    await daysTab.tap();
+    await page.waitForTimeout(500);
+    check(phone, 'the "N dni" tab shows its view', (await state(page)).view === 'days' && (await page.locator('[role="menu"]').count()) === 0);
+    await daysTab.tap();
+    await page.waitForTimeout(400);
+    const lengths = await page.locator('[role="menuitemradio"]').allTextContents();
+    check(phone, 'another tap on it offers 2 to 7 days', lengths.join('|') === '2 dni|3 dni|4 dni|5 dni|6 dni|7 dni', lengths.join('|'));
+    await page.locator('[role="menuitemradio"]', { hasText: '3 dni' }).tap();
+    await page.waitForTimeout(600);
+    const columns = await page.evaluate(() => document.querySelector('.time-grid-bg').children.length);
+    const label = await daysTab.textContent();
+    check(phone, 'choosing 3 shows three days', columns === 3 && label === '3 dni' && (await page.locator('[role="menu"]').count()) === 0, `${columns} days, ${label}`);
+    await show(page, 'month');
 
     // Back returns from a day opened in the month to that month.
     const target = await page.evaluate(() => {
