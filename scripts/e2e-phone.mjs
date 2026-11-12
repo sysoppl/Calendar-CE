@@ -8,7 +8,8 @@
 // - nothing shows a keyboard shortcut (<kbd>) without a keyboard;
 // - the back button returns from a day opened in the month to that month;
 // - the week is seven days, and the views are in the bar at the bottom, "N dni"
-//   among them, whose tab, tapped again, chooses how many days it shows.
+//   among them, whose tab, tapped again, chooses how many days it shows;
+// - Settings › General hides the bar's Agenda and "N dni" tabs and shows them again.
 //
 //   node scripts/e2e-phone.mjs [baseUrl]
 //   SHOTS=some/folder node scripts/e2e-phone.mjs http://localhost:5173
@@ -238,6 +239,25 @@ for (const phone of PHONES) {
     const label = await daysTab.textContent();
     check(phone, 'choosing 3 shows three days', columns === 3 && label === '3 dni' && (await page.locator('[role="menu"]').count()) === 0, `${columns} days, ${label}`);
     await show(page, 'month');
+
+    // Settings › General hides the Agenda and "N dni" tabs, and shows them again.
+    const barTabs = () => page.locator('[role="tablist"] [role="tab"]').allTextContents().then((t) => t.join('|'));
+    const flip = async (...labels) => {
+      await page.evaluate(async () => (await import('/src/store/ui.ts')).useUi.getState().openSettings('general'));
+      await page.waitForTimeout(400);
+      for (const name of labels) {
+        await page.getByRole('switch', { name, exact: true }).tap();
+        await page.waitForTimeout(200);
+      }
+      await page.evaluate(async () => (await import('/src/store/ui.ts')).useUi.getState().closeSettings());
+      await page.waitForTimeout(400);
+    };
+    await flip('Karta Agenda na pasku na dole');
+    check(phone, 'turning Agenda off in Settings takes its tab away', (await barTabs()) === 'Dzień|3 dni|Tydzień|Miesiąc|Rok', await barTabs());
+    await flip('Karta „N dni” na pasku na dole');
+    check(phone, 'turning "N dni" off too leaves four tabs', (await barTabs()) === 'Dzień|Tydzień|Miesiąc|Rok', await barTabs());
+    await flip('Karta Agenda na pasku na dole', 'Karta „N dni” na pasku na dole');
+    check(phone, 'turning both on again brings the six tabs back', (await barTabs()) === 'Agenda|Dzień|3 dni|Tydzień|Miesiąc|Rok', await barTabs());
 
     // Back returns from a day opened in the month to that month.
     const target = await page.evaluate(() => {

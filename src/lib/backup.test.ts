@@ -206,6 +206,26 @@ describe('restoring', () => {
   });
 });
 
+describe("the tabs of the phone's bar of views", () => {
+  it('travel in the file and come back with the settings; a value that is no on or off is left out', async () => {
+    const app = await filledDevice();
+    app.useSettings.getState().update({ viewBarAgenda: false });
+    const text = app.makeBackup().text;
+    expect(JSON.parse(text).settings).toMatchObject({ viewBarAgenda: false, viewBarDays: true });
+
+    localStorage.clear();
+    globalThis.indexedDB = new IDBFactory();
+    const fresh = await boot();
+    expect(fresh.useSettings.getState()).toMatchObject({ viewBarAgenda: true, viewBarDays: true });
+    await fresh.restoreBackup(fresh.parseBackup(text), { settings: true });
+    expect(fresh.useSettings.getState()).toMatchObject({ viewBarAgenda: false, viewBarDays: true });
+
+    const odd = JSON.parse(text);
+    odd.settings = { viewBarAgenda: 'no', viewBarDays: false };
+    expect(fresh.parseBackup(JSON.stringify(odd)).settings).toEqual({ viewBarDays: false });
+  });
+});
+
 describe('restoring a feed that cannot be reached', () => {
   it('names it and restores the rest', async () => {
     const first = await filledDevice();

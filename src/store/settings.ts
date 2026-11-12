@@ -83,6 +83,13 @@ export interface Settings {
   showWeekNumbers: boolean;
   /** What the round + button starts (phones and narrow windows, `Fab`). */
   fabAction: FabAction;
+  /**
+   * Whether the phone's bar of views (`ViewBar`) has an Agenda tab and an
+   * "N days" tab. Only the bar changes: a hidden view can still be the
+   * default view.
+   */
+  viewBarAgenda: boolean;
+  viewBarDays: boolean;
   showWeekends: boolean;
   dimPastEvents: boolean;
   showDeclinedEvents: boolean;
@@ -137,6 +144,8 @@ export const DEFAULT_SETTINGS: Settings = {
   customDays: 4,
   showWeekNumbers: false,
   fabAction: 'event',
+  viewBarAgenda: true,
+  viewBarDays: true,
   showWeekends: true,
   dimPastEvents: true,
   showDeclinedEvents: true,
