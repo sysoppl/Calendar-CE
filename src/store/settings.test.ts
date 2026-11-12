@@ -23,6 +23,10 @@ describe('settings defaults', () => {
     for (const bad of ['auto', '1.1', 0.5, 1.6, Number.NaN, Number.POSITIVE_INFINITY, null, undefined, {}]) expect(isTextSize(bad), String(bad)).toBe(false);
   });
 
+  it("show Agenda and 'N days' in the phone's bar of views, as before the settings", () => {
+    expect(DEFAULT_SETTINGS).toMatchObject({ viewBarAgenda: true, viewBarDays: true });
+  });
+
   it('have the round + button start a new event, as before the setting', () => {
     expect(DEFAULT_SETTINGS.fabAction).toBe('event');
   });

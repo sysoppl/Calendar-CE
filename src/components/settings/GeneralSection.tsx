@@ -77,8 +77,13 @@ export function GeneralSection() {
             ))}
           </select>
         </SettingRow>
-        {/* Where the bar of views is (phones and narrow windows), its "N days" tab changes the length too. */}
-        <SettingRow inline label={t('settings.customDays')} hint={t(mobile ? 'settings.customDaysHintPhone' : 'settings.customDaysHint')} htmlFor="set-days">
+        {/* Where the bar of views is (phones and narrow windows) and has its "N days" tab, that tab changes the length too. */}
+        <SettingRow
+          inline
+          label={t('settings.customDays')}
+          hint={t(mobile && s.viewBarDays ? 'settings.customDaysHintPhone' : 'settings.customDaysHint')}
+          htmlFor="set-days"
+        >
           <select id="set-days" className={SELECT_INLINE} value={s.customDays} onChange={(e) => changeSettings({ customDays: Number(e.target.value) })}>
             {CUSTOM_DAY_COUNTS.map((n) => (
               <option key={n} value={n}>
@@ -87,6 +92,23 @@ export function GeneralSection() {
             ))}
           </select>
         </SettingRow>
+        {/* Only where the bar of views is: phones and narrow windows. A hidden view stays in Default view above. */}
+        {mobile && (
+          <>
+            <ToggleRow
+              label={t('settings.viewBarAgenda')}
+              hint={t('settings.viewBarAgendaHint')}
+              checked={s.viewBarAgenda}
+              onChange={(viewBarAgenda) => changeSettings({ viewBarAgenda })}
+            />
+            <ToggleRow
+              label={t('settings.viewBarDays')}
+              hint={t('settings.viewBarDaysHint')}
+              checked={s.viewBarDays}
+              onChange={(viewBarDays) => changeSettings({ viewBarDays })}
+            />
+          </>
+        )}
         <ToggleRow label={t('settings.weekNumbers')} checked={s.showWeekNumbers} onChange={(showWeekNumbers) => changeSettings({ showWeekNumbers })} />
         <ToggleRow label={t('settings.weekends')} checked={s.showWeekends} onChange={(showWeekends) => changeSettings({ showWeekends })} />
         <ToggleRow label={t('settings.dimPast')} checked={s.dimPastEvents} onChange={(dimPastEvents) => changeSettings({ dimPastEvents })} />
