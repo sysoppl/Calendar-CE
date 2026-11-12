@@ -15,6 +15,15 @@ import { Menu } from '@/components/ui/Menu';
 export const PHONE_VIEWS: ViewType[] = ['agenda', 'day', 'days', 'week', 'month', 'year'];
 
 /**
+ * The views whose tabs the bar shows, in its order: Agenda and "N days" only
+ * while their settings (`viewBarAgenda`, `viewBarDays`) are on, so four, five
+ * or six tabs. Only the bar changes; a hidden view can still be on screen.
+ */
+export function barViews(agenda: boolean, days: boolean): ViewType[] {
+  return PHONE_VIEWS.filter((v) => (v === 'agenda' ? agenda : v === 'days' ? days : true));
+}
+
+/**
  * A tab's text, as wide as it is in bold whether it is bold or not (an unseen
  * bold copy drawn by CSS, so not part of its text), so that the tabs keep
  * their places when another one is selected.
@@ -37,12 +46,15 @@ function Label({ text, className = '' }: { text: string; className?: string }) {
  * new-event button sits above it (Fab). Tablets and computers pick the view
  * in the header instead.
  *
- * Six tabs share the width by their names' lengths (each as wide as its name
- * plus an equal share of what is left), so that the longest names fit a
+ * Its tabs (six, or fewer where Settings › General hides Agenda or
+ * "N days") share the width by their names' lengths (each as wide as its
+ * name plus an equal share of what is left), so that the longest names fit a
  * 320 px screen in every language; below 360 px the text is a little
- * smaller. The "N days" tab, once selected, shows a small caret: another tap
- * opens a menu above it with 2 to 7 days, which changes the same setting as
- * Settings › General › Custom view length.
+ * smaller. When the view on screen has no tab here (a hidden one, as the
+ * default view or from a shortcut), no tab is selected and the first one
+ * takes the Tab key. The "N days" tab, once selected, shows a small caret:
+ * another tap opens a menu above it with 2 to 7 days, which changes the same
+ * setting as Settings › General › Custom view length.
  */
 export function ViewBar() {
   const t = useT();
@@ -50,28 +62,31 @@ export function ViewBar() {
   const view = useUi((s) => s.view);
   const setView = useUi((s) => s.setView);
   const customDays = useSettings((s) => s.customDays);
+  const showAgenda = useSettings((s) => s.viewBarAgenda);
+  const showDays = useSettings((s) => s.viewBarDays);
   const [choosing, setChoosing] = useState(false);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
-  // Another view (a swipe, the back button, a shortcut) closes the menu for good, not only while it lasts.
-  if (choosing && view !== 'days') setChoosing(false);
+  const views = barViews(showAgenda, showDays);
+  // Another view (a swipe, the back button, a shortcut) closes the menu for good, not only while it lasts; so does hiding its tab.
+  if (choosing && (view !== 'days' || !showDays)) setChoosing(false);
   if (!mobile) return null;
 
-  // One stop for Tab; the arrows move between the views (the usual way of a tab list).
-  const focusable = PHONE_VIEWS.includes(view) ? view : PHONE_VIEWS[0];
+  // One stop for Tab; the arrows move between the tabs shown (the usual way of a tab list).
+  const focusable = views.includes(view) ? view : views[0];
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
-    const next = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? PHONE_VIEWS.length - 1 : null;
+    const next = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? views.length - 1 : null;
     if (next === null) return;
     e.preventDefault();
-    const index = (next + PHONE_VIEWS.length) % PHONE_VIEWS.length;
+    const index = (next + views.length) % views.length;
     setChoosing(false);
-    setView(PHONE_VIEWS[index]);
+    setView(views[index]);
     tabs.current[index]?.focus();
   };
 
   return (
     <nav className="bg-frame border-frame-border pb-safe shrink-0 border-t px-1.5">
       <div role="tablist" aria-label={t('nav.view')} className="flex h-14 items-center">
-        {PHONE_VIEWS.map((v, i) => {
+        {views.map((v, i) => {
           const selected = v === view;
           const days = v === 'days';
           const tab = (

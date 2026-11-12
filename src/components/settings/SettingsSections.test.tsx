@@ -2,6 +2,7 @@
 // The Settings page as a phone and a computer show it: which sections, which
 // rows, and how changes are saved.
 import { createElement as h } from 'react';
+import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { en } from '@/i18n/en';
@@ -182,6 +183,46 @@ describe('General', () => {
     const row = (document.getElementById('set-days') as HTMLSelectElement).closest('.border-b')!.textContent!;
     expect(row).toContain(en['settings.customDaysHint']);
     expect(row).not.toContain(en['settings.customDaysHintPhone']);
+  });
+
+  it('lets a phone hide the Agenda and "N days" tabs of the bar of views, both shown by default', async () => {
+    phone = true;
+    await render(h(GeneralSection));
+    const toggle = (label: string) => {
+      const id = [...document.querySelectorAll('label span[id]')].find((l) => l.textContent === label)!.id;
+      return document.querySelector<HTMLButtonElement>(`[role="switch"][aria-labelledby="${id}"]`)!;
+    };
+    const agenda = toggle(en['settings.viewBarAgenda']);
+    const days = toggle(en['settings.viewBarDays']);
+    expect([agenda.getAttribute('aria-checked'), days.getAttribute('aria-checked')]).toEqual(['true', 'true']);
+    expect(document.getElementById(agenda.getAttribute('aria-describedby')!)!.textContent).toBe(en['settings.viewBarAgendaHint']);
+    expect(document.getElementById(days.getAttribute('aria-describedby')!)!.textContent).toBe(en['settings.viewBarDaysHint']);
+    // Right under the length of the "N days" view, in the same group.
+    // A switch's row names it with a part of its label (the hint is in the label too).
+    const rows = [...document.querySelectorAll('label')].map((l) => (l.querySelector('span[id]') ?? l).textContent);
+    const at = rows.indexOf(en['settings.customDays']);
+    expect(rows.slice(at, at + 3)).toEqual([en['settings.customDays'], en['settings.viewBarAgenda'], en['settings.viewBarDays']]);
+
+    flushSync(() => agenda.click());
+    expect(useSettings.getState()).toMatchObject({ viewBarAgenda: false, viewBarDays: true });
+    await vi.waitFor(() => expect(agenda.getAttribute('aria-checked')).toBe('false'));
+    flushSync(() => days.click());
+    expect(useSettings.getState()).toMatchObject({ viewBarAgenda: false, viewBarDays: false });
+    // Without its tab the bar no longer changes the length: the plain hint.
+    await vi.waitFor(() => {
+      const row = (document.getElementById('set-days') as HTMLSelectElement).closest('.border-b')!.textContent!;
+      expect(row).toContain(en['settings.customDaysHint']);
+      expect(row).not.toContain(en['settings.customDaysHintPhone']);
+    });
+    flushSync(() => days.click());
+    flushSync(() => agenda.click());
+    expect(useSettings.getState()).toMatchObject({ viewBarAgenda: true, viewBarDays: true });
+  });
+
+  it('shows the tabs of the bar only where the bar is', async () => {
+    await render(h(GeneralSection));
+    expect(text()).not.toContain(en['settings.viewBarAgenda']);
+    expect(text()).not.toContain(en['settings.viewBarDays']);
   });
 
   it('shows the round + button choice only where the button is', async () => {

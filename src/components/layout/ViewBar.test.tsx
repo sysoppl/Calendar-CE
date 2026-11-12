@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { daysInRange, viewRange } from '@/lib/date';
 import { useSettings } from '@/store/settings';
 import { useUi } from '@/store/ui';
-import { ViewBar } from './ViewBar';
+import { PHONE_VIEWS, ViewBar, barViews } from './ViewBar';
 
 let root: Root | null = null;
 let host: HTMLElement;
@@ -21,7 +21,7 @@ beforeEach(() => {
       return { matches: max ? width <= Number(max[1]) : false, media: query, addEventListener() {}, removeEventListener() {} };
     },
   });
-  useSettings.setState({ language: 'en', customDays: 3, weekStartsOn: 1 });
+  useSettings.setState({ language: 'en', customDays: 3, weekStartsOn: 1, viewBarAgenda: true, viewBarDays: true });
   useUi.setState({ view: 'month', date: new Date(2026, 9, 16) });
   useUi.getState().clearNavHistory();
   document.body.innerHTML = '<div id="root"></div>';
@@ -42,7 +42,7 @@ async function bar() {
 
 
 const tabs = () => [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
-const daysTab = () => tabs()[2];
+const daysTab = () => host.querySelector<HTMLButtonElement>('[role="tab"][data-view="days"]')!;
 const menu = () => document.querySelector<HTMLElement>('[role="menu"]');
 const choices = () => [...document.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]')];
 const key = (el: Element, k: string) => flushSync(() => el.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true })));
@@ -206,5 +206,113 @@ describe('ViewBar', () => {
     root = createRoot(host);
     flushSync(() => root!.render(h(ViewBar)));
     expect(host.childNodes).toHaveLength(0);
+  });
+});
+
+describe('ViewBar with tabs hidden in Settings', () => {
+  const names = () => tabs().map((t) => t.textContent);
+  const views = () => tabs().map((t) => t.dataset.view);
+
+  it('shows Agenda and "N days" only while their settings are on: six, five or four tabs', async () => {
+    const cases: [boolean, boolean, string[]][] = [
+      [true, true, ['Agenda', 'Day', '3 days', 'Week', 'Month', 'Year']],
+      [false, true, ['Day', '3 days', 'Week', 'Month', 'Year']],
+      [true, false, ['Agenda', 'Day', 'Week', 'Month', 'Year']],
+      [false, false, ['Day', 'Week', 'Month', 'Year']],
+    ];
+    for (const [viewBarAgenda, viewBarDays, expected] of cases) {
+      useSettings.setState({ viewBarAgenda, viewBarDays });
+      await bar();
+      expect(names(), `${viewBarAgenda} ${viewBarDays}`).toEqual(expected);
+      expect(barViews(viewBarAgenda, viewBarDays)).toEqual(views());
+      // The view on screen (month) is still the one selected, and the Tab key's one stop.
+      expect(tabs().filter((t) => t.getAttribute('aria-selected') === 'true').map((t) => t.dataset.view)).toEqual(['month']);
+      expect(tabs().filter((t) => t.tabIndex === 0).map((t) => t.dataset.view)).toEqual(['month']);
+      root!.unmount();
+      root = null;
+    }
+  });
+
+  it('follows the settings while it is shown', async () => {
+    await bar();
+    expect(tabs()).toHaveLength(6);
+    flushSync(() => useSettings.setState({ viewBarAgenda: false }));
+    expect(views()).toEqual(['day', 'days', 'week', 'month', 'year']);
+    flushSync(() => useSettings.setState({ viewBarDays: false }));
+    expect(views()).toEqual(['day', 'week', 'month', 'year']);
+    flushSync(() => useSettings.setState({ viewBarAgenda: true, viewBarDays: true }));
+    expect(views()).toEqual(PHONE_VIEWS);
+  });
+
+  it('selects no tab while a hidden view is on screen, gives the Tab key to the first tab, and still switches views', async () => {
+    useSettings.setState({ viewBarAgenda: false, viewBarDays: false });
+    for (const hidden of ['agenda', 'days'] as const) {
+      useUi.setState({ view: hidden });
+      await bar();
+      expect(tabs().map((t) => t.getAttribute('aria-selected'))).toEqual(['false', 'false', 'false', 'false']);
+      expect(tabs().map((t) => t.tabIndex)).toEqual([0, -1, -1, -1]);
+      expect(menu()).toBeNull();
+      flushSync(() => tabs()[2].click());
+      expect(useUi.getState().view).toBe('month');
+      await vi.waitFor(() => expect(tabs()[2].getAttribute('aria-selected')).toBe('true'));
+      root!.unmount();
+      root = null;
+    }
+    // The hidden "N days" view still shows its days.
+    useUi.setState({ view: 'days' });
+    expect(shownDays()).toBe(3);
+  });
+
+  it('moves with the arrow keys, Home and End over the tabs shown only', async () => {
+    useSettings.setState({ viewBarAgenda: false });
+    await bar();
+    // Five tabs: Day, 3 days, Week, Month, Year.
+    key(tabs()[3], 'ArrowRight');
+    expect(useUi.getState().view).toBe('year');
+    await vi.waitFor(() => expect(document.activeElement).toBe(tabs()[4]));
+    key(tabs()[4], 'ArrowRight');
+    expect(useUi.getState().view).toBe('day');
+    await vi.waitFor(() => expect(document.activeElement).toBe(tabs()[0]));
+    key(tabs()[0], 'ArrowLeft');
+    expect(useUi.getState().view).toBe('year');
+    key(tabs()[4], 'Home');
+    expect(useUi.getState().view).toBe('day');
+    key(tabs()[0], 'ArrowRight');
+    expect(useUi.getState().view).toBe('days');
+    root!.unmount();
+
+    // Four tabs: Day, Week, Month, Year; never to a hidden view.
+    useSettings.setState({ viewBarDays: false });
+    useUi.setState({ view: 'day' });
+    await bar();
+    const seen: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const at = tabs().findIndex((t) => t.dataset.view === useUi.getState().view);
+      key(tabs()[at], 'ArrowRight');
+      seen.push(useUi.getState().view);
+    }
+    expect(seen).toEqual(['week', 'month', 'year', 'day']);
+    key(tabs()[0], 'End');
+    expect(useUi.getState().view).toBe('year');
+    await vi.waitFor(() => expect(document.activeElement).toBe(tabs()[3]));
+
+    // From a hidden view on screen, the first tab (the Tab key's stop) moves on as usual.
+    flushSync(() => useUi.setState({ view: 'agenda' }));
+    expect(tabs()[0].tabIndex).toBe(0);
+    key(tabs()[0], 'ArrowRight');
+    expect(useUi.getState().view).toBe('week');
+  });
+
+  it('closes the choice of days for good when its tab is hidden, the view staying', async () => {
+    await openChooser();
+    flushSync(() => useSettings.setState({ viewBarDays: false }));
+    await vi.waitFor(() => expect(menu()).toBeNull());
+    expect(host.querySelector('[data-view="days"]')).toBeNull();
+    expect(useUi.getState().view).toBe('days');
+    // Back again: the tab is selected, its menu not open.
+    flushSync(() => useSettings.setState({ viewBarDays: true }));
+    await vi.waitFor(() => expect(daysTab().getAttribute('aria-selected')).toBe('true'));
+    expect(menu()).toBeNull();
+    expect(daysTab().getAttribute('aria-expanded')).toBe('false');
   });
 });
