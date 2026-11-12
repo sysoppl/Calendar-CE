@@ -350,6 +350,7 @@ export const pl: Record<MessageKey, string> = {
   'settings.defaultView': 'Widok domyślny',
   'settings.customDays': 'Długość widoku niestandardowego',
   'settings.customDaysHint': 'Liczba dni w widoku „N dni”',
+  'settings.customDaysHintPhone': 'Liczba dni w widoku „N dni”; można ją zmienić także na pasku na dole: należy ponownie dotknąć jego karty',
   'settings.weekNumbers': 'Pokaż numery tygodni',
   'settings.fab': 'Okrągły przycisk +',
   'settings.fab.hint': 'Co rozpoczyna okrągły przycisk nad kalendarzem',

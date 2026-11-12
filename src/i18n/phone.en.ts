@@ -4,6 +4,9 @@ export const phoneEn = {
   'nav.moreOverdue': 'More, overdue tasks',
   'nav.dueCount': '{n} due',
 
+  // The bar of views: the menu of the "N days" tab
+  'nav.dayCount': 'Number of days',
+
   // Adding guests without a keyboard's Enter
   'editor.participantsHintTouch': 'Type an address and tap Add',
   'editor.addParticipant': 'Add',

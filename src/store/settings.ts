@@ -50,6 +50,8 @@ export interface CalendarAlarms {
 
 export const MIN_CUSTOM_DAYS = 2;
 export const MAX_CUSTOM_DAYS = 7;
+/** The lengths the "N days" view can have, in order: Settings › General and the phone's bar of views offer the same. */
+export const CUSTOM_DAY_COUNTS: readonly number[] = Array.from({ length: MAX_CUSTOM_DAYS - MIN_CUSTOM_DAYS + 1 }, (_, i) => i + MIN_CUSTOM_DAYS);
 
 /** The range of a text size chosen by hand. A value outside it (from a damaged or foreign store) is not taken. */
 export const MIN_TEXT_SIZE = 0.75;

@@ -370,6 +370,7 @@ export const en = {
   'settings.defaultView': 'Default view',
   'settings.customDays': 'Custom view length',
   'settings.customDaysHint': 'Number of days in the "N days" view',
+  'settings.customDaysHintPhone': 'Number of days in the "N days" view; also changed in the bar at the bottom by tapping its tab again',
   'settings.weekNumbers': 'Show week numbers',
   'settings.fab': 'Round + button',
   'settings.fab.hint': 'What the round button over the calendar starts',
