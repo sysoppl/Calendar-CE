@@ -135,7 +135,7 @@
 
 **Android**
 - Native CalDAV client (no proxy, no CORS issues)
-- Reminders fire even when the app is closed: exact alarms, rescheduled after a reboot, and CalDAV calendars refreshed hourly in the background
+- Reminders fire even when the app is closed: exact alarms, rescheduled after a reboot, and CalDAV calendars refreshed every 15 minutes in the background
 - Persistent notifications stay pinned: a swipe brings one back at once, without a sound, and so do a restart and an
   app update. **Dismiss** and **Snooze 10 min** end it, and a task's **Done** opens the app and marks the task done
 - The round **+** button adds an event, or, as *Settings → General → Round + button* chooses, a task or a small menu of
@@ -167,7 +167,8 @@
 
 Both are the same calendar app, Calendar CE. The **self-hosted edition** is this repository: you run the web app
 yourself and build the Android app from it. The **[hosted edition](https://calendar.patryk.pro)** is ready on the web
-and on Google Play. It adds an **end-to-end encrypted cloud** that keeps your devices in sync.
+and on Google Play. It adds an **end-to-end encrypted cloud** that keeps your devices in sync and, since 1.16, lets
+you share a cloud calendar with other people.
 
 **What is free:** in both editions, calendars and tasks **on the device** and on **CalDAV servers**, with no account
 and no time limit. **What is paid:** only the hosted edition's cloud, after a **14-day free trial**.
@@ -177,12 +178,13 @@ and no time limit. **What is paid:** only the hosted edition's cloud, after a **
 | Calendars and tasks on the device, no account    | ✓ free                                   | ✓ free                                                       |
 | CalDAV accounts (Nextcloud, Radicale, iCloud, …) | ✓ free                                   | ✓ free                                                       |
 | End-to-end encrypted cloud that syncs your devices | –                                      | ✓ 14 days free, then a monthly or yearly plan                |
+| Sharing a calendar or task list with another person | through your CalDAV server, if it offers sharing (Nextcloud, …): you set it up there, and a calendar shared with your account appears in the app, read-only if that is all you were given | ✓ cloud calendars, by e-mail, to view or to edit, end-to-end encrypted |
 | Settings that follow you to every device         | –                                        | ✓ with the cloud                                             |
 | Encrypted profile picture, Recovery Kit          | –                                        | ✓ with the cloud                                             |
 | Web app                                          | you host it: [Docker image](#self-hosting-with-docker) or Node | ready at [calendar.patryk.pro](https://calendar.patryk.pro) |
 | Android app                                      | you [build it](#android-app) from this repo | [Google Play](https://play.google.com/store/apps/details?id=pro.patryk.calendar) |
 | Account                                          | none                                     | only for the cloud: an e-mail address and a password         |
-| Ads                                              | none                                     | none on the web. The Google Play app shows one small banner when it is used without a cloud plan; an optional subscription in the app removes it |
+| Ads                                              | none                                     | none                                                         |
 | Server to run and update                         | yours                                    | none                                                         |
 | Price                                            | free and open source (AGPL-3.0)          | free on the device and with CalDAV; the cloud after its 14-day trial: a monthly or yearly plan |
 
@@ -246,6 +248,14 @@ flowchart LR
 | Every event and task, in full | How many calendars and items you have, and their approximate sizes |
 | All settings, holiday calendars, subscriptions | When items were created, changed or deleted |
 | Your profile picture | Your signed-in devices |
+| A shared calendar's name, its events and tasks, and the list of people kept inside it | Which accounts share a calendar, with which role, in which state and since when; their public keys |
+
+**Sharing a calendar** (since 1.16). A shared cloud calendar has keys of its own. The owner's app hands them to each
+person it is shared with, encrypted to that person's public key (X25519 + ML-KEM-768) and signed, so only the people
+in the calendar can read it, and only those who may edit can write an item the others accept. The service passes
+the keys on without being able to open them. It can't add a person or raise a role. Two people can compare a
+60-digit safety number to make sure the service gave each of them the other's real keys. The protocol and its limits
+are in [`docs/ENCRYPTION.md`](docs/ENCRYPTION.md#sharing-a-calendar).
 
 **Read the code.** The client-side encryption is published in [`src/lib/crypto/`](src/lib/crypto) with fixed test vectors,
 and [`docs/ENCRYPTION.md`](docs/ENCRYPTION.md) specifies it byte for byte. The self-hosted edition doesn't use it; it's

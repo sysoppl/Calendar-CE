@@ -14,7 +14,8 @@ so that anyone can check how it encrypts data. The self-hosted edition doesn't c
 | `kdf.ts`        | Argon2id + HKDF: password and Secret Key to sign-in secret and KEK    |
 | `argon2.ts`, `kdf.worker.ts` | Argon2id (hash-wasm), off the main thread              |
 | `keys.ts`       | Account key and the working keys cut from it, opaque row ids         |
-| `envelope.ts`   | AES-256-GCM envelope with key commitment, context binding, padding   |
+| `envelope.ts`   | AES-256-GCM envelope with key commitment, context binding, padding, and the key generation of a shared calendar |
+| `share.ts`      | Sharing a calendar between accounts (since 1.16): identity and card, safety number, calendar keys by generation, grants (envelope kind 6), rosters, author signatures. Tests in `share.test.ts` |
 | `primitives.ts`, `encoding.ts` | HKDF, HMAC, SHA-256, constant-time compare; base64/hex/UTF-8 |
 
 The protocol is shared with the hosted apps, so it can't change here on its own: a change to anything that alters the
