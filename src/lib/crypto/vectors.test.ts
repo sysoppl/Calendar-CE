@@ -6,15 +6,47 @@
 //   CRYPTO_VECTORS=write npx vitest run src/lib/crypto/vectors.test.ts
 // then run the tests again without the variable. The inputs are fixed below,
 // so regenerating without a change gives the same file byte for byte.
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  createHmac,
+  createPrivateKey,
+  createPublicKey,
+  sign as edSign,
+  verify as edVerify,
+  randomBytes,
+  timingSafeEqual,
+  type KeyObject,
+} from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { ml_kem768_x25519 } from '@noble/post-quantum/hybrid.js';
 import { argon2id } from 'hash-wasm';
 import { describe, expect, it } from 'vitest';
 import { fromBase64, fromHex, toBase64, toHex, utf8 } from './encoding';
 import { CryptoError, open, paddedLength, seal, sealWithSalt, type Context, type CryptoErrorCode, type Kind } from './envelope';
 import { deriveLogin, deriveRecovery } from './kdf';
 import { exportReminderKey, importAccountKeys, objectRowLabel, profileRowLabel, rowId, SETTINGS_ROW_LABEL } from './keys';
+import {
+  calendarIdKey,
+  calendarKeys,
+  deriveIdentity,
+  makeCard,
+  makeGrantWith,
+  makeRoster,
+  openGrant,
+  readCard,
+  readRoster,
+  safetyNumber,
+  signItem,
+  verifyItem,
+  type GrantPlace,
+  type Roster,
+  type ShareIdentity,
+  type SignedPlace,
+  type SignedValue,
+} from './share';
 
 const FILE = fileURLToPath(new URL('./vectors.json', import.meta.url));
 const WRITE = process.env.CRYPTO_VECTORS === 'write';
@@ -35,6 +67,8 @@ interface EnvelopeVector {
   aad: string;
   /** Standard base64 with padding: the stored text. */
   envelope: string;
+  /** The key generation in the header; absent means 0. */
+  keyGen?: number;
 }
 
 interface RejectVector {
@@ -43,8 +77,52 @@ interface RejectVector {
   key: string;
   context: Context;
   envelope: string;
+  /** The key generation the reader expects; absent means 0. */
+  keyGen?: number;
   /** The code this implementation reports. Others only have to refuse. */
   error: CryptoErrorCode;
+}
+
+interface IdentityVector {
+  name: string;
+  userId: string;
+  /** K_data, hex. */
+  dataKey: string;
+  kemSeed: string;
+  sigSeed: string;
+  /** Base64. */
+  kemPublic: string;
+  sigPublic: string;
+  card: string;
+  cardId: string;
+}
+
+interface SignatureVector {
+  name: string;
+  what: SignedValue;
+  signer: string;
+  place: SignedPlace;
+  content: string;
+  /** Hex of the bytes signed. */
+  message: string;
+  /** Base64. */
+  signature: string;
+}
+
+interface SharingVectors {
+  projectId: string;
+  identities: IdentityVector[];
+  safetyNumber: { a: string; b: string; fingerprints: Record<string, string>; number: string };
+  calendar: {
+    calendarId: string;
+    ownerId: string;
+    keys: { g: number; ck: string; dataKey: string; reminderKey: string }[];
+    idsKey: string;
+    rowIds: { label: string; rowId: string }[];
+  };
+  grant: { place: GrantPlace; generations: number[]; eseed: string; rowSalt: string; sharedSecret: string; plaintext: string; message: string; grant: string };
+  roster: { roster: Roster; message: string; text: string };
+  signatures: SignatureVector[];
 }
 
 interface LoginVector {
@@ -88,6 +166,7 @@ interface VectorFile {
   kdf: { argon2id: { memoryKiB: number; iterations: number; parallelism: number; hashLength: number }; login: LoginVector[]; recovery: RecoveryVector[] };
   accountKeys: AccountKeysVector;
   rowIds: RowIdVector[];
+  sharing: SharingVectors;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +200,12 @@ function refAad(header: Uint8Array, ctx: Context): Buffer {
   return Buffer.concat([refField('CAL1'), refField(header), refField(ctx.projectId), refField(ctx.scope), refField(ctx.id), refField(ctx.ownerId)]);
 }
 
+function refHeader(kind: number, keyGen = 0): Buffer {
+  const header = Buffer.from([1, 1, kind, 1, 0, 0, 0, 0]);
+  header.writeUInt32BE(keyGen, 4);
+  return header;
+}
+
 function refPaddedLength(total: number): number {
   if (total <= 8192) return Math.ceil(total / 512) * 512;
   const e = Math.floor(Math.log2(total));
@@ -143,8 +228,8 @@ function refRowKeys(key: Uint8Array, rowSalt: Uint8Array, aad: Uint8Array): { en
 }
 
 /** `faults` replaces the header or the padded plaintext, to build envelopes a correct sealer never writes. */
-function refSeal(key: Uint8Array, kind: number, ctx: Context, plaintext: Uint8Array, rowSalt: Uint8Array, faults: { header?: number[]; padded?: Uint8Array } = {}): string {
-  const header = Buffer.from(faults.header ?? [1, 1, kind, 1, 0, 0, 0, 0]);
+function refSeal(key: Uint8Array, kind: number, ctx: Context, plaintext: Uint8Array, rowSalt: Uint8Array, faults: { header?: number[]; padded?: Uint8Array } = {}, keyGen = 0): string {
+  const header = faults.header ? Buffer.from(faults.header) : refHeader(kind, keyGen);
   const aad = refAad(header, ctx);
   const row = refRowKeys(key, rowSalt, aad);
   const cipher = createCipheriv('aes-256-gcm', row.encKey, row.nonce);
@@ -153,10 +238,10 @@ function refSeal(key: Uint8Array, kind: number, ctx: Context, plaintext: Uint8Ar
   return Buffer.concat([header, rowSalt, row.commit, body]).toString('base64');
 }
 
-function refOpen(key: Uint8Array, kind: number, ctx: Context, text: string): Buffer {
+function refOpen(key: Uint8Array, kind: number, ctx: Context, text: string, keyGen = 0): Buffer {
   const envelope = Buffer.from(text, 'base64');
   const header = envelope.subarray(0, 8);
-  if (!header.equals(Buffer.from([1, 1, kind, 1, 0, 0, 0, 0]))) throw new Error('header');
+  if (!header.equals(refHeader(kind, keyGen))) throw new Error('header');
   const aad = refAad(header, ctx);
   const row = refRowKeys(key, envelope.subarray(8, 40), aad);
   if (!timingSafeEqual(row.commit, envelope.subarray(40, 72))) throw new Error('commit');
@@ -208,6 +293,64 @@ function refRowId(idsKey: string, label: string): string {
   return createHmac('sha256', Buffer.from(idsKey, 'hex')).update(label, 'utf8').digest('hex').slice(0, 32);
 }
 
+// Sharing, with node:crypto's Ed25519 and SHA-512 (X-Wing has no second
+// implementation here; its own test vectors are the library's).
+
+const ED25519_PKCS8_PREFIX = Buffer.from('302e020100300506032b657004220420', 'hex');
+
+function refEdPrivate(seed: Uint8Array): KeyObject {
+  return createPrivateKey({ key: Buffer.concat([ED25519_PKCS8_PREFIX, seed]), format: 'der', type: 'pkcs8' });
+}
+
+function refEdPublic(seed: Uint8Array): Buffer {
+  return Buffer.from(createPublicKey(refEdPrivate(seed)).export({ format: 'jwk' }).x as string, 'base64url');
+}
+
+function refEdSign(seed: Uint8Array, message: Uint8Array): string {
+  return edSign(null, message, refEdPrivate(seed)).toString('base64');
+}
+
+function refEdVerify(publicKey: Uint8Array, message: Uint8Array, signature: string): boolean {
+  const key = createPublicKey({ key: { kty: 'OKP', crv: 'Ed25519', x: Buffer.from(publicKey).toString('base64url') }, format: 'jwk' });
+  return edVerify(null, message, key, Buffer.from(signature, 'base64'));
+}
+
+function refU32(value: number): Buffer {
+  const out = Buffer.alloc(4);
+  out.writeUInt32BE(value, 0);
+  return out;
+}
+
+const sha256Of = (text: string) => createHash('sha256').update(text, 'utf8').digest();
+
+function refCardMessage(projectId: string, userId: string, kemPublic: Uint8Array, sigPublic: Uint8Array): Buffer {
+  return Buffer.concat([Buffer.from('cal/v1/share/card'), refField(projectId), refField(userId), refField(kemPublic), refField(sigPublic)]);
+}
+
+function refGrantMessage(place: GrantPlace, cipherText: Uint8Array, wrapped: string): Buffer {
+  return Buffer.concat([Buffer.from('cal/v1/share/grant'), refField(place.projectId), refField(place.calendarId), refField(place.ownerId), refField(place.memberId), refField(cipherText), refField(wrapped)]);
+}
+
+function refRosterMessage(projectId: string, body: string): Buffer {
+  const bytes = Buffer.from(body, 'utf8');
+  return Buffer.concat([Buffer.from('cal/v1/share/roster'), refField(projectId), refU32(bytes.length), bytes]);
+}
+
+function refItemMessage(what: SignedValue, place: SignedPlace, content: string): Buffer {
+  const row = what === 'item' ? [refField(place.rowId!)] : [];
+  return Buffer.concat([Buffer.from(`cal/v1/share/${what}`), refField(place.projectId), refField(place.calendarId), ...row, refU32(place.generation), sha256Of(content)]);
+}
+
+/** One person's half of the safety number. */
+function refFingerprint(userId: string, kemPublic: Uint8Array, sigPublic: Uint8Array): string {
+  const key = Buffer.concat([sigPublic, kemPublic]);
+  let hash = createHash('sha512').update(Buffer.from([0, 0])).update(key).update(userId, 'utf8').update(key).digest();
+  for (let i = 1; i < 5200; i++) hash = createHash('sha512').update(hash).update(key).digest();
+  let digits = '';
+  for (let i = 0; i < 30; i += 5) digits += String(hash.readUIntBE(i, 5) % 100000).padStart(5, '0');
+  return digits;
+}
+
 async function codeOf(promise: Promise<unknown>): Promise<string> {
   const error = await promise.then(
     () => undefined,
@@ -245,7 +388,7 @@ const ABOUT = [
   'Generated by src/lib/crypto/vectors.test.ts (CRYPTO_VECTORS=write); do not edit by hand.',
   'Encodings: "key", "rowSalt", "aad" and the key fields under "kdf" and "accountKeys" are hexadecimal; "plaintext" and "envelope" are standard base64 with padding; "authKey" and "proof" are base64url without padding; other strings are UTF-8 text.',
   'HKDF(ikm, info, len) is HKDF-SHA-256 with an empty salt (the same as a salt of 32 zero bytes) unless a salt is named.',
-  'Envelope = header (8) || rowSalt (32) || commit (32) || body. header = [version 1][suite 1][kind][padding scheme 1][key generation u32 BE = 0].',
+  'Envelope = header (8) || rowSalt (32) || commit (32) || body. header = [version 1][suite 1][kind][padding scheme 1][key generation u32 BE]; the key generation is 0 unless a vector says otherwise in "keyGen", and a reader refuses any generation but the one it expects.',
   'AAD = F("CAL1") || F(header) || F(projectId) || F(scope) || F(id) || F(ownerId), where F(x) = byte length of x as u16 BE || x and text is UTF-8.',
   'okm = HKDF-SHA-256(ikm = key, salt = rowSalt, info = "cal/v1/row" || SHA-256(AAD), 76 bytes); encKey = okm[0..32], commit = okm[32..64], nonce = okm[64..76].',
   'padded = byte length of the plaintext as u32 BE || plaintext || zero bytes. With L = 4 + length: the padded size is L rounded up to a multiple of 512 while L <= 8192; above, E = floor(log2 L), S = floor(log2 E) + 1, mask = (1 << (E - S)) - 1, size = (L + mask) & ~mask.',
@@ -256,7 +399,121 @@ const ABOUT = [
   '"kdf.recovery": rkek = HKDF(RK, "cal/v1/rk", 32); proof = base64url(HKDF(RK, "cal/v1/recovery-proof", 32)); verifier = hex(SHA-256(proof as ASCII)). RK is the ASCII of "recoveryKey".',
   '"accountKeys": dataKey = HKDF(accountKey, "cal/v1/data", 32); reminderKey = HKDF(accountKey, "cal/v1/reminders", 32); idsKey = HKDF(accountKey, "cal/v1/ids", 32).',
   '"rowIds": rowId = the first 32 hexadecimal characters of HMAC-SHA-256(idsKey of "accountKey", label as UTF-8).',
+  'Kinds: 1 object, 2 calendar, 3 settings, 4 key wrap, 5 reminder digest, 6 share grant.',
+  '"sharing": sharing a calendar between accounts. F(x) as above; u32(n) = n as u32 BE; labels such as "cal/v1/share/card" are UTF-8 without a length; base64 is standard with padding; Ed25519 is RFC 8032 (verified strictly); X-Wing is ML-KEM-768 + X25519 (draft-connolly-cfrg-xwing-kem).',
+  '"sharing.identities": kemSeed = HKDF(dataKey, "cal/v1/share/kem", 32), kemPublic = X-Wing public key of kemSeed (1216 bytes); sigSeed = HKDF(dataKey, "cal/v1/share/sig", 32), sigPublic = Ed25519 public key of sigSeed; card = JSON {"v":1,"u":userId,"k":kemPublic,"s":sigPublic,"p":Ed25519(sigSeed, "cal/v1/share/card" || F(projectId) || F(u) || F(kemPublic) || F(sigPublic))}; cardId = hex(SHA-256(kemPublic || sigPublic)).',
+  '"sharing.safetyNumber": per person h = SHA-512(0x0000 || key || userId || key), then 5199 times h = SHA-512(h || key), key = sigPublic || kemPublic; the first 30 bytes of h as six 5-byte big-endian numbers mod 100000, five digits each (the fingerprint); the two fingerprints sorted ascending and joined.',
+  '"sharing.calendar": per generation g, dataKey = HKDF(ck, "cal/v1/share/data", 32), reminderKey = HKDF(ck, "cal/v1/share/reminders", 32); idsKey = HKDF(ck of generation 0, "cal/v1/share/ids", 32); rowIds as "rowIds" under that idsKey.',
+  '"sharing.grant": (ct, sharedSecret) = X-Wing encapsulation to the member\'s kemPublic with the randomness "eseed"; w = the envelope (kind 6, key sharedSecret, rowSalt, context {projectId, "share", calendarId, memberId}) of "plaintext"; "message" = "cal/v1/share/grant" || F(projectId) || F(calendarId) || F(ownerId) || F(memberId) || F(ct) || F(w), signed with the owner\'s sigSeed; grant = JSON {"v","c","o","m","ct","w","sig"}. The member opens it with its kemSeed.',
+  '"sharing.roster": text = JSON {"b":body,"sig":Ed25519(owner, "message")}, body = JSON of {"v":1} and "roster" in the order shown, "message" = "cal/v1/share/roster" || F(projectId) || u32(byte length of body) || body.',
+  '"sharing.signatures": "message" = "cal/v1/share/<what>" || F(projectId) || F(calendarId) || F(rowId) (for "item" only) || u32(generation) || SHA-256(content); "signature" = Ed25519 of the signer\'s sigSeed over it.',
 ];
+
+const MEMBER = '7a0b1c2d3e4f50617283';
+const FORMER = '9c2d3e4f506172839405';
+const SHARED_CALENDAR = '0f1e2d3c4b5a69788796a5b4c3d2e1f0';
+const GRANT_ENVELOPE = 'share grant (kind 6): the keys of "sharing.grant" under its shared secret, context id = calendar id, ownerId = member id';
+
+interface SharingResult {
+  section: SharingVectors;
+  /** What the envelope vectors of shared rows are made of. */
+  item: { key: string; rowId: string; plaintext: Uint8Array };
+  digest: { key: string; plaintext: Uint8Array };
+}
+
+async function generateSharing(ownerDataKey: string, ics: string, digestJson: string): Promise<SharingResult> {
+  const people = [
+    { name: 'owner', userId: OWNER, dataKey: ownerDataKey },
+    { name: 'member', userId: MEMBER, dataKey: fixed('data key: member').toString('hex') },
+  ];
+  const identities: IdentityVector[] = [];
+  const derived: ShareIdentity[] = [];
+  for (const p of people) {
+    const identity = await deriveIdentity(fromHex(p.dataKey));
+    derived.push(identity);
+    identities.push({
+      ...p,
+      kemSeed: toHex(identity.kemSeed),
+      sigSeed: toHex(identity.sigSecret),
+      kemPublic: toBase64(identity.kemPublic),
+      sigPublic: toBase64(identity.sigPublic),
+      card: await makeCard(identity, PROJECT, p.userId),
+      cardId: createHash('sha256').update(identity.kemPublic).update(identity.sigPublic).digest('hex'),
+    });
+  }
+  const [owner, member] = derived;
+  const ownerCard = await readCard(identities[0].card, PROJECT, OWNER);
+  const memberCard = await readCard(identities[1].card, PROJECT, MEMBER);
+  const number = await safetyNumber(ownerCard, memberCard);
+  const fingerprints = { owner: refFingerprint(OWNER, owner.kemPublic, owner.sigPublic), member: refFingerprint(MEMBER, member.kemPublic, member.sigPublic) };
+  expect(number).toBe([fingerprints.owner, fingerprints.member].sort().join(''));
+
+  const cks = [0, 1, 2].map((g) => fixed(`calendar key: generation ${g}`));
+  const keys = cks.map((ck, g) => ({ g, ck: ck.toString('hex'), dataKey: refHkdf(ck, NO_SALT, 'cal/v1/share/data', 32).toString('hex'), reminderKey: refHkdf(ck, NO_SALT, 'cal/v1/share/reminders', 32).toString('hex') }));
+  const idsKey = refHkdf(cks[0], NO_SALT, 'cal/v1/share/ids', 32).toString('hex');
+  expect(toHex(await calendarIdKey(cks[0]))).toBe(idsKey);
+  const rowIds = [objectRowLabel(SHARED_CALENDAR, '8d3f2c1e-5a7b-4c9d-9e1f-0a2b3c4d5e6f'), objectRowLabel(SHARED_CALENDAR, 'zażółć-gęślą@example.com')].map((label) => ({ label, rowId: refRowId(idsKey, label) }));
+
+  const place: GrantPlace = { projectId: PROJECT, calendarId: SHARED_CALENDAR, ownerId: OWNER, memberId: MEMBER };
+  const eseed = Buffer.concat([fixed('eseed: grant, first half'), fixed('eseed: grant, second half')]);
+  const grantSalt = fixed(`rowSalt: ${GRANT_ENVELOPE}`);
+  const grantText = await makeGrantWith(owner, place, memberCard, cks.map((k, g) => ({ g, k: Uint8Array.from(k) })), eseed, grantSalt);
+  const grant = JSON.parse(grantText) as { ct: string; w: string; sig: string };
+  const sharedSecret = Buffer.from(ml_kem768_x25519.decapsulate(fromBase64(grant.ct), member.kemSeed));
+  const grantPlaintext = refOpen(sharedSecret, 6, { projectId: PROJECT, scope: 'share', id: SHARED_CALENDAR, ownerId: MEMBER }, grant.w).toString('utf8');
+  const grantMessage = refGrantMessage(place, fromBase64(grant.ct), grant.w);
+  expect(refEdVerify(owner.sigPublic, grantMessage, grant.sig)).toBe(true);
+
+  const roster: Roster = {
+    c: SHARED_CALENDAR,
+    o: OWNER,
+    n: 4,
+    g: 2,
+    members: [
+      { u: OWNER, r: 'w', s: identities[0].sigPublic, k: identities[0].cardId },
+      { u: MEMBER, r: 'w', s: identities[1].sigPublic, k: identities[1].cardId },
+    ],
+    former: [{ u: FORMER, s: refEdPublic(fixed('sig seed: former member')).toString('base64'), g: 1 }],
+    at: 1767600000000,
+  };
+  const rosterText = await makeRoster(owner, PROJECT, roster);
+  const rosterMessage = refRosterMessage(PROJECT, (JSON.parse(rosterText) as { b: string }).b);
+
+  const meta = JSON.stringify({
+    name: 'Praca',
+    color: '#9171f0',
+    description: 'Spotkania i terminy',
+    components: ['VEVENT', 'VTODO'],
+    people: [
+      { u: OWNER, e: 'owner@example.com' },
+      { u: MEMBER, e: 'member@example.com', n: 'Ola' },
+    ],
+  });
+  const signed: { name: string; what: SignedValue; signer: ShareIdentity; signerId: string; place: SignedPlace; content: string }[] = [
+    { name: 'item: an event written by the member', what: 'item', signer: member, signerId: MEMBER, place: { projectId: PROJECT, calendarId: SHARED_CALENDAR, rowId: rowIds[0].rowId, generation: 2 }, content: ics },
+    { name: 'meta: the calendar\'s own row, written by the owner', what: 'meta', signer: owner, signerId: OWNER, place: { projectId: PROJECT, calendarId: SHARED_CALENDAR, generation: 2 }, content: meta },
+    { name: 'digest: the reminder digest, written by the owner', what: 'digest', signer: owner, signerId: OWNER, place: { projectId: PROJECT, calendarId: SHARED_CALENDAR, generation: 2 }, content: digestJson },
+  ];
+  const signatures: SignatureVector[] = [];
+  for (const s of signed) {
+    signatures.push({ name: s.name, what: s.what, signer: s.signerId, place: s.place, content: s.content, message: refItemMessage(s.what, s.place, s.content).toString('hex'), signature: await signItem(s.signer, s.what, s.place, s.content) });
+  }
+  const json = (value: unknown): Uint8Array => utf8(JSON.stringify(value));
+
+  return {
+    section: {
+      projectId: PROJECT,
+      identities,
+      safetyNumber: { a: OWNER, b: MEMBER, fingerprints, number },
+      calendar: { calendarId: SHARED_CALENDAR, ownerId: OWNER, keys, idsKey, rowIds },
+      grant: { place, generations: [0, 1, 2], eseed: eseed.toString('hex'), rowSalt: grantSalt.toString('hex'), sharedSecret: sharedSecret.toString('hex'), plaintext: grantPlaintext, message: grantMessage.toString('hex'), grant: grantText },
+      roster: { roster, message: rosterMessage.toString('hex'), text: rosterText },
+      signatures,
+    },
+    item: { key: keys[2].dataKey, rowId: rowIds[0].rowId, plaintext: json({ c: SHARED_CALENDAR, d: ics, a: MEMBER, s: signatures[0].signature }) },
+    digest: { key: keys[2].reminderKey, plaintext: json({ m: digestJson, a: OWNER, s: signatures[2].signature }) },
+  };
+}
 
 async function generate(): Promise<VectorFile> {
   const accountKeys = refAccountKeys(ACCOUNT_KEY);
@@ -307,8 +564,10 @@ async function generate(): Promise<VectorFile> {
   };
   const json = (value: unknown): Uint8Array => utf8(JSON.stringify(value));
   const row = (scope: string, id: string): Context => ({ projectId: PROJECT, scope, id, ownerId: OWNER });
+  const sharing = await generateSharing(accountKeys.dataKey, object.d, JSON.stringify(digest));
+  const grant = sharing.section.grant;
 
-  const cases: { name: string; kind: Kind; key: string; context: Context; plaintext: Uint8Array }[] = [
+  const cases: { name: string; kind: Kind; key: string; context: Context; plaintext: Uint8Array; keyGen?: number }[] = [
     { name: 'object (kind 1): an event, under the data key of "accountKeys"', kind: 1, key: accountKeys.dataKey, context: row('objects', OBJECT_ROW), plaintext: json(object) },
     { name: 'calendar (kind 2): calendar metadata, under the data key', kind: 2, key: accountKeys.dataKey, context: row('calendars', CALENDAR_ROW), plaintext: json(calendar) },
     { name: 'settings (kind 3): the settings row, under the data key', kind: 3, key: accountKeys.dataKey, context: row('settings', SETTINGS_ROW), plaintext: json(settings) },
@@ -330,12 +589,44 @@ async function generate(): Promise<VectorFile> {
       context: { projectId: 'kalendarz-żółw', scope: 'calendars', id: 'wiersz-ąę-📅', ownerId: 'użytkownik-1' },
       plaintext: json({ name: 'Dom', color: '#069c8d', components: ['VEVENT'], order: 0, visible: true }),
     },
+    {
+      name: 'shared object (kind 1): the event of "sharing.signatures" with its author and signature, under the data key of generation 2 of "sharing.calendar", key generation 2, ownerId = the calendar owner',
+      kind: 1,
+      key: sharing.item.key,
+      context: row('sharedObjects', sharing.item.rowId),
+      plaintext: sharing.item.plaintext,
+      keyGen: 2,
+    },
+    {
+      name: 'shared reminder digest (kind 5): the digest of "sharing.signatures", signed, under the reminder key of generation 2, key generation 2, row id = calendar id',
+      kind: 5,
+      key: sharing.digest.key,
+      context: row('sharedReminders', SHARED_CALENDAR),
+      plaintext: sharing.digest.plaintext,
+      keyGen: 2,
+    },
+    {
+      name: 'key generation 4294967294 (0xfffffffe): the header holds an unsigned 32-bit number',
+      kind: 2,
+      key: fixed('key: generations').toString('hex'),
+      context: row('sharedCalendars', SHARED_CALENDAR),
+      plaintext: utf8('key generation 4294967294'),
+      keyGen: 0xfffffffe,
+    },
+    {
+      name: GRANT_ENVELOPE,
+      kind: 6,
+      key: grant.sharedSecret,
+      context: { projectId: PROJECT, scope: 'share', id: SHARED_CALENDAR, ownerId: MEMBER },
+      plaintext: utf8(grant.plaintext),
+    },
   ];
 
   const envelopes: EnvelopeVector[] = [];
   for (const item of cases) {
     const rowSalt = fixed(`rowSalt: ${item.name}`);
-    const envelope = await sealWithSalt(fromHex(item.key), item.kind, item.context, item.plaintext, rowSalt);
+    const keyGen = item.keyGen ?? 0;
+    const envelope = await sealWithSalt(fromHex(item.key), item.kind, item.context, item.plaintext, rowSalt, keyGen);
     envelopes.push({
       name: item.name,
       kind: item.kind,
@@ -345,10 +636,14 @@ async function generate(): Promise<VectorFile> {
       plaintext: toBase64(item.plaintext),
       plaintextLength: item.plaintext.length,
       paddedLength: paddedLength(item.plaintext.length),
-      aad: refAad(Uint8Array.of(1, 1, item.kind, 1, 0, 0, 0, 0), item.context).toString('hex'),
+      aad: refAad(refHeader(item.kind, keyGen), item.context).toString('hex'),
       envelope,
+      // Only where it is not 0, so that the vectors of generation 0 stay as they were.
+      ...(keyGen ? { keyGen } : {}),
     });
   }
+  // The grant's envelope is exactly the one in the grant.
+  expect(envelopes.at(-1)!.envelope).toBe((JSON.parse(grant.grant) as { w: string }).w);
 
   // Rejections all start from one valid envelope.
   const key = fixed('key: rejects');
@@ -357,11 +652,12 @@ async function generate(): Promise<VectorFile> {
   const message = utf8('attack at dawn');
   const salt = fixed('rowSalt: rejects');
   const valid = await sealWithSalt(key, 1, context, message, salt);
-  const changed = (index: number, change: (byte: number) => number): string => {
-    const bytes = fromBase64(valid);
+  const changedIn = (text: string, index: number, change: (byte: number) => number): string => {
+    const bytes = fromBase64(text);
     bytes[index] = change(bytes[index]);
     return toBase64(bytes);
   };
+  const changed = (index: number, change: (byte: number) => number): string => changedIn(valid, index, change);
   const flip = (byte: number): number => byte ^ 1;
   const nonZeroPadding = refPad(message);
   nonZeroPadding[511] = 1;
@@ -398,6 +694,10 @@ async function generate(): Promise<VectorFile> {
     { name: 'truncated by one byte', ...base, envelope: toBase64(fromBase64(valid).subarray(0, 599)), error: 'format' },
     { name: 'empty text', ...base, envelope: '', error: 'format' },
     { name: 'not base64: one character replaced with an asterisk', ...base, envelope: `${valid.slice(0, 100)}*${valid.slice(101)}`, error: 'format' },
+    { name: 'key generation 2, sealed consistently, where generation 0 is expected', ...base, envelope: refSeal(key, 1, context, message, salt, {}, 2), error: 'version' },
+    { name: 'key generation 2, sealed consistently, where generation 3 is expected', ...base, keyGen: 3, envelope: refSeal(key, 1, context, message, salt, {}, 2), error: 'version' },
+    { name: 'key generation changed from 2 to 3 after sealing, generation 3 expected', ...base, keyGen: 3, envelope: changedIn(refSeal(key, 1, context, message, salt, {}, 2), 7, () => 3), error: 'auth' },
+    { name: 'a valid share grant (kind 6) where kind 1 is asked for', ...base, envelope: await sealWithSalt(key, 6, context, message, salt), error: 'auth' },
   ];
 
   const rowIds: RowIdVector[] = [];
@@ -414,6 +714,7 @@ async function generate(): Promise<VectorFile> {
     kdf: { argon2id: { memoryKiB: 65536, iterations: 3, parallelism: 1, hashLength: 32 }, login, recovery },
     accountKeys,
     rowIds,
+    sharing: sharing.section,
   };
 }
 
@@ -436,7 +737,8 @@ describe.skipIf(WRITE)('vectors.json', () => {
 
   it('covers every kind, the empty plaintext and the padding boundaries', () => {
     expect(vectors.envelopes.length).toBeGreaterThanOrEqual(6);
-    expect([...new Set(vectors.envelopes.map((v) => v.kind))].sort()).toEqual([1, 2, 3, 4, 5]);
+    expect([...new Set(vectors.envelopes.map((v) => v.kind))].sort()).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(vectors.envelopes.filter((v) => v.keyGen !== undefined).map((v) => v.keyGen)).toEqual([2, 2, 0xfffffffe]);
     const lengths = vectors.envelopes.map((v) => v.plaintextLength);
     for (const length of [0, 507, 508, 509, 8188, 8189]) expect(lengths).toContain(length);
     expect(Math.max(...lengths)).toBeGreaterThan(16384);
@@ -456,12 +758,15 @@ describe.skipIf(WRITE)('vectors.json', () => {
         expect(plaintext, v.name).toHaveLength(v.plaintextLength);
         expect(paddedLength(v.plaintextLength), v.name).toBe(v.paddedLength);
         expect(fromBase64(v.envelope), v.name).toHaveLength(72 + v.paddedLength + 16);
-        expect(await sealWithSalt(key, v.kind, v.context, plaintext, fromHex(v.rowSalt)), v.name).toBe(v.envelope);
-        expect(toHex(await open(key, v.kind, v.context, v.envelope)), v.name).toBe(toHex(plaintext));
+        const keyGen = v.keyGen ?? 0;
+        expect(await sealWithSalt(key, v.kind, v.context, plaintext, fromHex(v.rowSalt), keyGen), v.name).toBe(v.envelope);
+        expect(toHex(await open(key, v.kind, v.context, v.envelope, keyGen)), v.name).toBe(toHex(plaintext));
         // The same with the key as a non-extractable CryptoKey, the form the app holds.
         const cryptoKey = await crypto.subtle.importKey('raw', key, 'HKDF', false, ['deriveBits']);
-        expect(await sealWithSalt(cryptoKey, v.kind, v.context, plaintext, fromHex(v.rowSalt)), v.name).toBe(v.envelope);
-        expect(toHex(await open(cryptoKey, v.kind, v.context, v.envelope)), v.name).toBe(toHex(plaintext));
+        expect(await sealWithSalt(cryptoKey, v.kind, v.context, plaintext, fromHex(v.rowSalt), keyGen), v.name).toBe(v.envelope);
+        expect(toHex(await open(cryptoKey, v.kind, v.context, v.envelope, keyGen)), v.name).toBe(toHex(plaintext));
+        // A reader that expects another generation refuses it.
+        expect(await codeOf(open(key, v.kind, v.context, v.envelope, keyGen === 0 ? 1 : 0)), v.name).toBe('version');
       }),
     );
   });
@@ -470,19 +775,123 @@ describe.skipIf(WRITE)('vectors.json', () => {
     for (const v of vectors.envelopes) {
       const key = fromHex(v.key);
       const plaintext = fromBase64(v.plaintext);
-      expect(refAad(Uint8Array.of(1, 1, v.kind, 1, 0, 0, 0, 0), v.context).toString('hex'), v.name).toBe(v.aad);
+      const keyGen = v.keyGen ?? 0;
+      expect(refAad(refHeader(v.kind, keyGen), v.context).toString('hex'), v.name).toBe(v.aad);
       expect(refPaddedLength(4 + v.plaintextLength), v.name).toBe(v.paddedLength);
-      expect(refSeal(key, v.kind, v.context, plaintext, fromHex(v.rowSalt)), v.name).toBe(v.envelope);
-      expect(refOpen(key, v.kind, v.context, v.envelope).toString('hex'), v.name).toBe(toHex(plaintext));
+      expect(refSeal(key, v.kind, v.context, plaintext, fromHex(v.rowSalt), {}, keyGen), v.name).toBe(v.envelope);
+      expect(refOpen(key, v.kind, v.context, v.envelope, keyGen).toString('hex'), v.name).toBe(toHex(plaintext));
     }
   });
 
   it('refuses every reject vector, in both implementations', async () => {
     expect(vectors.rejects.length).toBeGreaterThanOrEqual(20);
     for (const v of vectors.rejects) {
-      expect(await codeOf(open(fromHex(v.key), v.kind, v.context, v.envelope)), v.name).toBe(v.error);
-      expect(() => refOpen(fromHex(v.key), v.kind, v.context, v.envelope), v.name).toThrow();
+      expect(await codeOf(open(fromHex(v.key), v.kind, v.context, v.envelope, v.keyGen ?? 0)), v.name).toBe(v.error);
+      expect(() => refOpen(fromHex(v.key), v.kind, v.context, v.envelope, v.keyGen ?? 0), v.name).toThrow();
     }
+  });
+
+  it('reproduces the sharing identities and cards, and checks them with node:crypto', async () => {
+    const s = vectors.sharing;
+    expect(s.identities.map((i) => i.userId)).toEqual([OWNER, MEMBER]);
+    for (const v of s.identities) {
+      const dataKey = fromHex(v.dataKey);
+      expect(refHkdf(dataKey, NO_SALT, 'cal/v1/share/kem', 32).toString('hex'), v.name).toBe(v.kemSeed);
+      expect(refHkdf(dataKey, NO_SALT, 'cal/v1/share/sig', 32).toString('hex'), v.name).toBe(v.sigSeed);
+      expect(refEdPublic(fromHex(v.sigSeed)).toString('base64'), v.name).toBe(v.sigPublic);
+      expect(toBase64(ml_kem768_x25519.keygen(fromHex(v.kemSeed)).publicKey), v.name).toBe(v.kemPublic);
+      const identity = await deriveIdentity(await crypto.subtle.importKey('raw', dataKey, 'HKDF', false, ['deriveBits']));
+      expect({ kemSeed: toHex(identity.kemSeed), sigSeed: toHex(identity.sigSecret), kemPublic: toBase64(identity.kemPublic), sigPublic: toBase64(identity.sigPublic) }).toEqual({
+        kemSeed: v.kemSeed,
+        sigSeed: v.sigSeed,
+        kemPublic: v.kemPublic,
+        sigPublic: v.sigPublic,
+      });
+      expect(await makeCard(identity, s.projectId, v.userId)).toBe(v.card);
+      const card = JSON.parse(v.card) as { v: number; u: string; k: string; s: string; p: string };
+      expect(card).toEqual({ v: 1, u: v.userId, k: v.kemPublic, s: v.sigPublic, p: card.p });
+      const kemPublic = fromBase64(v.kemPublic);
+      const sigPublic = fromBase64(v.sigPublic);
+      expect(refEdSign(fromHex(v.sigSeed), refCardMessage(s.projectId, v.userId, kemPublic, sigPublic))).toBe(card.p);
+      expect(createHash('sha256').update(kemPublic).update(sigPublic).digest('hex')).toBe(v.cardId);
+      expect((await readCard(v.card, s.projectId, v.userId)).id).toBe(v.cardId);
+    }
+  });
+
+  it('reproduces the safety number', async () => {
+    const s = vectors.sharing;
+    const [owner, member] = await Promise.all(s.identities.map((i) => readCard(i.card, s.projectId, i.userId)));
+    expect(refFingerprint(owner.userId, owner.kemPublic, owner.sigPublic)).toBe(s.safetyNumber.fingerprints.owner);
+    expect(refFingerprint(member.userId, member.kemPublic, member.sigPublic)).toBe(s.safetyNumber.fingerprints.member);
+    expect(s.safetyNumber.number).toBe([s.safetyNumber.fingerprints.owner, s.safetyNumber.fingerprints.member].sort().join(''));
+    expect(await safetyNumber(owner, member)).toBe(s.safetyNumber.number);
+    expect(await safetyNumber(member, owner)).toBe(s.safetyNumber.number);
+  });
+
+  it('reproduces the calendar keys and the row ids of a shared calendar', async () => {
+    const c = vectors.sharing.calendar;
+    for (const k of c.keys) {
+      const ck = fromHex(k.ck);
+      expect(refHkdf(ck, NO_SALT, 'cal/v1/share/data', 32).toString('hex')).toBe(k.dataKey);
+      expect(refHkdf(ck, NO_SALT, 'cal/v1/share/reminders', 32).toString('hex')).toBe(k.reminderKey);
+      const keys = await calendarKeys(ck);
+      expect(toHex(keys.remindersRaw)).toBe(k.reminderKey);
+      const ctx: Context = { projectId: PROJECT, scope: 'sharedObjects', id: OBJECT_ROW, ownerId: OWNER };
+      expect(refOpen(fromHex(k.dataKey), 1, ctx, await seal(keys.data, 1, ctx, utf8('x'), k.g), k.g).toString('utf8')).toBe('x');
+    }
+    expect(toHex(await calendarIdKey(fromHex(c.keys[0].ck)))).toBe(c.idsKey);
+    expect(refHkdf(fromHex(c.keys[0].ck), NO_SALT, 'cal/v1/share/ids', 32).toString('hex')).toBe(c.idsKey);
+    for (const r of c.rowIds) expect(refRowId(c.idsKey, r.label)).toBe(r.rowId);
+  });
+
+  it('reproduces the grant from its fixed randomness, and the member opens it', async () => {
+    const s = vectors.sharing;
+    const g = s.grant;
+    const [ownerVector, memberVector] = s.identities;
+    const owner = await deriveIdentity(fromHex(ownerVector.dataKey));
+    const member = await deriveIdentity(fromHex(memberVector.dataKey));
+    const ownerCard = await readCard(ownerVector.card, s.projectId, ownerVector.userId);
+    const memberCard = await readCard(memberVector.card, s.projectId, memberVector.userId);
+    const keys = s.calendar.keys.filter((k) => g.generations.includes(k.g)).map((k) => ({ g: k.g, k: fromHex(k.ck) }));
+    expect(await makeGrantWith(owner, g.place, memberCard, keys, fromHex(g.eseed), fromHex(g.rowSalt))).toBe(g.grant);
+    const grant = JSON.parse(g.grant) as { v: number; c: string; o: string; m: string; ct: string; w: string; sig: string };
+    expect(Object.keys(grant)).toEqual(['v', 'c', 'o', 'm', 'ct', 'w', 'sig']);
+    expect({ c: grant.c, o: grant.o, m: grant.m }).toEqual({ c: g.place.calendarId, o: g.place.ownerId, m: g.place.memberId });
+    // The decapsulation with the member's seed gives the stored shared secret, which opens w.
+    expect(toHex(ml_kem768_x25519.decapsulate(fromBase64(grant.ct), fromHex(memberVector.kemSeed)))).toBe(g.sharedSecret);
+    const ctx: Context = { projectId: s.projectId, scope: 'share', id: g.place.calendarId, ownerId: g.place.memberId };
+    expect(refOpen(fromHex(g.sharedSecret), 6, ctx, grant.w).toString('utf8')).toBe(g.plaintext);
+    expect(JSON.parse(g.plaintext)).toEqual({ v: 1, c: g.place.calendarId, o: g.place.ownerId, keys: keys.map((k) => ({ g: k.g, k: toBase64(k.k) })) });
+    expect(refGrantMessage(g.place, fromBase64(grant.ct), grant.w).toString('hex')).toBe(g.message);
+    expect(refEdVerify(ownerCard.sigPublic, fromHex(g.message), grant.sig)).toBe(true);
+    const opened = await openGrant(member, g.grant, g.place, ownerCard);
+    expect(opened.map((k) => ({ g: k.g, k: toHex(k.k) }))).toEqual(keys.map((k) => ({ g: k.g, k: toHex(k.k) })));
+  });
+
+  it('reproduces the roster and the author signatures', async () => {
+    const s = vectors.sharing;
+    const owner = await deriveIdentity(fromHex(s.identities[0].dataKey));
+    const member = await deriveIdentity(fromHex(s.identities[1].dataKey));
+    const ownerCard = await readCard(s.identities[0].card, s.projectId, OWNER);
+    expect(await makeRoster(owner, s.projectId, s.roster.roster)).toBe(s.roster.text);
+    const outer = JSON.parse(s.roster.text) as { b: string; sig: string };
+    expect(JSON.parse(outer.b)).toEqual({ v: 1, ...s.roster.roster });
+    expect(refRosterMessage(s.projectId, outer.b).toString('hex')).toBe(s.roster.message);
+    expect(refEdVerify(ownerCard.sigPublic, fromHex(s.roster.message), outer.sig)).toBe(true);
+    expect(await readRoster(s.roster.text, { projectId: s.projectId, calendarId: s.roster.roster.c, ownerId: OWNER, ownerCard })).toEqual(s.roster.roster);
+    const seeds: Record<string, ShareIdentity> = { [OWNER]: owner, [MEMBER]: member };
+    for (const v of s.signatures) {
+      expect(refItemMessage(v.what, v.place, v.content).toString('hex'), v.name).toBe(v.message);
+      expect(await signItem(seeds[v.signer], v.what, v.place, v.content), v.name).toBe(v.signature);
+      expect(refEdSign(seeds[v.signer].sigSecret, fromHex(v.message)), v.name).toBe(v.signature);
+      await verifyItem(seeds[v.signer].sigPublic, v.what, v.place, v.content, v.signature);
+    }
+    // The shared rows among the envelope vectors carry these signatures.
+    const item = vectors.envelopes.find((v) => v.context.scope === 'sharedObjects')!;
+    expect(JSON.parse(Buffer.from(item.plaintext, 'base64').toString('utf8'))).toMatchObject({ c: s.calendar.calendarId, a: MEMBER, s: s.signatures[0].signature, d: s.signatures[0].content });
+    const digestRow = vectors.envelopes.find((v) => v.context.scope === 'sharedReminders')!;
+    expect(JSON.parse(Buffer.from(digestRow.plaintext, 'base64').toString('utf8'))).toEqual({ m: s.signatures[2].content, a: OWNER, s: s.signatures[2].signature });
+    expect(digestRow.key).toBe(s.calendar.keys[2].reminderKey);
   });
 
   it('derives the login vectors', { timeout: 60_000 }, async () => {
@@ -548,14 +957,16 @@ describe.skipIf(WRITE)('two implementations of the envelope', () => {
         const key = randomBytes(32);
         const salt = randomBytes(32);
         const plaintext = randomBytes(length);
-        const kind = ((index % 5) + 1) as Kind;
+        const kind = ((index % 6) + 1) as Kind;
+        // Generation 0 for every third, others spread over the 32 bits.
+        const keyGen = index % 3 === 0 ? 0 : Math.imul(index, 0x9e3779b1) >>> 0;
         const place: Context = { ...ctx, id: `row-${index}-ż`, ownerId: `user-${length}` };
-        const text = await sealWithSalt(key, kind, place, plaintext, salt);
-        expect(refSeal(key, kind, place, plaintext, salt), `length ${length}`).toBe(text);
-        expect(refOpen(key, kind, place, text).equals(plaintext), `length ${length}`).toBe(true);
+        const text = await sealWithSalt(key, kind, place, plaintext, salt, keyGen);
+        expect(refSeal(key, kind, place, plaintext, salt, {}, keyGen), `length ${length}`).toBe(text);
+        expect(refOpen(key, kind, place, text, keyGen).equals(plaintext), `length ${length}`).toBe(true);
         // And the other direction, with an envelope the module did not write.
-        const foreign = refSeal(key, kind, place, plaintext, randomBytes(32));
-        expect(Buffer.from(await open(key, kind, place, foreign)).equals(plaintext), `length ${length}`).toBe(true);
+        const foreign = refSeal(key, kind, place, plaintext, randomBytes(32), {}, keyGen);
+        expect(Buffer.from(await open(key, kind, place, foreign, keyGen)).equals(plaintext), `length ${length}`).toBe(true);
         expect(paddedLength(length), `length ${length}`).toBe(refPaddedLength(4 + length));
       }),
     );
@@ -594,9 +1005,9 @@ describe.skipIf(WRITE)('two implementations of the envelope', () => {
   it('refuses an unknown kind byte even when sealed consistently', async () => {
     const key = fixed('key: strictness');
     const salt = fixed('rowSalt: strictness');
-    for (const kind of [0, 6, 255]) {
+    for (const kind of [0, 7, 255]) {
       const text = refSeal(key, kind, ctx, utf8('attack at dawn'), salt);
-      for (const asked of [1, 2, 3, 4, 5] as Kind[]) expect(await codeOf(open(key, asked, ctx, text))).toBe('auth');
+      for (const asked of [1, 2, 3, 4, 5, 6] as Kind[]) expect(await codeOf(open(key, asked, ctx, text))).toBe('auth');
     }
   });
 });

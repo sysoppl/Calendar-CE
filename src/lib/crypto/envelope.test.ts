@@ -4,6 +4,7 @@ import { fromBase64, fromHex, toBase64, toHex, utf8 } from './encoding';
 import {
   CryptoError,
   KIND,
+  keyGenOf,
   MAX_PLAINTEXT_BYTES,
   open,
   openJson,
@@ -22,7 +23,7 @@ const KEY = Uint8Array.from({ length: 32 }, (_, i) => i + 1);
 const OTHER_KEY = Uint8Array.from({ length: 32 }, (_, i) => 255 - i);
 const SALT = Uint8Array.from({ length: 32 }, (_, i) => 0xa0 ^ i);
 const CTX: Context = { projectId: 'calendar', scope: 'objects', id: '5f1c0d6b8a9e4c3fb2a17d0e6c4b9a58', ownerId: '66f2a1b3c4d5e6f70812' };
-const KINDS: Kind[] = [1, 2, 3, 4, 5];
+const KINDS: Kind[] = [1, 2, 3, 4, 5, 6];
 const MESSAGE = utf8('attack at dawn');
 
 const HEADER = 8;
@@ -225,7 +226,7 @@ describe('tampering', () => {
 
   it('rejects a kind byte that was changed, whatever kind is asked for', async () => {
     const text = await seal(KEY, 1, CTX, MESSAGE);
-    for (const value of [0, 2, 5, 6, 255]) {
+    for (const value of [0, 2, 5, 6, 7, 255]) {
       const tampered = withByte(text, 2, () => value);
       for (const kind of KINDS) await expectCode(open(KEY, kind, CTX, tampered), 'auth');
     }
@@ -362,7 +363,7 @@ describe('wrong key or wrong place', () => {
 
   it('refuses a kind that does not exist', async () => {
     const text = await seal(KEY, 1, CTX, MESSAGE);
-    for (const kind of [0, 6, 1.5, -1, NaN, '1', undefined] as unknown as Kind[]) {
+    for (const kind of [0, 7, 1.5, -1, NaN, '1', undefined] as unknown as Kind[]) {
       await expectCode(seal(KEY, kind, CTX, MESSAGE), 'format');
       await expectCode(open(KEY, kind, CTX, text), 'format');
     }
@@ -373,6 +374,69 @@ describe('wrong key or wrong place', () => {
     await expectCode(seal(KEY, 1, CTX, [1, 2, 3] as unknown as Uint8Array), 'format');
     await expectCode(sealWithSalt(KEY, 1, CTX, MESSAGE, SALT.subarray(0, 31)), 'format');
     await expectCode(sealWithSalt(KEY, 1, CTX, MESSAGE, new Uint8Array(33)), 'format');
+  });
+});
+
+describe('key generations', () => {
+  it('writes generation 0 by default, byte for byte as before', async () => {
+    const text = await sealWithSalt(KEY, 1, CTX, MESSAGE, SALT);
+    expect(await sealWithSalt(KEY, 1, CTX, MESSAGE, SALT, 0)).toBe(text);
+    expect(Array.from(fromBase64(text).subarray(4, HEADER))).toEqual([0, 0, 0, 0]);
+    expect(keyGenOf(text)).toBe(0);
+    expect(await open(KEY, 1, CTX, text, 0)).toEqual(MESSAGE);
+  });
+
+  it('writes the generation big-endian into the header and opens only when it is the one expected', async () => {
+    for (const keyGen of [1, 2, 255, 256, 0x01020304, 0xfffffffe, 0xffffffff]) {
+      const text = await seal(KEY, 1, CTX, MESSAGE, keyGen);
+      const header = fromBase64(text).subarray(4, HEADER);
+      expect(new DataView(header.buffer, header.byteOffset, 4).getUint32(0)).toBe(keyGen);
+      expect(keyGenOf(text)).toBe(keyGen);
+      expect(await open(KEY, 1, CTX, text, keyGen)).toEqual(MESSAGE);
+      await expectCode(open(KEY, 1, CTX, text), 'version');
+      await expectCode(open(KEY, 1, CTX, text, keyGen - 1), 'version');
+      if (keyGen < 0xffffffff) await expectCode(open(KEY, 1, CTX, text, keyGen + 1), 'version');
+    }
+  });
+
+  it('binds the generation: one changed in the header no longer opens under the new number', async () => {
+    const text = await seal(KEY, 1, CTX, MESSAGE, 2);
+    const moved = withByte(text, 7, () => 3);
+    expect(keyGenOf(moved)).toBe(3);
+    await expectCode(open(KEY, 1, CTX, moved, 3), 'auth');
+    await expectCode(open(KEY, 1, CTX, withByte(await seal(KEY, 1, CTX, MESSAGE), 7, () => 2), 2), 'auth');
+  });
+
+  it('passes the generation through the JSON helpers', async () => {
+    const text = await sealJson(KEY, 1, CTX, { a: 1 }, 7);
+    expect(keyGenOf(text)).toBe(7);
+    expect(await openJson(KEY, 1, CTX, text, 7)).toEqual({ a: 1 });
+    await expectCode(openJson(KEY, 1, CTX, text), 'version');
+  });
+
+  it('refuses a generation that is not an unsigned 32-bit number', async () => {
+    const text = await seal(KEY, 1, CTX, MESSAGE);
+    for (const keyGen of [-1, 1.5, 0x100000000, NaN, Infinity, '1', null]) {
+      await expectCode(seal(KEY, 1, CTX, MESSAGE, keyGen as number), 'format');
+      await expectCode(sealWithSalt(KEY, 1, CTX, MESSAGE, SALT, keyGen as number), 'format');
+      await expectCode(open(KEY, 1, CTX, text, keyGen as number), 'format');
+    }
+  });
+
+  it('reads the generation only from what looks like an envelope', async () => {
+    const text = await seal(KEY, 1, CTX, MESSAGE, 5);
+    expect(() => keyGenOf(withByte(text, 0, () => 2))).toThrow(expect.objectContaining({ code: 'version' }));
+    expect(() => keyGenOf(withByte(text, 1, () => 2))).toThrow(expect.objectContaining({ code: 'version' }));
+    expect(() => keyGenOf(withByte(text, 3, () => 2))).toThrow(expect.objectContaining({ code: 'version' }));
+    for (const bad of ['', 'AQEBAQ==', '*'.repeat(800), undefined]) expect(() => keyGenOf(bad as string)).toThrow(expect.objectContaining({ code: 'format' }));
+  });
+
+  it('opens a share grant (kind 6) only as one', async () => {
+    const grant = await seal(KEY, KIND.shareGrant, CTX, MESSAGE);
+    expect(KIND.shareGrant).toBe(6);
+    expect(await open(KEY, 6, CTX, grant)).toEqual(MESSAGE);
+    for (const kind of [1, 2, 3, 4, 5] as Kind[]) await expectCode(open(KEY, kind, CTX, grant), 'auth');
+    await expectCode(open(KEY, 6, CTX, await seal(KEY, 1, CTX, MESSAGE)), 'auth');
   });
 });
 
