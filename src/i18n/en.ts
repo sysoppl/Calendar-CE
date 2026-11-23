@@ -594,7 +594,7 @@ export const en = {
   'reminders.scheduledCount': '{n} in the next 45 days',
   'reminders.next': 'Next: {title} · {time}',
   'reminders.background': 'Background refresh',
-  'reminders.backgroundHint': 'Checks your CalDAV calendars every hour, even when the app is closed, so events added elsewhere still remind you.',
+  'reminders.backgroundHint': 'Checks your CalDAV calendars every 15 minutes, even when the app is closed, so events added elsewhere still remind you.',
   'reminders.lastRun': 'Last successful run {time}',
   'reminders.neverRun': 'Not run yet',
   'reminders.runNow': 'Refresh now',

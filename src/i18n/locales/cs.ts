@@ -548,7 +548,7 @@ const messages: Record<MessageKey, string> = {
   'reminders.scheduledCount': '{n} v příštích 45 dnech',
   'reminders.next': 'Další: {title} · {time}',
   'reminders.background': 'Obnovování na pozadí',
-  'reminders.backgroundHint': 'Každou hodinu kontroluje vaše kalendáře CalDAV, i když je aplikace zavřená, takže připomenou i události přidané jinde.',
+  'reminders.backgroundHint': 'Každých 15 minut kontroluje vaše kalendáře CalDAV, i když je aplikace zavřená, takže připomenou i události přidané jinde.',
   'reminders.lastRun': 'Poslední úspěšné spuštění {time}',
   'reminders.neverRun': 'Zatím nespuštěno',
   'reminders.runNow': 'Obnovit nyní',

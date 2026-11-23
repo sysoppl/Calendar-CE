@@ -30,13 +30,24 @@ import pl.patrykpro.calendar.R;
 import pl.patrykpro.calendar.vault.VaultException;
 
 /**
- * Hourly background refresh: downloads upcoming events and tasks from every
+ * Background refresh every 15 minutes: downloads upcoming events and tasks from every
  * visible CalDAV calendar and reschedules their reminders, so reminders work even
  * when the app is not opened and for events created on other devices.
  */
 public class ReminderSyncWorker extends Worker {
     private static final String TAG = "CalendarReminders";
-    private static final String PERIODIC = "calendar-reminder-sync";
+    /**
+     * The unique name of the periodic refresh. Up to 1.15 it ran every hour
+     * under {@link #PERIODIC_HOURLY}; the new name is what moves existing
+     * installs to the new period ({@link #ensurePeriodic}).
+     */
+    static final String PERIODIC = "calendar-reminder-sync-15m";
+    /** The name of the hourly refresh of 1.15 and before; cancelled wherever it is still enqueued. */
+    static final String PERIODIC_HOURLY = "calendar-reminder-sync";
+    /** How often the refresh runs: WorkManager's shortest period (PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS). */
+    static final long PERIOD_MINUTES = 15;
+    /** The window at the end of each period in which it may run: WorkManager's smallest (MIN_PERIODIC_FLEX_MILLIS). */
+    static final long FLEX_MINUTES = 5;
     private static final String ONCE = "calendar-reminder-sync-now";
     /** More reminders than this for one calendar within the horizon is not a real calendar; the rest is ignored. */
     static final int MAX_REMINDERS = 5000;
@@ -61,12 +72,31 @@ public class ReminderSyncWorker extends Worker {
         super(context, params);
     }
 
+    /**
+     * Makes sure the periodic refresh is enqueued, every {@link #PERIOD_MINUTES}
+     * minutes with network. Called at every start of the app, at every
+     * hand-over of the sync configuration, and after a boot.
+     *
+     * Why a new unique name and not {@code ExistingPeriodicWorkPolicy.UPDATE}:
+     * the WorkManager in use (2.12) has UPDATE (since 2.8), and it would
+     * carry the new period over too, but it rewrites the stored request,
+     * raises its generation and hands it to the system scheduler again on
+     * every call, and this is called on every start. KEEP leaves a waiting
+     * refresh exactly as it is, as it always did; under a new name it puts
+     * the 15-minute request in place once, on the first call after the
+     * update. Cancelling the hourly one of 1.15 and before is a lookup that
+     * finds nothing from the second call on; a run of it that is going on
+     * then is stopped, and what it fetched so far stays. A later change of
+     * the period needs a new name again, and the cancelling of this one.
+     */
     public static void ensurePeriodic(Context context) {
         Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
-        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(ReminderSyncWorker.class, 1, TimeUnit.HOURS, 15, TimeUnit.MINUTES)
+        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(ReminderSyncWorker.class, PERIOD_MINUTES, TimeUnit.MINUTES, FLEX_MINUTES, TimeUnit.MINUTES)
             .setConstraints(constraints)
             .build();
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.KEEP, request);
+        WorkManager workManager = WorkManager.getInstance(context);
+        workManager.cancelUniqueWork(PERIODIC_HOURLY);
+        workManager.enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.KEEP, request);
     }
 
     /** A refresh as soon as there is network. One already waiting or running is replaced: the app asks after a change. */
@@ -120,7 +150,7 @@ public class ReminderSyncWorker extends Worker {
         }
 
         ReminderScheduler.rescheduleAll(context);
-        // Hourly: a persistent notification that went some other way (a cleaner app) goes up again.
+        // Every refresh: a persistent notification that went some other way (a cleaner app) goes up again, silent.
         ReminderNotifier.restoreStanding(context);
         // Stopped (replaced by a newer run, or out of time): what was fetched is in place, the record is left to a whole run.
         if (isStopped()) return Result.retry();

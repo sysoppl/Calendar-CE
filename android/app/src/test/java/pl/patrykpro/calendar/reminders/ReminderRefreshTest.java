@@ -20,6 +20,17 @@ import pl.patrykpro.calendar.vault.TestKeys;
 
 /** The CalDAV part of the background refresh, with the network replaced by a stand-in. */
 public class ReminderRefreshTest {
+    @Test
+    public void runsEveryFifteenMinutesUnderANameOfItsOwn() {
+        // WorkManager's shortest period and smallest window: a shorter one would be stretched to these anyway.
+        assertEquals(androidx.work.PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS, java.util.concurrent.TimeUnit.MINUTES.toMillis(ReminderSyncWorker.PERIOD_MINUTES));
+        assertEquals(androidx.work.PeriodicWorkRequest.MIN_PERIODIC_FLEX_MILLIS, java.util.concurrent.TimeUnit.MINUTES.toMillis(ReminderSyncWorker.FLEX_MINUTES));
+        // The hourly refresh of 1.15 and before was enqueued under this name with KEEP; only a new
+        // name moves an installed app to the new period, and the old one is what gets cancelled.
+        assertEquals("calendar-reminder-sync", ReminderSyncWorker.PERIODIC_HOURLY);
+        assertFalse(ReminderSyncWorker.PERIODIC.equals(ReminderSyncWorker.PERIODIC_HOURLY));
+    }
+
     private static final long DAY = 86400000L;
     private static final long HORIZON = 45 * DAY;
     private static final String ICS = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:e\r\nSUMMARY:Call\r\nDTSTART:20261012T070000Z\r\n"

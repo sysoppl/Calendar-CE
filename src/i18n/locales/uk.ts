@@ -548,7 +548,7 @@ const messages: Record<MessageKey, string> = {
   'reminders.scheduledCount': '{n} протягом наступних 45 днів',
   'reminders.next': 'Наступне: {title} · {time}',
   'reminders.background': 'Оновлення у фоні',
-  'reminders.backgroundHint': 'Щогодини перевіряє ваші календарі CalDAV, навіть коли застосунок закрито, тож події, додані деінде, теж нагадають про себе.',
+  'reminders.backgroundHint': 'Кожні 15 хвилин перевіряє ваші календарі CalDAV, навіть коли застосунок закрито, тож події, додані деінде, теж нагадають про себе.',
   'reminders.lastRun': 'Останній успішний запуск {time}',
   'reminders.neverRun': 'Ще не запускалося',
   'reminders.runNow': 'Оновити зараз',

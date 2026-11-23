@@ -572,7 +572,7 @@ export const pl: Record<MessageKey, string> = {
   'reminders.scheduledCount': '{n} w ciągu najbliższych 45 dni',
   'reminders.next': 'Następne: {title} · {time}',
   'reminders.background': 'Odświeżanie w tle',
-  'reminders.backgroundHint': 'Co godzinę sprawdza kalendarze CalDAV, także gdy aplikacja jest zamknięta, więc wydarzenia dodane gdzie indziej też przypomną o sobie.',
+  'reminders.backgroundHint': 'Co 15 minut sprawdza kalendarze CalDAV, także gdy aplikacja jest zamknięta, więc wydarzenia dodane gdzie indziej też przypomną o sobie.',
   'reminders.lastRun': 'Ostatnie udane uruchomienie {time}',
   'reminders.neverRun': 'Jeszcze nie uruchomiono',
   'reminders.runNow': 'Odśwież teraz',

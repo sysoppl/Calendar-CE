@@ -548,7 +548,7 @@ const messages: Record<MessageKey, string> = {
   'reminders.scheduledCount': '{n} en los próximos 45 días',
   'reminders.next': 'Siguiente: {title} · {time}',
   'reminders.background': 'Actualización en segundo plano',
-  'reminders.backgroundHint': 'Revisa tus calendarios CalDAV cada hora, incluso con la app cerrada, para que los eventos añadidos en otro lugar también te avisen.',
+  'reminders.backgroundHint': 'Revisa tus calendarios CalDAV cada 15 minutos, incluso con la app cerrada, para que los eventos añadidos en otro lugar también te avisen.',
   'reminders.lastRun': 'Última ejecución correcta {time}',
   'reminders.neverRun': 'Aún no se ha ejecutado',
   'reminders.runNow': 'Actualizar ahora',
