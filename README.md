@@ -388,10 +388,13 @@ The build writes `version.json` (`{"version":"1.16.0"}`) into the bundle; the se
 when it starts, when its window gets the focus or the connection comes back (at most once a minute) and every 15
 minutes, without cookies, referrer or redirects, and reads nothing from the answer but a plain `x.y.z` version.
 Once that version is newer than its own, a full page covers the whole app until it is updated: it cannot be put away,
-and the dialogs under it stay as they were. When nothing is open that could hold unsaved input (no dialog, editor,
-Settings or search, nothing typed into a field), the page loads the new version by itself, once per version and tab;
-otherwise, or when that load still brought the old version, **Load the new version** clears the app's cached shell and
-loads it from the server. Calendars, tasks and settings stay as they are. An answer that is missing or not a version
+and the dialogs under it stay as they were. It never covers what is being typed: while something is open that could
+hold unsaved input (a dialog, editor, Settings or search, text typed into a field) or a CalDAV sync runs, a small
+notice says that the app updates once that is saved or closed, and the full page comes the moment it is (after 10
+minutes of waiting it comes anyway, over what is open, which stays as it was). The page then loads the new version by
+itself, once per version and tab and only with nothing open; otherwise, or when that load still brought the old
+version, **Load the new version** clears the app's cached shell and loads it from the server. Calendars, tasks and
+settings stay as they are. An answer that is missing or not a version
 changes nothing, so a device that is offline keeps working, and a well-formed answer that is not newer (a rolled-back
 release) lifts the lock again. The Android app follows your server only when it is built for it
 ([Android app](#android-app)).
@@ -552,7 +555,8 @@ most once a minute) and every 15 minutes while it is open. The request carries n
 your server sees the device's address and the WebView's user agent. The server answers it with
 `Access-Control-Allow-Origin: *` (that one file only; the app's page is `https://localhost`), so the ready-made image
 needs nothing more. When the server's version is newer than the app's, a full page locks the app with
-**Download the update**, which opens `VITE_ANDROID_URL` in the browser; reminders it has scheduled keep firing. Without
+**Download the update**, which opens `VITE_ANDROID_URL` in the browser; reminders it has scheduled keep firing. As in
+the browser, it waits with a small notice while something is open or being typed, for at most 10 minutes. Without
 a download address the app does not lock, as it would have nothing to offer.
 
 Put the new APK at `VITE_ANDROID_URL` **before** you update the server: from that moment every copy that asks is
@@ -592,9 +596,11 @@ In development the proxy may reach a CalDAV server on your own machine (e.g. Rad
 ### 1.16.0
 
 - **Newest version only** ([Updating](#updating), [Android app](#android-app)): once your server runs a newer
-  version, a full page that cannot be put away covers the whole app until it is updated. The web app loads the new
-  version by itself when nothing is open that could hold unsaved input, and otherwise offers **Load the new
-  version**; calendars, tasks and settings stay as they are, and a device that is offline keeps working. The server
+  version, a full page that cannot be put away covers the whole app until it is updated. It never covers what is
+  being typed: while an editor, a dialog or a field with text is open, or a CalDAV sync runs, a small notice says that
+  the app updates once that is saved or closed, and the page comes then (after 10 minutes of waiting it comes anyway,
+  over what is open, which stays as it was). The web app loads the new version by itself when nothing is open that
+  could hold unsaved input, and otherwise offers **Load the new version**; calendars, tasks and settings stay as they are, and a device that is offline keeps working. The server
   sends the new `/version.json` uncached. The Android app asks only the server it was built for
   (`VITE_UPDATE_URL`, with `VITE_ANDROID_URL` for **Download the update**); built without them, the default, it
   never asks anyone.

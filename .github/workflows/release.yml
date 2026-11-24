@@ -5,7 +5,8 @@
 #   3. the Docker image on the GitHub Container Registry,
 #      ghcr.io/<owner>/calendar-ce with the tags X.Y.Z, X.Y, X and latest, for
 #      linux/amd64 and linux/arm64;
-#   4. a GitHub release of the tag, with notes of what changed since the
+#   4. a GitHub release of the tag, with the version's part of the README's
+#      "Release notes" (as the tag has it) above what changed since the
 #      version tag before (scripts/release-notes.mjs).
 # Started by hand (workflow_dispatch) on a branch, it runs the tests, builds
 # both platforms and writes the notes of the newest version tag into the run's
@@ -145,7 +146,7 @@ jobs:
               exit 0
             fi
           fi
-          if ! node scripts/release-notes.mjs "$tag" --out release-notes.md; then
+          if ! node scripts/release-notes.mjs "$tag" --written-in README.md --out release-notes.md; then
             echo "::warning::The release notes could not be written; the release links the commits instead"
             printf 'The changes are in the [commits up to %s](%s/%s/commits/%s).\n' "$tag" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$tag" > release-notes.md
           fi

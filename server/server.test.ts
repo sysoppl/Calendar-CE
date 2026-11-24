@@ -682,7 +682,8 @@ describe('deployment kit', () => {
       expect([...workflow.matchAll(/contents: write/g)]).toHaveLength(1);
       expect(release).toContain('contents: write');
       expect(release).toMatch(/fetch-depth: 0/);
-      expect(release).toContain('node scripts/release-notes.mjs "$tag" --out release-notes.md');
+      // With the version's part of the README's release notes above the commits.
+      expect(release).toContain('node scripts/release-notes.mjs "$tag" --written-in README.md --out release-notes.md');
       expect(release).toContain('docker pull $image:$version');
       // The token only in the step that publishes, and that step only for a tag.
       expect(release.match(/github\.token|secrets\./g)).toHaveLength(1);
