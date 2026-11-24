@@ -213,9 +213,9 @@ generation's key and opens with `g` as the expected generation.
 
 A new generation starts whenever somebody loses access or the right to edit: removed by the owner, left, the account
 gone, or changed from writer to viewer. The owner's app makes `CK_g+1`, where `g` is the highest generation it holds
-or has seen in a roster or grant it verified, never a number the service names. It then signs a new roster and makes
-a new grant for itself and for every member who stays. Items written before are **not** encrypted again; they stay
-readable under their old generation, for the people who had it.
+or has seen in a roster or grant it verified, never a number the service names. It then signs a new roster and makes a
+new grant for itself and for every member who stays (a [withheld one](#the-grant) for a member held back). Items
+written before are **not** encrypted again; they stay readable under their old generation, for the people who had it.
 
 ### The grant
 
@@ -238,6 +238,16 @@ The member's app checks, in this order, and stops at the first failure:
 A grant that brings a different key for a generation the device already holds is refused ("keys changed"): a key is
 never replaced.
 
+**A withheld grant** has the same form, names the member and is signed by the owner, but its secret is encapsulated to
+a throwaway X-Wing key whose secret half is discarded at once, around a random key, so nobody can open it
+(`makeWithheldGrant`). The service accepts a new generation only with a grant for every member who stays. A member who
+stays but whose card the owner's app can't check at that moment (the service shows a different card than the
+remembered one) gets such a grant in a new generation, such as the one that takes somebody else out, and so does a
+member the owner took out too whose own removal comes with a later generation (one removal per generation). Each keeps
+the roster entry the last verified roster had; their app can't open the grant and keeps the keys it had. Removing
+somebody therefore never waits for someone else's keys, and a member who was held back receives the new generation
+only with the next one the owner's app makes after their safety number has been compared again.
+
 ### The roster
 
 The roster is the owner's signed statement of who may read and who may write. It is signed, not encrypted: it holds
@@ -251,12 +261,14 @@ account ids, roles, public signing keys and the generation number, which the ser
 | `former` | Up to 50 people who used to be writers, each with the generation from which their writes no longer count |
 
 A reader checks the owner's signature with the owner's remembered card, then that the roster is for this calendar
-and this owner, and refuses one whose version is lower than the highest it has seen for the calendar. That highest
-version is kept in the account's encrypted settings, so the service can't hand out an old roster again to a device
-of an account that has seen a newer one.
+and this owner, and refuses one whose version is lower than the highest it has seen for that calendar and owner.
+That highest version is kept in the account's encrypted settings, per calendar and owner, so the service can't hand
+out an old roster again to a device of an account that has seen a newer one, and a roster of anybody else can't raise
+the number the real owner's rosters must pass.
 
 A writer who leaves, is removed or becomes a viewer moves to `former` with the new generation, so that what they
-wrote before still counts. A viewer never does.
+wrote before still counts. A viewer never does. A former writer who is made a writer again leaves `former`; a later
+removal or demotion gives them a new entry with its own generation.
 
 ### Author signatures and what a reader accepts
 
@@ -289,13 +301,31 @@ The service stores and delivers; these rules decide what a device does with what
   invitation, it notes that in the account's end-to-end encrypted settings, with the calendar, the owner and the
   owner's card. A calendar the service lists without such a note is ignored and reported. While the notes can't be
   read, nothing new is accepted.
+- **A calendar id belongs to one owner for good.** The owner a calendar is known with on the account (it made it, or
+  accepted it from that owner first) is the only one: an invitation of anybody else for that id is not offered and
+  not accepted, and a listing that names another owner for it never replaces what the device holds. If the service
+  swaps the owner, the calendar stays as it was, read-only, the app warns about it, and nothing is ever encrypted with
+  the other owner's keys.
+- **Nobody gets the keys before the owner confirms them.** Which account accepted an invitation, and its card, are the
+  service's word. The owner's app shows the person who accepted (by the address the owner typed, with the name the
+  service gives marked as the service's word, and the safety number to compare) and makes a grant only once the owner
+  confirms exactly that person with exactly the card shown at that moment. The confirmation is kept in the owner's
+  encrypted settings, bound to the invitation, the person and the card, so every device of the owner honours it and
+  the service can't make one up or move it to another person, card or calendar; if the card differs when the grant is
+  made, nothing is handed over. The one exception: a person whose safety number the owner compared, with that very
+  card, under the very address the invitation went to, and whom the owner never removed from this calendar. Anybody
+  else, such as a person compared under another address or one the owner removed before, waits for the owner's
+  confirmation, and the app says why.
 - **The owner's app builds the member list from what it verified and from the owner's own decisions.** A new roster
-  starts from the last roster the app verified. A person joins only through an invitation the owner made, with the
-  role the owner chose; a role changes only when the owner changes it. What the service says about members never
-  goes into a roster. The service can cause a removal, by no longer listing someone as a member. It can never add a
-  person or raise a role.
-- **A device writes only with the newest generation it has seen** in a verified roster or grant. If it doesn't hold
-  that key yet, the calendar is read-only on that device until the grant arrives.
+  starts from the last roster the app verified. A person joins only through an invitation the owner made and the
+  owner's confirmation, with the role the owner chose; a role changes only when the owner changes it. What the
+  service says about members never goes into a roster. The service can cause a removal, by no longer listing someone
+  as a member. It can't raise a role, or add a person the owner didn't confirm.
+- **A device writes only with the newest generation it has seen** in a verified roster or grant. The highest
+  generation seen is kept with the highest roster version, per calendar and owner, in the account's encrypted
+  settings, so every device of the account knows it. If a device doesn't hold that key yet, the calendar is read-only
+  on it until the grant arrives. While a removal the owner made has no new generation yet, the owner's devices don't
+  write to the calendar at all.
 - **A device never takes an item at an older generation than it accepted it at.** An older copy handed out again is
   refused.
 
@@ -315,9 +345,10 @@ The service *can* refuse service, delete data, or hand back an older copy of an 
 change an item, move it or slip it into another account without your devices rejecting it.
 
 For a shared calendar the service *can* also take a person out (the owner's app then starts a new key generation), and
-withhold or delay invitations, grants, rosters and items. It *can't* read the calendar, add a person to it, raise
-anyone's role, or make a device accept an item that nobody with the right to edit signed. Whether it could deliver
-keys of its own at the first hand-over depends on the safety number: see the first sharing point below.
+withhold or delay invitations, grants, rosters and items. It *can't* read the calendar, raise anyone's role, add a
+person the owner didn't confirm, or make a device accept an item that nobody with the right to edit signed. It does
+decide which account an invitation leads to and which card it shows for that account; whether that can put keys of
+its own in a person's place depends on the safety number: see the first sharing point below.
 
 ## Known limits
 
@@ -332,17 +363,33 @@ keys of its own at the first hand-over depends on the safety number: see the fir
 
 Sharing adds these:
 
-- **The first hand-over trusts the service, unless you compare the safety number.** The service passes the cards on.
-  If two people never compare the safety number, the owner's app encapsulates the calendar keys to whichever card the
-  service delivered first. A card that changes later is detected and blocks the hand-over.
-- **Removing someone doesn't take anything back.** Their devices keep what they already had, including the keys of
-  the generations up to their removal. Items written before the removal are not encrypted again; they stay under their
-  old generation. Only what is written afterwards uses the new key.
-- **A removed writer together with the service can still forge items at old generations.** A person who could edit
-  stays in the roster as a former writer, so that what they wrote still counts, and they still hold the old keys. If
-  the service stores it for them, an item sealed and signed at a generation from before their removal is accepted by
-  a device that has not yet accepted that item at a higher generation. A removed viewer can't do this: a viewer's
-  signature never counts.
+- **Confirming a person without comparing the safety number trusts the service.** The service decides which account
+  an invitation leads to and passes the cards on. No key leaves before the owner confirms the person who accepted, but
+  an owner who confirms without comparing the safety number accepts the service's word that this is the person
+  invited, with their real card: the service could put an account and keys of its own in that place. In the same way
+  an invited person who accepts without comparing trusts the service on who the owner is. A card that changes later
+  is detected and blocks every further hand-over to it.
+- **Removing someone doesn't take anything back.** Their devices keep what they already had, including the keys of the
+  generations up to their removal. Items written before the removal are not encrypted again; they stay under their old
+  generation. Everything written afterwards uses the new key, which the removed person never received. Until the new
+  generation is made, the owner's devices write nothing to the calendar, but the other members' apps, which don't know
+  of the removal yet, still write with the generation they hold.
+- **A member held back from a new generation stays behind.** A member whose card can't be checked when a new
+  generation is made keeps the generations they had and gets the new one only once their safety number has been
+  compared again; until then the calendar is read-only for them, and the owner's app shows their keys as changed.
+- **A former writer together with the service can still forge items at old generations.** A person who could edit and
+  was removed or made a viewer stays in the roster as a former writer, so that what they wrote still counts, and they
+  still hold the old keys. If the service stores it for them, an item sealed and signed at a generation from before
+  their removal or demotion is accepted by a device that has not yet accepted that item at a higher generation: a new
+  item as well as an older version of an existing one. The app can't tell such an item from one written before. A
+  signature at an old generation carries no time that could be trusted, and a device that never saw the calendar
+  before (a member's new device) has no history to compare it with, so refusing items that first appear afterwards
+  would also hide what the person really wrote, on every such device. Alone the person can't: a removed person is no
+  longer in the calendar, and the hosted service refuses writes from a viewer and clears away what is not stored as
+  the calendar's items are. That a writer made a viewer, who is still in the calendar, can't plant such an item
+  therefore relies on the service's refusal and clean-up, not on the encryption. Closing this would need the owner to
+  sign the former writer's items, or a list of them, at the removal or demotion, which the format doesn't have yet. A
+  removed viewer can't do this: a viewer's signature never counts.
 - **Nobody checks the author's signature of a shared reminder list.** The Android app, the one reader that acts on
   it, checks that the list opens with the right key for the right calendar, not who signed it. The phone is only
   given reminder keys from the generation in use onwards, so the writer is someone in the calendar now. That includes
@@ -351,9 +398,9 @@ Sharing adds these:
 - **The service can withhold or delay, and deletions are not authenticated.** As for private data, the service can
   make an item look deleted, or not deliver it.
 - **A device shown only old data keeps acting on old state.** The service can keep handing a device an old roster and
-  old items. What bounds this is what was seen before: the highest roster version and generation the account has
-  seen, and the generation at which the device accepted each item. A device that was never shown anything newer can't
-  tell.
+  old items. What bounds this is what was seen before: the highest roster version and generation the account has seen
+  for that calendar and owner, and the generation at which the device accepted each item. A device that was never
+  shown anything newer can't tell.
 - **The post-quantum half has not been independently audited.** ML-KEM-768 and the X-Wing combiner come from
   `@noble/post-quantum`, which has so far been audited only by its own author, and X-Wing itself is still a draft
   specification (draft-connolly-cfrg-xwing-kem). The classical half (X25519) and the signatures (Ed25519) come from
