@@ -505,6 +505,37 @@ export function makeGrant(owner: ShareIdentity, place: GrantPlace, member: Share
 }
 
 /**
+ * A grant for `place.memberId` that nobody can open: made and signed as any
+ * grant, but encapsulated to a throwaway X-Wing key whose secret half is
+ * dropped at once, around a key drawn at random. The owner gives it to a
+ * member who stays in a new generation while their card cannot be checked
+ * (it is not the one pinned for them): the server takes a new generation only
+ * with a grant for everybody in it, and this one hands that member nothing.
+ * Their app cannot open it and keeps the keys it had; it gets the new
+ * generation once the owner has compared their safety number again.
+ */
+export async function makeWithheldGrant(owner: ShareIdentity, place: GrantPlace): Promise<string> {
+  checkPlace(place);
+  const { xwing } = await load();
+  const seed = randomBytes(KEY_LENGTH);
+  let kemPublic: Bytes;
+  try {
+    const pair = xwing.keygen(seed);
+    kemPublic = own(pair.publicKey);
+    if (pair.secretKey !== seed) wipe(pair.secretKey);
+  } finally {
+    wipe(seed);
+  }
+  const decoy: ShareCard = { userId: place.memberId, kemPublic, sigPublic: new Uint8Array(SIG_PUBLIC_LENGTH), id: '' };
+  const keys = [{ g: 0, k: randomBytes(KEY_LENGTH) }];
+  try {
+    return await makeGrant(owner, place, decoy, keys);
+  } finally {
+    wipe(keys[0].k);
+  }
+}
+
+/**
  * Opens a grant meant for this identity: checks the owner's signature with the
  * owner's pinned card first, then decapsulates and opens the keys. Returns
  * them sorted by generation (generation 0 always first: a grant without it

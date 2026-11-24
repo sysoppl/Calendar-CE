@@ -28,6 +28,7 @@ export {
   calendarKeys,
   calendarIdKey,
   makeGrant,
+  makeWithheldGrant,
   openGrant,
   makeRoster,
   readRoster,

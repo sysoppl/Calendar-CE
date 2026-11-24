@@ -15,6 +15,7 @@ import {
   makeCard,
   makeGrant,
   makeRoster,
+  makeWithheldGrant,
   MAX_GRANT_KEYS,
   openGrant,
   readCard,
@@ -323,6 +324,21 @@ describe('grants', () => {
     const b = JSON.parse(await makeGrant(owner.identity, place, member.card, keys)) as Record<string, string>;
     expect(a.ct).not.toBe(b.ct);
     expect(a.w).not.toBe(b.w);
+  });
+
+  it('can be withheld: a grant in the right form, signed by the owner, that nobody can open', async () => {
+    const text = await makeWithheldGrant(owner.identity, place);
+    const grant = JSON.parse(text) as Record<string, string | number>;
+    // The same form as any grant (what the server checks of one), for the member named.
+    expect(Object.keys(grant)).toEqual(['v', 'c', 'o', 'm', 'ct', 'w', 'sig']);
+    expect(grant).toMatchObject({ v: 1, c: CALENDAR, o: OWNER, m: MEMBER });
+    expect(fromBase64(grant.ct as string)).toHaveLength(1120);
+    // The member's app sees the owner's signature but cannot open it, nor can anybody else.
+    for (const who of [member, owner, stranger]) expect(await codeOf(openGrant(who.identity, text, place, owner.card))).toBe('auth');
+    // Each one is new.
+    expect(JSON.parse(await makeWithheldGrant(owner.identity, place)).ct).not.toBe(grant.ct);
+    // Made only for a real place.
+    expect(await codeOf(makeWithheldGrant(owner.identity, { ...place, memberId: '' }))).toBe('format');
   });
 
   it('work for the owner, as a grant to the owner\'s other devices', async () => {
