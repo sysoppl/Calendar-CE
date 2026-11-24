@@ -302,6 +302,19 @@ describe('server', () => {
       expect((await get('/.well-known/security.txt')).body).toBe('Contact: mailto:security@example.com');
     });
 
+    it('opens a file only by the name it has, in that case, on every file system', async () => {
+      // NTFS and APFS ignore case: without the check /INDEX.HTML or a capitalised name would be served there, not on Linux.
+      for (const path of ['/INDEX.HTML', '/Version.json', '/SW.JS', '/third-party-notices.txt', '/ICONS/icon-192.webp', '/icons/ICON-192.webp', '/Assets/index-abc123.js', '/assets/INDEX-ABC123.JS', '/.WELL-KNOWN/security.txt']) {
+        const res = await get(path);
+        expect([res.status, res.body], path).toEqual([404, 'Not found']);
+      }
+      // A path of the app (no file name in it) in another case is the app shell; the real names are served.
+      expect((await get('/APP/SETTINGS')).body).toBe(SHELL);
+      expect((await get('/version.json')).status).toBe(200);
+      expect((await get('/icons/icon-192.webp')).status).toBe(200);
+      expect((await get('/THIRD-PARTY-NOTICES.txt')).status).toBe(200);
+    });
+
     it('writes the links it was started with into the pages, and nothing else', async () => {
       const links = { privacy: 'https://example.org/privacy?a=1&b="2"', terms: '', contact: 'mailto:hello@example.org' };
       const withLinks = createAppServer({ root: join(dir, 'dist'), links });

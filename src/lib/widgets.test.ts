@@ -115,7 +115,10 @@ describe('the snapshot', () => {
     expect(new Set(snap.events.map((e) => e.key)).size).toBe(18);
   });
 
-  it('keeps what is nearest today when there is too much', () => {
+  // More events than a snapshot takes (2,540 written and read): about 2 s alone, and well over the
+  // default 5 s when the whole suite runs in parallel on a busy machine. The fixture cannot be smaller
+  // than the limit it tests, so the test gets the time it needs.
+  it('keeps what is nearest today when there is too much', { timeout: 30_000 }, () => {
     const many: Record<string, string> = {};
     for (let i = 0; i < SNAPSHOT_LIMITS.events + 40; i++) many[`local://e/${i}.ics`] = event(`e${i}`, { start: new Date(2026, 9, 1, 0, i), end: new Date(2026, 9, 1, 0, i + 1) });
     many['local://e/next.ics'] = event('Next');
