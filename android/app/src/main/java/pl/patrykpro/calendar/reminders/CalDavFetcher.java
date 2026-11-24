@@ -41,8 +41,8 @@ final class CalDavFetcher implements ReminderSyncWorker.CalendarSource {
     /**
      * Shared by every calendar and every run, so they share one connection
      * pool. Every request carries the password, so over plain http it goes only
-     * to a server on the private network (CleartextPassword): the hourly
-     * refresh does not send it across the internet in clear.
+     * to a server on the private network (CleartextPassword): the background
+     * refresh, every 15 minutes, does not send it across the internet in clear.
      */
     static final OkHttpClient CLIENT = CleartextPassword.guard(CertificateBlocklist.guard(new OkHttpClient.Builder()))
         .followRedirects(false)

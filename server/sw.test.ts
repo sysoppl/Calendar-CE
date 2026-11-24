@@ -396,4 +396,16 @@ describe('service worker', () => {
     expect(sw.fetched).toEqual([]);
     expect(sw.cached()).toEqual([]);
   });
+
+  it('leaves the newest version to the network, never to a cache', async () => {
+    site['/version.json'] = () => file('{"version":"1.2.1"}', 'application/json');
+    const sw = boot(network);
+    await sw.install();
+    for (const path of ['/version.json', '/version.json?t=1']) {
+      expect(await sw.get(path), path).toBeUndefined();
+      expect(await sw.navigate(path), path).toBeUndefined();
+    }
+    expect(sw.cached()).not.toContain('/version.json');
+    expect([...sw.stores.values()].some((cache) => [...cache.entries.keys()].some((key) => key.startsWith('/version.json')))).toBe(false);
+  });
 });

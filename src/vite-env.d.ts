@@ -12,3 +12,10 @@ declare const __APP_URL__: string;
  * Read through src/lib/links.ts.
  */
 declare const __APP_LINKS__: { privacy: string; terms: string; contact: string };
+/**
+ * Where the Android app asks for the newest version and downloads it
+ * (VITE_UPDATE_URL, VITE_ANDROID_URL; scripts/android-update.mjs). Both empty
+ * unless both were set at build time: then the Android app asks nobody.
+ * Read through src/lib/appUpdate.
+ */
+declare const __ANDROID_UPDATE__: { versionUrl: string; downloadUrl: string };

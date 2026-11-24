@@ -31,6 +31,16 @@ export const en = {
   'app.otherTab.useHere': 'Use here',
   'app.otherTab.switching': 'Switching to this tab…',
 
+  // The screen that locks the app while a newer version is out (AppUpdateLock)
+  'app.update.title': 'Update Calendar CE',
+  'app.update.text.web': 'A new version of Calendar CE is out. Load it to keep using the app. Your calendars, tasks and settings stay as they are.',
+  'app.update.text.direct': 'A new version of Calendar CE is out. Download and install it to keep using the app. Your calendars, tasks and settings stay as they are.',
+  'app.update.version': 'Version in use: {version}',
+  'app.update.reload': 'Load the new version',
+  'app.update.reloading': 'Loading the new version…',
+  'app.update.download': 'Download the update',
+  'app.update.waiting': 'A new version of Calendar CE is ready. The app updates once you save or close what is open.',
+
   // Header / navigation
   'nav.today': 'Today',
   'nav.previous': 'Previous',
@@ -594,7 +604,7 @@ export const en = {
   'reminders.scheduledCount': '{n} in the next 45 days',
   'reminders.next': 'Next: {title} · {time}',
   'reminders.background': 'Background refresh',
-  'reminders.backgroundHint': 'Checks your CalDAV calendars every hour, even when the app is closed, so events added elsewhere still remind you.',
+  'reminders.backgroundHint': 'Checks your CalDAV calendars every 15 minutes, even when the app is closed, so events added elsewhere still remind you.',
   'reminders.lastRun': 'Last successful run {time}',
   'reminders.neverRun': 'Not run yet',
   'reminders.runNow': 'Refresh now',

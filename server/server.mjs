@@ -5,13 +5,23 @@
 // import it: nothing listens until the file is the entry point.
 import { createHash } from 'node:crypto';
 import { realpathSync } from 'node:fs';
-import { open } from 'node:fs/promises';
+import { open, realpath } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { extname, join, normalize, resolve, sep } from 'node:path';
+import { extname, join, normalize, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleDavProxy, proxyNotices } from './davProxy.mjs';
 import { resolveLinks } from './publicConfig.mjs';
 import { securityHeaders } from './securityHeaders.mjs';
+
+/**
+ * The server's word on the newest version (scripts/version-file.mjs), which
+ * every running copy of the app asks for: never cached anywhere, and
+ * readable by an Android app built with VITE_UPDATE_URL, whose page lives at
+ * another origin (https://localhost). It is public and goes without
+ * credentials, so any origin may read it; nothing else of the site is shared
+ * that way.
+ */
+const VERSION_PATH = '/version.json';
 
 const DIST = resolve(fileURLToPath(new URL('..', import.meta.url)), 'dist');
 
@@ -35,12 +45,20 @@ const MIME = {
   '.xml': 'application/xml; charset=utf-8',
 };
 
-/** Opens `path` if it is a regular file; directories, devices and missing files give null. */
-async function openFile(path) {
+/**
+ * Opens `path` under `root` if it is a regular file there by exactly that
+ * name; directories, devices and missing files give null. A file system that
+ * ignores case (NTFS, APFS by default) would open /INDEX.HTML or a name in
+ * capitals as well: the name the file really has (its real path, as the
+ * system resolves it) must be the one asked for, so that the server answers
+ * the same on every file system. `realRoot` is `root` with its symbolic
+ * links resolved.
+ */
+async function openFile(path, root, realRoot) {
   let handle;
   try {
     handle = await open(path, 'r');
-    if ((await handle.stat()).isFile()) return handle;
+    if ((await handle.stat()).isFile() && (await realpath(path)) === join(realRoot, relative(root, path))) return handle;
   } catch {
     /* missing or unreadable */
   }
@@ -82,7 +100,7 @@ export function linksInjector(links) {
   };
 }
 
-async function serveStatic(req, res, root, headers, inject) {
+async function serveStatic(req, res, root, realRoot, headers, inject) {
   for (const [name, value] of Object.entries(headers)) res.setHeader(name, value);
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('allow', 'GET, HEAD');
@@ -104,10 +122,10 @@ async function serveStatic(req, res, root, headers, inject) {
   // Nothing the build emits starts with a dot, so such a path is a probe
   // (/.env, /.git/config) - except the directory reserved for site metadata.
   const hidden = segments.some((s) => s.startsWith('.') && s !== '.well-known');
-  let handle = hidden ? null : await openFile(file);
+  let handle = hidden ? null : await openFile(file, root, realRoot);
   if (!handle && !hidden) {
     file = join(file, 'index.html');
-    handle = await openFile(file);
+    handle = await openFile(file, root, realRoot);
   }
   if (!handle) {
     // The app shell answers every path the client-side app may own (/app/...).
@@ -116,7 +134,7 @@ async function serveStatic(req, res, root, headers, inject) {
     const appPath = !hidden && !/^\/assets(\/|$)/i.test(urlPath) && !segments.at(-1).includes('.');
     if (!appPath) return sendPlain(res, 404, 'Not found');
     file = join(root, 'index.html');
-    handle = await openFile(file);
+    handle = await openFile(file, root, realRoot);
     if (!handle) return sendPlain(res, 404, 'Not found - did you run "npm run build"?');
   }
 
@@ -127,12 +145,18 @@ async function serveStatic(req, res, root, headers, inject) {
     await handle.close();
   }
   if (inject && extname(file).toLowerCase() === '.html') data = inject(data);
+  const versionFile = urlPath === VERSION_PATH && file === join(root, VERSION_PATH.slice(1));
+  if (versionFile) {
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('cross-origin-resource-policy', 'cross-origin');
+  }
   // A digest rather than size and time: rebuilt files often keep both.
   const etag = `"${createHash('sha256').update(data).digest('base64url').slice(0, 22)}"`;
   res.setHeader('etag', etag);
   // Hashed assets never change; everything else (index.html, sw.js, the
-  // manifest) must be revalidated so updates and fixes reach users.
-  res.setHeader('cache-control', file.startsWith(join(root, 'assets') + sep) ? 'public, max-age=31536000, immutable' : 'no-cache');
+  // manifest) must be revalidated so updates and fixes reach users. The
+  // version file is not kept at all, by the browser or anything between.
+  res.setHeader('cache-control', versionFile ? 'no-store' : file.startsWith(join(root, 'assets') + sep) ? 'public, max-age=31536000, immutable' : 'no-cache');
   if (matchesEtag(req.headers['if-none-match'], etag)) {
     res.statusCode = 304;
     return res.end();
@@ -151,11 +175,17 @@ async function serveStatic(req, res, root, headers, inject) {
  */
 export function createRequestHandler({ root = DIST, headers = securityHeaders(), proxy = handleDavProxy, links = resolveLinks() } = {}) {
   const base = resolve(root);
+  // Symbolic links on the way resolved once; a root that is not there (yet) is asked again next time.
+  let realBase = null;
+  const realRoot = async () => {
+    if (realBase === null) realBase = await realpath(base).catch(() => null);
+    return realBase ?? base;
+  };
   const inject = linksInjector(links);
   return async function handleRequest(req, res) {
     try {
       if (await proxy(req, res)) return;
-      await serveStatic(req, res, base, headers, inject);
+      await serveStatic(req, res, base, await realRoot(), headers, inject);
     } catch (err) {
       console.error(err);
       if (res.headersSent) return res.destroy();

@@ -30,7 +30,7 @@ import okhttp3.Route;
  * The Network Security Config still allows plain http for every CalDAV
  * server, for those feeds and for servers on the LAN; the account form warns
  * about http. Both CalDAV clients (DavHttp and the background refresh, which
- * would otherwise send the password again every hour) are built through
+ * would otherwise send the password again every 15 minutes) are built through
  * {@link #guard}.
  */
 public final class CleartextPassword {

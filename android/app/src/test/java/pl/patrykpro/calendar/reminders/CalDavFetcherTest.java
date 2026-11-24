@@ -92,7 +92,7 @@ public class CalDavFetcherTest {
 
     @Test(timeout = 10000)
     public void thePasswordIsNotSentOverHttpToAPublicAddress() {
-        // The hourly refresh would otherwise send it across the internet in clear, again and again.
+        // The background refresh would otherwise send it across the internet in clear, again and again.
         try {
             new CalDavFetcher("anna", "secret").events("http://93.184.215.14:9/cal/", 0, 1000);
             fail("Sent the password");

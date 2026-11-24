@@ -19,7 +19,7 @@ import javax.crypto.SecretKey;
  * the device and never exportable.
  *
  * It is deliberately not bound to user authentication or to an unlocked
- * screen. A reminder has to be read when its alarm fires, and the hourly
+ * screen. A reminder has to be read when its alarm fires, and the background
  * refresh needs the CalDAV passwords, both with the screen locked; a key that asks
  * for the user first would be useless to them.
  *

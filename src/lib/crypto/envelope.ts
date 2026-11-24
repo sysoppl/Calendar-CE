@@ -2,7 +2,7 @@
 // fixed byte for byte: the hosted edition's Android app opens the same
 // envelopes in Java, and both sides are tested against vectors.json.
 //
-//   header   [version 1][suite 1][kind][padding scheme 1][key generation, u32 BE, 0]    8 bytes
+//   header   [version 1][suite 1][kind][padding scheme 1][key generation, u32 BE]       8 bytes
 //   rowSalt  random, fresh for every encryption                                         32 bytes
 //   commit                                                                              32 bytes
 //   body     AES-256-GCM over the padded plaintext, with the 16-byte tag appended
@@ -23,6 +23,10 @@
 //   ciphertext to another row, table or user and have it open there.
 // - Padding hides the exact size: steps of 512 bytes up to 8 KiB, then Padmé,
 //   which never adds more than about 12%.
+// - The key generation names which key of a shared calendar sealed the value
+//   (share.ts): an account's own values are always generation 0, and a reader
+//   says which generation it expects, so a value cannot pass for another one.
+//   It is part of the header and so of the AAD.
 import { concat, fromBase64, fromUtf8, toBase64, utf8, wipe, type Bytes } from './encoding';
 import { CryptoError } from './errors';
 import { equalBytes, hkdf, hkdfKey, randomBytes, sha256 } from './primitives';
@@ -30,20 +34,20 @@ import { equalBytes, hkdf, hkdfKey, randomBytes, sha256 } from './primitives';
 export { CryptoError } from './errors';
 export type { CryptoErrorCode } from './errors';
 
-export type Kind = 1 | 2 | 3 | 4 | 5;
+export type Kind = 1 | 2 | 3 | 4 | 5 | 6;
 
 /** Names for the kinds, so call sites do not carry bare numbers. */
-export const KIND = { object: 1, calendar: 2, settings: 3, keyWrap: 4, reminderDigest: 5 } as const satisfies Record<string, Kind>;
+export const KIND = { object: 1, calendar: 2, settings: 3, keyWrap: 4, reminderDigest: 5, shareGrant: 6 } as const satisfies Record<string, Kind>;
 
 /** Where a value lives. Every field is bound into the ciphertext. */
 export interface Context {
   /** The name of the service's project, a fixed string (`calendar` in the vectors). */
   projectId: string;
-  /** The collection the value is stored in. */
+  /** The collection the value is stored in; `"share"` for a share grant. */
   scope: string;
-  /** The value's id in that collection; for a key wrap, its slot (password or Recovery Key). */
+  /** The value's id in that collection; for a key wrap, its slot (password or Recovery Key); for a share grant, the calendar's id. */
   id: string;
-  /** The id of the account that owns the value. */
+  /** The id of the account that owns the value: a shared calendar's owner for its values, the member for a share grant. */
   ownerId: string;
 }
 
@@ -95,7 +99,42 @@ export function sealedLength(plaintextBytes: number): number {
 }
 
 function checkKind(kind: Kind): void {
-  if (!Number.isInteger(kind) || kind < 1 || kind > 5) throw new CryptoError('format', 'Unknown kind of value');
+  if (!Number.isInteger(kind) || kind < 1 || kind > 6) throw new CryptoError('format', 'Unknown kind of value');
+}
+
+/** The largest key generation: it is stored as an unsigned 32-bit number. */
+export const MAX_KEY_GENERATION = 0xffffffff;
+
+function checkKeyGen(keyGen: number): void {
+  if (!Number.isInteger(keyGen) || keyGen < 0 || keyGen > MAX_KEY_GENERATION) throw new CryptoError('format', 'Unknown key generation');
+}
+
+function headerOf(kind: Kind, keyGen: number): Bytes {
+  const header = Uint8Array.of(VERSION, SUITE, kind, PADDING, 0, 0, 0, 0);
+  new DataView(header.buffer).setUint32(4, keyGen);
+  return header;
+}
+
+/** The key generation in the header of an envelope, read without opening it. */
+function readKeyGen(envelope: Uint8Array): number {
+  return new DataView(envelope.buffer, envelope.byteOffset, envelope.byteLength).getUint32(4);
+}
+
+/**
+ * The key generation an envelope names, read from its header without opening
+ * it, so that a reader can pick the key. It says nothing about whether the
+ * envelope is genuine: `open` still has to be told the generation it expects.
+ * Throws `CryptoError` for text that is not an envelope of this protocol.
+ */
+export function keyGenOf(text: string): number {
+  // The header is the first 8 bytes, which the first 12 characters hold;
+  // decoding only them keeps this cheap for a value of megabytes.
+  if (typeof text !== 'string' || text.length < 16) throw new CryptoError('format', 'The envelope is truncated');
+  const head = fromBase64(text.slice(0, 12));
+  if (head[0] !== VERSION) throw new CryptoError('version', 'Unknown envelope version');
+  if (head[1] !== SUITE) throw new CryptoError('version', 'Unknown cipher suite');
+  if (head[3] !== PADDING) throw new CryptoError('version', 'Unknown padding scheme');
+  return readKeyGen(head);
 }
 
 function field(bytes: Uint8Array): Bytes {
@@ -152,14 +191,15 @@ async function rowKeys(key: CryptoKey | Uint8Array, rowSalt: Uint8Array, aad: Ui
  * `seal` with the salt given instead of drawn. For test vectors only: a salt
  * used twice under one key and context repeats the key and the nonce.
  */
-export async function sealWithSalt(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, plaintext: Uint8Array, rowSalt: Uint8Array): Promise<string> {
+export async function sealWithSalt(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, plaintext: Uint8Array, rowSalt: Uint8Array, keyGen = 0): Promise<string> {
   checkKind(kind);
+  checkKeyGen(keyGen);
   if (!ArrayBuffer.isView(plaintext)) throw new CryptoError('format', 'The plaintext must be bytes');
   if (plaintext.byteLength > MAX_PLAINTEXT_BYTES) throw new CryptoError('format', 'The plaintext is too large');
   if (rowSalt.length !== SALT_LENGTH) throw new CryptoError('format', 'The row salt must be 32 bytes');
   // Whatever kind of view was passed, what gets sealed is its bytes.
   const bytes = new Uint8Array(plaintext.buffer, plaintext.byteOffset, plaintext.byteLength);
-  const header = Uint8Array.of(VERSION, SUITE, kind, PADDING, 0, 0, 0, 0);
+  const header = headerOf(kind, keyGen);
   const aad = associatedData(header, ctx);
   const row = await rowKeys(key, rowSalt, aad);
   const padded = new Uint8Array(paddedLength(bytes.length));
@@ -175,19 +215,23 @@ export async function sealWithSalt(key: CryptoKey | Uint8Array, kind: Kind, ctx:
 
 /**
  * Encrypts `plaintext` for one place. `key` is one of the account's working
- * keys, or 32 raw bytes (a KEK or RKEK wrapping the account key). Returns
- * standard base64.
+ * keys, or 32 raw bytes (a KEK or RKEK wrapping the account key, a calendar's
+ * working key, a grant's shared secret). `keyGen` is the generation of a
+ * shared calendar's key, 0 for everything else. Returns standard base64.
  */
-export function seal(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, plaintext: Uint8Array): Promise<string> {
-  return sealWithSalt(key, kind, ctx, plaintext, randomBytes(SALT_LENGTH));
+export function seal(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, plaintext: Uint8Array, keyGen = 0): Promise<string> {
+  return sealWithSalt(key, kind, ctx, plaintext, randomBytes(SALT_LENGTH), keyGen);
 }
 
 /**
- * Opens an envelope, which must be of this `kind` and sealed for this exact
- * context. Throws `CryptoError`; the result is a fresh buffer the caller owns.
+ * Opens an envelope, which must be of this `kind`, sealed for this exact
+ * context and with the key generation `keyGen` (0 unless a shared calendar's
+ * generation is meant). Throws `CryptoError`; the result is a fresh buffer the
+ * caller owns.
  */
-export async function open(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, text: string): Promise<Bytes> {
+export async function open(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, text: string, keyGen = 0): Promise<Bytes> {
   checkKind(kind);
+  checkKeyGen(keyGen);
   const envelope = fromBase64(text);
   if (envelope.length < HEADER_LENGTH) throw new CryptoError('format', 'The envelope is truncated');
   // The scheme is checked before anything else, so that a value written by a
@@ -195,7 +239,7 @@ export async function open(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context
   if (envelope[0] !== VERSION) throw new CryptoError('version', 'Unknown envelope version');
   if (envelope[1] !== SUITE) throw new CryptoError('version', 'Unknown cipher suite');
   if (envelope[3] !== PADDING) throw new CryptoError('version', 'Unknown padding scheme');
-  if ((envelope[4] | envelope[5] | envelope[6] | envelope[7]) !== 0) throw new CryptoError('version', 'Unknown key generation');
+  if (readKeyGen(envelope) !== keyGen) throw new CryptoError('version', 'Unknown key generation');
   const paddedSize = envelope.length - BODY_OFFSET - TAG_LENGTH;
   if (paddedSize < BLOCK || padTo(paddedSize) !== paddedSize) throw new CryptoError('format', 'The envelope is truncated or has an impossible length');
   if (envelope[2] !== kind) throw new CryptoError('auth', 'The envelope holds another kind of value');
@@ -229,7 +273,7 @@ export async function open(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context
 }
 
 /** `seal` for a value stored as JSON. */
-export async function sealJson(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, value: unknown): Promise<string> {
+export async function sealJson(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, value: unknown, keyGen = 0): Promise<string> {
   let json: string | undefined;
   try {
     json = JSON.stringify(value);
@@ -239,15 +283,15 @@ export async function sealJson(key: CryptoKey | Uint8Array, kind: Kind, ctx: Con
   if (json === undefined) throw new CryptoError('format', 'The value has no JSON form');
   const bytes = utf8(json);
   try {
-    return await seal(key, kind, ctx, bytes);
+    return await seal(key, kind, ctx, bytes, keyGen);
   } finally {
     wipe(bytes);
   }
 }
 
 /** `open` for a value stored as JSON. The shape of the result is the caller's to check. */
-export async function openJson<T = unknown>(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, text: string): Promise<T> {
-  const bytes = await open(key, kind, ctx, text);
+export async function openJson<T = unknown>(key: CryptoKey | Uint8Array, kind: Kind, ctx: Context, text: string, keyGen = 0): Promise<T> {
+  const bytes = await open(key, kind, ctx, text, keyGen);
   try {
     return JSON.parse(fromUtf8(bytes)) as T;
   } catch {
