@@ -12,6 +12,9 @@ const SHELL = '/';
 const STATIC = /^\/(icons\/.+|favicon\.svg|manifest(\.[a-z-]+)?\.webmanifest|THIRD-PARTY-NOTICES\.txt)$/;
 // The app asks for the licence notices with its version in the query.
 const NOTICES = '/THIRD-PARTY-NOTICES.txt';
+// The server's word on the newest version (src/lib/appUpdate): always from the
+// network, never from a cache, or a copy would hold the app on an old release.
+const VERSION_FILE = '/version.json';
 
 const isHtml = (res) => (res.headers.get('content-type') ?? '').includes('text/html');
 // Error pages, redirects (a login portal on public Wi-Fi) and partial answers
@@ -148,7 +151,7 @@ async function versionedNotices(event) {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
-  if (req.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/dav-proxy')) return;
+  if (req.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/dav-proxy') || url.pathname === VERSION_FILE) return;
 
   const isFile = url.pathname.startsWith('/assets/') || /\.[^/]*$/.test(url.pathname);
   if (req.mode === 'navigate') {

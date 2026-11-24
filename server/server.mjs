@@ -13,6 +13,16 @@ import { handleDavProxy, proxyNotices } from './davProxy.mjs';
 import { resolveLinks } from './publicConfig.mjs';
 import { securityHeaders } from './securityHeaders.mjs';
 
+/**
+ * The server's word on the newest version (scripts/version-file.mjs), which
+ * every running copy of the app asks for: never cached anywhere, and
+ * readable by an Android app built with VITE_UPDATE_URL, whose page lives at
+ * another origin (https://localhost). It is public and goes without
+ * credentials, so any origin may read it; nothing else of the site is shared
+ * that way.
+ */
+const VERSION_PATH = '/version.json';
+
 const DIST = resolve(fileURLToPath(new URL('..', import.meta.url)), 'dist');
 
 const MIME = {
@@ -127,12 +137,18 @@ async function serveStatic(req, res, root, headers, inject) {
     await handle.close();
   }
   if (inject && extname(file).toLowerCase() === '.html') data = inject(data);
+  const versionFile = urlPath === VERSION_PATH && file === join(root, VERSION_PATH.slice(1));
+  if (versionFile) {
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('cross-origin-resource-policy', 'cross-origin');
+  }
   // A digest rather than size and time: rebuilt files often keep both.
   const etag = `"${createHash('sha256').update(data).digest('base64url').slice(0, 22)}"`;
   res.setHeader('etag', etag);
   // Hashed assets never change; everything else (index.html, sw.js, the
-  // manifest) must be revalidated so updates and fixes reach users.
-  res.setHeader('cache-control', file.startsWith(join(root, 'assets') + sep) ? 'public, max-age=31536000, immutable' : 'no-cache');
+  // manifest) must be revalidated so updates and fixes reach users. The
+  // version file is not kept at all, by the browser or anything between.
+  res.setHeader('cache-control', versionFile ? 'no-store' : file.startsWith(join(root, 'assets') + sep) ? 'public, max-age=31536000, immutable' : 'no-cache');
   if (matchesEtag(req.headers['if-none-match'], etag)) {
     res.statusCode = 304;
     return res.end();

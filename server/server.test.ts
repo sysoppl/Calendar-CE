@@ -145,6 +145,7 @@ describe('server', () => {
     await writeFile(join(root, 'index.html'), SHELL);
     await writeFile(join(root, 'sw.js'), 'self.skipWaiting();');
     await writeFile(join(root, 'manifest.webmanifest'), '{}');
+    await writeFile(join(root, 'version.json'), '{"version":"1.16.1"}\n');
     await writeFile(join(root, 'THIRD-PARTY-NOTICES.txt'), 'notices');
     await writeFile(join(root, '.env'), 'SECRET=1');
     await writeFile(join(root, '.well-known', 'security.txt'), 'Contact: mailto:security@example.com');
@@ -201,10 +202,37 @@ describe('server', () => {
 
     it('caches hashed assets for good and revalidates the rest', async () => {
       expect((await get('/assets/index-abc123.js')).headers['cache-control']).toBe('public, max-age=31536000, immutable');
-      for (const path of ['/', '/sw.js', '/manifest.webmanifest', '/app/settings']) {
+      for (const path of ['/', '/sw.js', '/manifest.webmanifest', '/app/settings', '/THIRD-PARTY-NOTICES.txt']) {
         expect((await get(path)).headers['cache-control'], path).toBe('no-cache');
       }
       expect((await get('/assets/gone-000000.js')).headers['cache-control']).toBe('no-store');
+    });
+
+    it('sends the newest version uncached, to the Android app as well, and nothing else to other sites', async () => {
+      const reply = await get('/version.json', { headers: { origin: 'https://localhost' } });
+      expect(reply.status).toBe(200);
+      expect(JSON.parse(reply.body)).toEqual({ version: '1.16.1' });
+      expect(reply.headers['content-type']).toBe('application/json');
+      expect(reply.headers['cache-control']).toBe('no-store');
+      // Public facts, read without credentials from the Android app's page at https://localhost.
+      expect(reply.headers['access-control-allow-origin']).toBe('*');
+      expect(reply.headers['access-control-allow-credentials']).toBeUndefined();
+      expect(reply.headers['cross-origin-resource-policy']).toBe('cross-origin');
+      // Locked down like every other answer.
+      expect(reply.headers['content-security-policy']).toBe(contentSecurityPolicy());
+      expect(reply.headers['x-content-type-options']).toBe('nosniff');
+      // A revalidation and HEAD carry the same headers.
+      const again = await get('/version.json', { headers: { 'if-none-match': reply.headers.etag as string } });
+      expect(again.status).toBe(304);
+      expect(again.headers['access-control-allow-origin']).toBe('*');
+      expect(again.headers['cache-control']).toBe('no-store');
+      expect((await get('/version.json', { method: 'HEAD' })).headers['access-control-allow-origin']).toBe('*');
+      // No other file is shared with other sites.
+      for (const path of ['/', '/manifest.webmanifest', '/assets/index-abc123.js', '/version.json/x', '/version.json.bak', '/app/version.json']) {
+        const other = await get(path, { headers: { origin: 'https://localhost' } });
+        expect(other.headers['access-control-allow-origin'], path).toBeUndefined();
+        expect(other.headers['cross-origin-resource-policy'], path).toBe('same-origin');
+      }
     });
 
     it('answers 304 to a matching validator', async () => {

@@ -13,6 +13,8 @@ import { contentSecurityPolicy, securityHeaders } from './server/securityHeaders
 import { serviceWorkerVersion } from './scripts/sw-version.mjs';
 // Stops a build that is not a production one or still carries the seeder.
 import { developmentGuard } from './scripts/development-guard.mjs';
+// version.json, which every running copy asks for the newest version (src/lib/appUpdate).
+import { versionFile } from './scripts/version-file.mjs';
 
 /**
  * The licence text next to the app (LICENSE.txt): every copy of the bundle
@@ -120,6 +122,7 @@ export default defineConfig(({ mode }) => {
       cspMeta(contentSecurityPolicy({ meta: true })),
       preloadApp(),
       serviceWorkerVersion(pkg.version),
+      versionFile(pkg.version),
       licenseFile(),
       developmentGuard(),
     ],
