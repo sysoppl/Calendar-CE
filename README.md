@@ -66,6 +66,7 @@
 - [Connecting to CalDAV servers](#connecting-to-caldav-servers)
 - [Android app](#android-app)
 - [Development](#development)
+- [Release notes](#release-notes)
 - [Sponsor](#sponsor)
 - [Contributing](#contributing)
 - [Security](#security)
@@ -142,6 +143,9 @@
   the two
 - **Home screen widgets**: Agenda, Today, Month and Tasks, each with its own calendars, look (the system's, light or
   dark) and background. A tap opens the day, the event or the task, adds a new one, or marks a task done
+- Optionally kept on the version of **your own server**: built with its address, the app locks itself until the new
+  APK you put up is installed ([Android app](#android-app)). Built without it (the default), it never contacts anyone
+  about updates
 - No ads, no trackers, no analytics and no consent pop-ups
 
 <details>
@@ -378,6 +382,20 @@ since the one before and the image to pull. A version is released only after the
 tag. Every image carries its version and the commit it was built from (`org.opencontainers.image.version` and
 `.revision` labels), plus an SBOM and build provenance.
 
+**Newest version only** (since 1.16). Every copy of the web app that is open moves to the version your server runs.
+The build writes `version.json` (`{"version":"1.16.0"}`) into the bundle; the server sends it with
+`Cache-Control: no-store`, and the service worker never answers it from a cache. The app asks its own server for it
+when it starts, when its window gets the focus or the connection comes back (at most once a minute) and every 15
+minutes, without cookies, referrer or redirects, and reads nothing from the answer but a plain `x.y.z` version.
+Once that version is newer than its own, a full page covers the whole app until it is updated: it cannot be put away,
+and the dialogs under it stay as they were. When nothing is open that could hold unsaved input (no dialog, editor,
+Settings or search, nothing typed into a field), the page loads the new version by itself, once per version and tab;
+otherwise, or when that load still brought the old version, **Load the new version** clears the app's cached shell and
+loads it from the server. Calendars, tasks and settings stay as they are. An answer that is missing or not a version
+changes nothing, so a device that is offline keeps working, and a well-formed answer that is not newer (a rolled-back
+release) lifts the lock again. The Android app follows your server only when it is built for it
+([Android app](#android-app)).
+
 ### Without Compose
 
 The same container with `docker run`, locked down like the compose file:
@@ -424,6 +442,17 @@ Every setting is an environment variable: `environment:` in `docker-compose.yml`
 
 `npm run build` reads the same variables, so a build of your own (and the Android app, which has no server) can carry
 them too; the server's values take precedence.
+
+**The Android app** (read only when it is built, `npm run android:sync`; the server and the browser's app never use
+them, see [Android app](#android-app)):
+
+| Variable           | Default   | What it does                                                                                              |
+| ------------------ | --------- | --------------------------------------------------------------------------------------------------------- |
+| `VITE_UPDATE_URL`  | *(empty)* | The `https://` address of your Calendar CE server. The app asks its `/version.json` for the newest version |
+| `VITE_ANDROID_URL` | *(empty)* | The `https://` address of the APK you built, for **Download the update**                                 |
+
+Both or neither: with only one of them the app looks for no update at all (the build says so). Without them, the
+default, the Android app never asks anyone about updates.
 
 **The server and its DAV proxy:**
 
@@ -506,6 +535,31 @@ A signed release build (`./gradlew assembleRelease`) reads its keystore from the
 `android/keystore.properties` (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`). Without one, the release APK
 is left unsigned.
 
+### Keeping your Android build up to date
+
+By default the Android app never asks anyone whether a newer version is out: not GitHub, not the hosted edition,
+not your server. To keep the people who use your build on the version your server runs, build it with both addresses
+of the [configuration table](#configuration):
+
+```sh
+VITE_UPDATE_URL=https://calendar.example.com \
+VITE_ANDROID_URL=https://calendar.example.com/calendar.apk \
+npm run android:sync
+```
+
+The app then asks `https://calendar.example.com/version.json` when it starts, when it comes back to the front (at
+most once a minute) and every 15 minutes while it is open. The request carries no cookie, credential or referrer, but
+your server sees the device's address and the WebView's user agent. The server answers it with
+`Access-Control-Allow-Origin: *` (that one file only; the app's page is `https://localhost`), so the ready-made image
+needs nothing more. When the server's version is newer than the app's, a full page locks the app with
+**Download the update**, which opens `VITE_ANDROID_URL` in the browser; reminders it has scheduled keep firing. Without
+a download address the app does not lock, as it would have nothing to offer.
+
+Put the new APK at `VITE_ANDROID_URL` **before** you update the server: from that moment every copy that asks is
+locked until it installs what is at that address. If your server pulls `ghcr.io/sysoppl/calendar-ce:latest`, pin
+the image to the version of your APK instead (see [Updating](#updating)). Both addresses must be `https://`: the
+WebView reads no plain-HTTP answer from the app's page, and an APK should not travel unencrypted.
+
 Prefer a ready-made app? **[Calendar CE on Google Play](https://play.google.com/store/apps/details?id=pro.patryk.calendar)**.
 
 ## Development
@@ -532,6 +586,18 @@ In development the proxy may reach a CalDAV server on your own machine (e.g. Rad
 | `android/`         | The Android shell, native CalDAV client and reminders                |
 | `deploy/`          | Reverse proxy and systemd examples                                   |
 | `scripts/`         | Build helpers, screenshots, end-to-end checks                        |
+
+## Release notes
+
+### 1.16.0
+
+- **Newest version only** ([Updating](#updating), [Android app](#android-app)): once your server runs a newer
+  version, a full page that cannot be put away covers the whole app until it is updated. The web app loads the new
+  version by itself when nothing is open that could hold unsaved input, and otherwise offers **Load the new
+  version**; calendars, tasks and settings stay as they are, and a device that is offline keeps working. The server
+  sends the new `/version.json` uncached. The Android app asks only the server it was built for
+  (`VITE_UPDATE_URL`, with `VITE_ANDROID_URL` for **Download the update**); built without them, the default, it
+  never asks anyone.
 
 ## Sponsor
 
