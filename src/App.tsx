@@ -48,6 +48,9 @@ import { closeTopModal, isModalOpen } from '@/components/ui/Modal';
 import { closeTopFloating } from '@/components/ui/Menu';
 import { BACK_DEPTH, handleBackButton, useBackButtonLayer } from '@/components/onboarding/back';
 import { Onboarding } from '@/components/onboarding/Onboarding';
+import { safeToReload, startAppUpdate } from '@/lib/appUpdate';
+import { AppUpdateLock } from '@/components/update/AppUpdateLock';
+import { readReloadProbe } from '@/components/update/reloadProbe';
 
 /** Tab title: the month being shown, then the app's name ("October 2026 | Calendar"). */
 function useTabTitle() {
@@ -143,6 +146,9 @@ function Root() {
     useData.getState().init().catch(fail);
   }, []);
 
+  // Every copy runs the newest version: a newer one locks the whole app until it is updated (AppUpdateLock).
+  useEffect(() => startAppUpdate({ safeToReload: () => safeToReload(readReloadProbe()) }), []);
+
   let screen: Screen;
   if (failed) screen = 'failed';
   else if (!hydrated) screen = 'loading';
@@ -172,6 +178,7 @@ function Root() {
       <ScopeDialog />
       <ConfirmDialog />
       <Toasts />
+      <AppUpdateLock />
     </>
   );
 }

@@ -26,6 +26,14 @@ export const pl: Record<MessageKey, string> = {
   'app.otherTab.useHere': 'Użyj tutaj',
   'app.otherTab.switching': 'Przełączanie na tę kartę…',
 
+  'app.update.title': 'Kalendarz CE wymaga aktualizacji',
+  'app.update.text.web': 'Dostępna jest nowa wersja Kalendarza CE. Aby dalej korzystać z aplikacji, należy ją wczytać. Kalendarze, zadania i ustawienia pozostają bez zmian.',
+  'app.update.text.direct': 'Dostępna jest nowa wersja Kalendarza CE. Aby dalej korzystać z aplikacji, należy ją pobrać i zainstalować. Kalendarze, zadania i ustawienia pozostają bez zmian.',
+  'app.update.version': 'Używana wersja: {version}',
+  'app.update.reload': 'Wczytaj nową wersję',
+  'app.update.reloading': 'Wczytywanie nowej wersji…',
+  'app.update.download': 'Pobierz aktualizację',
+
   'nav.today': 'Dziś',
   'nav.previous': 'Poprzedni',
   'nav.next': 'Następny',

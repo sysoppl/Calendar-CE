@@ -15,6 +15,8 @@ import { serviceWorkerVersion } from './scripts/sw-version.mjs';
 import { developmentGuard } from './scripts/development-guard.mjs';
 // version.json, which every running copy asks for the newest version (src/lib/appUpdate).
 import { versionFile } from './scripts/version-file.mjs';
+// Where the Android app looks for a newer version: nowhere unless it is built with VITE_UPDATE_URL and VITE_ANDROID_URL.
+import { androidUpdateNotice, resolveAndroidUpdate } from './scripts/android-update.mjs';
 
 /**
  * The licence text next to the app (LICENSE.txt): every copy of the bundle
@@ -108,11 +110,14 @@ function preloadApp(): Plugin {
   };
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const root = fileURLToPath(new URL('.', import.meta.url));
   // .env files count as well as the environment, like for `import.meta.env`.
   const env = loadEnv(mode, root, 'VITE_');
   const config = resolvePublicConfig(env);
+  const androidUpdate = resolveAndroidUpdate(env);
+  const notice = command === 'build' ? androidUpdateNotice(env) : null;
+  if (notice) console.warn(notice);
 
   return {
     plugins: [
@@ -131,6 +136,7 @@ export default defineConfig(({ mode }) => {
       __APP_VERSION__: JSON.stringify(pkg.version),
       __APP_URL__: JSON.stringify(config.appUrl),
       __APP_LINKS__: JSON.stringify(resolveLinks(env)),
+      __ANDROID_UPDATE__: JSON.stringify(androidUpdate),
     },
     resolve: {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

@@ -31,6 +31,15 @@ export const en = {
   'app.otherTab.useHere': 'Use here',
   'app.otherTab.switching': 'Switching to this tab…',
 
+  // The screen that locks the app while a newer version is out (AppUpdateLock)
+  'app.update.title': 'Update Calendar CE',
+  'app.update.text.web': 'A new version of Calendar CE is out. Load it to keep using the app. Your calendars, tasks and settings stay as they are.',
+  'app.update.text.direct': 'A new version of Calendar CE is out. Download and install it to keep using the app. Your calendars, tasks and settings stay as they are.',
+  'app.update.version': 'Version in use: {version}',
+  'app.update.reload': 'Load the new version',
+  'app.update.reloading': 'Loading the new version…',
+  'app.update.download': 'Download the update',
+
   // Header / navigation
   'nav.today': 'Today',
   'nav.previous': 'Previous',

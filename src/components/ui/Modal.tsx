@@ -42,15 +42,43 @@ let handover: HTMLElement | null = null;
  * `isModalOpen()` tells the two apart.
  */
 export function closeTopModal(): boolean {
+  if (lockRoot) return false;
   const top = openModals[openModals.length - 1];
   if (!top?.dismissible()) return false;
   top.close();
   return true;
 }
 
-/** Whether a dialog is open, dismissible or not. */
+/** Whether a dialog is open, dismissible or not, or the whole app is locked (`setAppLock`). */
 export function isModalOpen(): boolean {
+  return openModals.length > 0 || lockRoot !== null;
+}
+
+/** Whether a dialog of this module is open: the app lock does not count. */
+export function isDialogOpen(): boolean {
   return openModals.length > 0;
+}
+
+/**
+ * The screen that locks the whole app (`AppUpdateLock`), above every dialog.
+ * While it is set, everything else on the page is inert (dialogs opened
+ * before or after it as well), no dialog reacts to a key, the back button
+ * and Escape close nothing, and `isModalOpen()` is true, which keeps the
+ * keyboard shortcuts off. What the dialogs under it hold stays as it was.
+ */
+let lockRoot: HTMLElement | null = null;
+/** Whatever the page adds to <body> while the lock is up becomes inert too. */
+let lockWatch: MutationObserver | null = null;
+
+export function setAppLock(root: HTMLElement | null): void {
+  lockRoot = root;
+  lockWatch?.disconnect();
+  lockWatch = null;
+  if (root && typeof MutationObserver === 'function') {
+    lockWatch = new MutationObserver(() => syncInert());
+    lockWatch.observe(document.body, { childList: true });
+  }
+  syncInert();
 }
 
 /** z-index of the dialog layer (`z-50` below). */
@@ -67,10 +95,11 @@ let inerted = new Set<HTMLElement>();
  * through to the backdrop and close the dialog.
  */
 function syncInert() {
-  const top = openModals[openModals.length - 1];
+  const top = lockRoot ? { root: lockRoot } : openModals[openModals.length - 1];
   const next = new Set<HTMLElement>();
   if (top) {
-    const above = [...document.querySelectorAll<HTMLElement>('.fixed, [data-floating-ui-portal] > *')];
+    // Under the app lock nothing else stays usable, not even what is painted above the dialogs.
+    const above = lockRoot ? [] : [...document.querySelectorAll<HTMLElement>('.fixed, [data-floating-ui-portal] > *')];
     const keep = [top.root, ...above.filter((el) => Number(getComputedStyle(el).zIndex) > LAYER)];
     const visit = (parent: Element) => {
       for (const child of parent.children) {
@@ -102,8 +131,8 @@ function tabStops(root: HTMLElement): HTMLElement[] {
   });
 }
 
-/** Keeps Tab and Shift+Tab inside the dialog. */
-function trapTab(e: KeyboardEvent, panel: HTMLElement) {
+/** Keeps Tab and Shift+Tab inside the dialog (also the app lock's). */
+export function trapTab(e: KeyboardEvent, panel: HTMLElement) {
   const active = document.activeElement as HTMLElement | null;
   const stops = tabStops(panel);
   const moveTo = (el: HTMLElement | undefined) => {
@@ -163,8 +192,8 @@ export function Modal({ open, onClose, dismissible = true, title, children, foot
       else if (!panel.current?.contains(document.activeElement)) panel.current?.focus();
     });
     const onKey = (e: KeyboardEvent) => {
-      // Only the topmost dialog reacts, so Escape closes one layer at a time.
-      if (openModals[openModals.length - 1] !== entry || !panel.current) return;
+      // Only the topmost dialog reacts, so Escape closes one layer at a time; none under the app lock.
+      if (lockRoot || openModals[openModals.length - 1] !== entry || !panel.current) return;
       if (e.key === 'Tab') trapTab(e, panel.current);
       else if (e.key === 'Escape' && dismissibleRef.current) {
         // A dropdown or picker opened from the dialog closes first.
