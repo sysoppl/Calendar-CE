@@ -25,6 +25,7 @@ const messages: Record<MessageKey, string> = {
   'app.update.reload': 'Завантажити нову версію',
   'app.update.reloading': 'Завантаження нової версії…',
   'app.update.download': 'Завантажити оновлення',
+  'app.update.waiting': 'Вийшла нова версія Календаря CE. Застосунок оновиться, щойно ви збережете або закриєте те, що зараз відкрито.',
   'nav.today': 'Сьогодні',
   'nav.previous': 'Попередній',
   'nav.next': 'Наступний',

@@ -25,6 +25,7 @@ const messages: Record<MessageKey, string> = {
   'app.update.reload': 'Neue Version laden',
   'app.update.reloading': 'Neue Version wird geladen…',
   'app.update.download': 'Update herunterladen',
+  'app.update.waiting': 'Eine neue Version von Kalender CE ist da. Die App aktualisiert sich, sobald Sie gespeichert oder geschlossen haben, was gerade geöffnet ist.',
   'nav.today': 'Heute',
   'nav.previous': 'Zurück',
   'nav.next': 'Weiter',

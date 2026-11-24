@@ -25,6 +25,7 @@ const messages: Record<MessageKey, string> = {
   'app.update.reload': 'Nieuwe versie laden',
   'app.update.reloading': 'Nieuwe versie wordt geladen…',
   'app.update.download': 'Update downloaden',
+  'app.update.waiting': 'Er is een nieuwe versie van Kalender CE. De app werkt zichzelf bij zodra je hebt opgeslagen of gesloten wat nu open is.',
   'nav.today': 'Vandaag',
   'nav.previous': 'Vorige',
   'nav.next': 'Volgende',

@@ -33,6 +33,7 @@ export const pl: Record<MessageKey, string> = {
   'app.update.reload': 'Wczytaj nową wersję',
   'app.update.reloading': 'Wczytywanie nowej wersji…',
   'app.update.download': 'Pobierz aktualizację',
+  'app.update.waiting': 'Dostępna jest nowa wersja Kalendarza CE. Aplikacja zaktualizuje się po zapisaniu lub zamknięciu tego, co jest teraz otwarte.',
 
   'nav.today': 'Dziś',
   'nav.previous': 'Poprzedni',

@@ -21,11 +21,13 @@ export interface ReloadProbe {
   typing: boolean;
   /** A text field on the page holds something typed. */
   filled: boolean;
+  /** Work runs that a reload would cut off without a word (a sync writing to a CalDAV server). */
+  working: boolean;
 }
 
-/** Whether nothing the user may be in the middle of would be lost by loading the page again. */
+/** Whether nothing the user may be in the middle of, nor any work under way, would be lost by locking and loading the page again. */
 export function safeToReload(probe: ReloadProbe): boolean {
-  return !probe.modalOpen && !probe.overlayOpen &&!probe.typing && !probe.filled;
+  return !probe.modalOpen && !probe.overlayOpen && !probe.typing && !probe.filled && !probe.working;
 }
 
 /** Where this tab notes the version it loaded the page again for. */

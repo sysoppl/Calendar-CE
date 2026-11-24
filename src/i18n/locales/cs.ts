@@ -25,6 +25,7 @@ const messages: Record<MessageKey, string> = {
   'app.update.reload': 'Načíst novou verzi',
   'app.update.reloading': 'Načítání nové verze…',
   'app.update.download': 'Stáhnout aktualizaci',
+  'app.update.waiting': 'Vyšla nová verze Kalendáře CE. Aplikace se aktualizuje, jakmile uložíte nebo zavřete to, co máte otevřené.',
   'nav.today': 'Dnes',
   'nav.previous': 'Předchozí',
   'nav.next': 'Další',

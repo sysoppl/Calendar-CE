@@ -11,6 +11,16 @@
 // Without an answer nothing changes: a device that is offline, or a server
 // that answers with something else than a version, never locks, and a lock
 // stays until a well-formed answer says that this is the newest version.
+//
+// The lock never costs what the person is in the middle of. While something
+// is open that can hold input, or work runs that must not be cut off
+// (`safeToReload`), the app is not locked: a small notice says that the new
+// version follows once that is saved or closed (`waiting`), and the moment
+// it is (`watchSafety`, no polling) the app locks and, in the browser, loads
+// the new version. So that the lock cannot be put off for good, it comes
+// anyway after `graceMs` (10 minutes) of waiting: covered by the lock, what
+// is open stays as it was and work under way goes on; only the lock's
+// button loads the page again, and it does so by itself once that is safe.
 // Reminders the Android app has scheduled keep firing; only the screen is locked.
 
 import { create } from 'zustand';
@@ -23,6 +33,8 @@ export interface AppUpdateState {
   channel: UpdateChannel;
   /** A newer version is known: the whole app is locked until it is updated. */
   locked: boolean;
+  /** A newer version is known and waits until nothing open would be lost: a notice says so, the app is not locked yet. */
+  waiting: boolean;
   /** The newer version's number. */
   latest: string | null;
   /** The page is being loaded again. */
@@ -32,6 +44,7 @@ export interface AppUpdateState {
 export const INITIAL_APP_UPDATE: Readonly<AppUpdateState> = Object.freeze({
   channel: 'none',
   locked: false,
+  waiting: false,
   latest: null,
   busy: false,
 });
@@ -47,8 +60,17 @@ export interface AppUpdateEnvironment {
   /** Where the server's answer is (the browser: its own `/version.json`; the Android app: `<VITE_UPDATE_URL>/version.json`). */
   versionUrl: string;
   fetchAnswer: (url: string) => Promise<VersionAnswer | null>;
-  /** Whether the page may be loaded again without a word (./reload.ts `safeToReload`). */
+  /**
+   * Whether nothing would be lost by locking and loading the page again: no
+   * input open, no work under way that must not be cut off (./reload.ts `safeToReload`).
+   */
   safeToReload: () => boolean;
+  /**
+   * Calls `changed` whenever what `safeToReload` reads may have changed
+   * (src/components/update/reloadProbe.ts); returns what stops that. Without
+   * it the app only looks again at the next ask and when the grace time ends.
+   */
+  watchSafety?: (changed: () => void) => () => void;
   /** This tab's sessionStorage, for the guard against loading again in a loop; null where there is none. */
   session: SessionLike | null;
   reload: () => void;
@@ -62,9 +84,17 @@ export interface AppUpdateEnvironment {
   intervalMs?: number;
   /** Before the page loads again by itself, for writes under way to land (ms). */
   settleMs?: number;
+  /** How long a newer version waits for a safe moment before it locks anyway (ms). */
+  graceMs?: number;
 }
 
-export const APP_UPDATE_TIMING = Object.freeze({ gapMs: 60_000, intervalMs: 15 * 60_000, settleMs: 1500 });
+/**
+ * `graceMs`: the longest a newer version waits while something is open that
+ * could hold input (an editor, a dialog, a field with text) or work runs that
+ * must not be cut off, before the lock comes anyway (README, "Newest version
+ * only").
+ */
+export const APP_UPDATE_TIMING = Object.freeze({ gapMs: 60_000, intervalMs: 15 * 60_000, settleMs: 1500, graceMs: 10 * 60_000 });
 
 export interface AppUpdateController {
   /** Asks now (one ask at a time; the one under way is returned). */
@@ -80,16 +110,87 @@ export function createAppUpdate(env: AppUpdateEnvironment): AppUpdateController 
   const gapMs = env.gapMs ?? APP_UPDATE_TIMING.gapMs;
   const intervalMs = env.intervalMs ?? APP_UPDATE_TIMING.intervalMs;
   const settleMs = env.settleMs ?? APP_UPDATE_TIMING.settleMs;
+  const graceMs = env.graceMs ?? APP_UPDATE_TIMING.graceMs;
   useAppUpdate.setState({ ...INITIAL_APP_UPDATE, channel }, true);
   if (channel === 'none') return { check: async () => {}, update: async () => {}, stop() {} };
 
   let stopped = false;
   let checking: Promise<void> | null = null;
   let lastAsked = -Infinity;
+  /** The newer version known, or null. */
+  let known: string | null = null;
+  /** The newer version has waited `graceMs` for a safe moment: it locks now, safe or not. */
+  let graceOver = false;
+  let graceTimer: ReturnType<typeof setTimeout> | undefined;
+  let unwatch: (() => void) | null = null;
+  /** Only patches that change something are set (the watch sees every keystroke). */
   const set = (patch: Partial<AppUpdateState>) => {
-    if (!stopped) useAppUpdate.setState(patch);
+    if (stopped) return;
+    const now = useAppUpdate.getState();
+    if ((Object.keys(patch) as (keyof AppUpdateState)[]).some((key) => now[key] !== patch[key])) useAppUpdate.setState(patch);
   };
   const state = () => useAppUpdate.getState();
+
+  function watch(): void {
+    if (!unwatch && env.watchSafety) unwatch = env.watchSafety(() => void settle());
+  }
+
+  function unwatchSafety(): void {
+    unwatch?.();
+    unwatch = null;
+  }
+
+  /** No newer version (any more): everything waiting for one ends. */
+  function forget(): void {
+    known = null;
+    graceOver = false;
+    clearTimeout(graceTimer);
+    graceTimer = undefined;
+    unwatchSafety();
+  }
+
+  /** Not locked yet, and something is open or under way: the notice, and a lock at the latest when the grace time is over. */
+  function wait(latest: string): void {
+    graceTimer ??= setTimeout(() => {
+      graceOver = true;
+      void settle();
+    }, graceMs);
+    watch();
+    set({ waiting: true, latest });
+  }
+
+  /**
+   * Does what the newer version calls for now: wait while it is not safe
+   * (until the grace time is over), else lock; and in the browser, load the
+   * new version once it is safe.
+   */
+  async function settle(): Promise<void> {
+    if (stopped || known === null || state().busy) return;
+    const safe = env.safeToReload();
+    const latest = known;
+    if (!state().locked && !safe && !graceOver) return wait(latest);
+    if (channel === 'android') {
+      // Nothing more to wait for: the lock links the download.
+      unwatchSafety();
+      return set({ locked: true, waiting: false, latest });
+    }
+    // The browser.
+    const decision = safe ? webDecision({ latest, mark: readReloadMark(env.session), safe, canMark: env.session !== null }) : 'lock';
+    set({ locked: true, waiting: false, latest, busy: decision === 'reload' });
+    if (decision !== 'reload') {
+      // Locked while something is open: it loads by itself once that is safe. Locked for another reason: the button.
+      if (safe) unwatchSafety();
+      else watch();
+      return;
+    }
+    unwatchSafety();
+    await new Promise((resolve) => setTimeout(resolve, settleMs));
+    if (stopped) return;
+    // Noted before it goes: should the load bring this version again, the lock waits for the button.
+    if (!writeReloadMark(env.session, latest)) return set({ busy: false });
+    await refreshWorker(env.shell);
+    if (!stopped) env.reload();
+  }
 
   async function checkServer(): Promise<void> {
     const answer = await env.fetchAnswer(env.versionUrl);
@@ -97,21 +198,14 @@ export function createAppUpdate(env: AppUpdateEnvironment): AppUpdateController 
     const latest = answer.version;
     if (!isNewer(latest, current)) {
       if (channel === 'web') settleReloadMark(env.session, current);
-      set({ locked: false, latest: null, busy: false });
+      forget();
+      set({ locked: false, waiting: false, latest: null, busy: false });
       return;
     }
-    if (channel === 'android') return set({ locked: true, latest });
-    // The browser. A load already under way goes on.
+    // A load already under way goes on.
     if (state().busy) return;
-    const decision = webDecision({ latest, mark: readReloadMark(env.session), safe: env.safeToReload(), canMark: env.session !== null });
-    set({ locked: true, latest, busy: decision === 'reload' });
-    if (decision !== 'reload') return;
-    await new Promise((resolve) => setTimeout(resolve, settleMs));
-    if (stopped) return;
-    // Noted before it goes: should the load bring this version again, the lock waits for the button.
-    if (!writeReloadMark(env.session, latest)) return set({ busy: false });
-    await refreshWorker(env.shell);
-    if (!stopped) env.reload();
+    known = latest;
+    await settle();
   }
 
   function check(): Promise<void> {
@@ -132,6 +226,7 @@ export function createAppUpdate(env: AppUpdateEnvironment): AppUpdateController 
     // The Android app's lock is a download link; nothing to run here.
     if (channel !== 'web' || !now.latest) return;
     // Asked for by hand: the caches of the app shell and the worker go first, so the load really comes from the server.
+    unwatchSafety();
     writeReloadMark(env.session, now.latest);
     set({ busy: true });
     await dropAppShell(env.shell);
@@ -151,6 +246,7 @@ export function createAppUpdate(env: AppUpdateEnvironment): AppUpdateController 
       stopped = true;
       unlisten();
       clearInterval(timer);
+      forget();
     },
   };
 }

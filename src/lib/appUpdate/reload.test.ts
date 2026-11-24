@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { RELOAD_MARK_KEY, SHELL_CACHE_PREFIX, dropAppShell, readReloadMark, refreshWorker, safeToReload, settleReloadMark, webDecision, writeReloadMark, type ReloadProbe } from './reload';
 
-const IDLE: ReloadProbe = { modalOpen: false, overlayOpen: false, typing: false, filled: false };
+const IDLE: ReloadProbe = { modalOpen: false, overlayOpen: false, typing: false, filled: false, working: false };
 
 function memorySession(initial: Record<string, string> = {}) {
   const values = new Map(Object.entries(initial));

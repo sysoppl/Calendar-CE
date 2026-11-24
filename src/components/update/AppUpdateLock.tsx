@@ -21,7 +21,29 @@ const LINK = 'bg-primary text-primary-contrast hover:bg-primary-hover mt-6 inlin
  */
 export function AppUpdateLock({ downloadUrl = ANDROID_UPDATE.downloadUrl }: { downloadUrl?: string }) {
   const locked = useAppUpdate((s) => s.locked);
-  return locked ? <Lock downloadUrl={downloadUrl} /> : null;
+  // Never a notice without something to do: the Android channel exists only with a download address.
+  const waiting = useAppUpdate((s) => s.waiting && s.channel !== 'none' && (s.channel !== 'android' || !!downloadUrl));
+  if (locked) return <Lock downloadUrl={downloadUrl} />;
+  return waiting ? <Waiting /> : null;
+}
+
+/**
+ * A newer version waits until nothing open would be lost (the controller's
+ * `waiting`): a small notice at the top that takes no tap and no focus, above
+ * the dialogs, so that the person can save or close what they are doing.
+ */
+function Waiting() {
+  const t = useT();
+  return createPortal(
+    // Above the dialogs' layer (50), so that an open dialog leaves it readable (Modal.tsx keeps such elements out of `inert`).
+    <div data-app-update-waiting style={{ zIndex: 60 }} className="pointer-events-none fixed inset-x-0 top-0 flex justify-center px-4 pt-[calc(0.5rem+var(--safe-top))]">
+      <p role="status" className="bg-bg-elevated border-border-weak text-text shadow-elevated flex max-w-[min(28rem,100%)] items-center gap-2 rounded-xl border px-3 py-2 text-[0.8125rem]">
+        <CircleArrowUp size={16} className="text-primary shrink-0" aria-hidden />
+        <span className="min-w-0 break-words">{t('app.update.waiting')}</span>
+      </p>
+    </div>,
+    document.body,
+  );
 }
 
 function Lock({ downloadUrl }: { downloadUrl: string }) {
@@ -37,7 +59,11 @@ function Lock({ downloadUrl }: { downloadUrl: string }) {
     heading.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Tab') trapTab(e, el);
-      else if (e.key === 'Escape') e.preventDefault();
+      else if (e.key === 'Escape') {
+        // Seen first (the window, capturing): no menu, picker or dialog under the lock hears it.
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
     };
     window.addEventListener('keydown', onKey, true);
     return () => {

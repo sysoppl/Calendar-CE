@@ -48,9 +48,9 @@ import { closeTopModal, isModalOpen } from '@/components/ui/Modal';
 import { closeTopFloating } from '@/components/ui/Menu';
 import { BACK_DEPTH, handleBackButton, useBackButtonLayer } from '@/components/onboarding/back';
 import { Onboarding } from '@/components/onboarding/Onboarding';
-import { safeToReload, startAppUpdate } from '@/lib/appUpdate';
+import { safeToReload, startAppUpdate, useAppUpdate } from '@/lib/appUpdate';
 import { AppUpdateLock } from '@/components/update/AppUpdateLock';
-import { readReloadProbe } from '@/components/update/reloadProbe';
+import { readReloadProbe, watchReloadProbe } from '@/components/update/reloadProbe';
 
 /** Tab title: the month being shown, then the app's name ("October 2026 | Calendar"). */
 function useTabTitle() {
@@ -65,16 +65,19 @@ function useTabTitle() {
 }
 
 /**
- * Android hardware back button: an open menu or picker first, then the top
- * dialog (one that must be answered keeps the press), then whatever screen is
- * showing, deepest layer first (see components/onboarding/back.ts); in the
- * calendar the last layer goes back through the views and dates it showed.
- * With nothing left to close the app is minimised.
+ * Android hardware back button: under the lock of a newer version, nothing
+ * (not even a menu under it closes); otherwise an open menu or picker first,
+ * then the top dialog (one that must be answered keeps the press), then
+ * whatever screen is showing, deepest layer first (see
+ * components/onboarding/back.ts); in the calendar the last layer goes back
+ * through the views and dates it showed. With nothing left to close the app
+ * is minimised.
  */
 function useBackButton() {
   useEffect(() => {
     if (!isNative) return;
     const handle = CapApp.addListener('backButton', () => {
+      if (useAppUpdate.getState().locked) return;
       if (closeTopFloating() || closeTopModal() || isModalOpen()) return;
       if (!handleBackButton()) void CapApp.minimizeApp();
     });
@@ -146,8 +149,9 @@ function Root() {
     useData.getState().init().catch(fail);
   }, []);
 
-  // Every copy runs the newest version: a newer one locks the whole app until it is updated (AppUpdateLock).
-  useEffect(() => startAppUpdate({ safeToReload: () => safeToReload(readReloadProbe()) }), []);
+  // Every copy runs the newest version: a newer one locks the whole app until it is updated (AppUpdateLock),
+  // once nothing open would be lost (or after the grace time).
+  useEffect(() => startAppUpdate({ safeToReload: () => safeToReload(readReloadProbe()), watchSafety: watchReloadProbe }), []);
 
   let screen: Screen;
   if (failed) screen = 'failed';

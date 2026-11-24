@@ -39,6 +39,7 @@ export const en = {
   'app.update.reload': 'Load the new version',
   'app.update.reloading': 'Loading the new version…',
   'app.update.download': 'Download the update',
+  'app.update.waiting': 'A new version of Calendar CE is ready. The app updates once you save or close what is open.',
 
   // Header / navigation
   'nav.today': 'Today',

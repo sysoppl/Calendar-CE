@@ -26,6 +26,9 @@ interface Rig {
   wake: () => void;
   listen: ReturnType<typeof vi.fn>;
   unlisten: ReturnType<typeof vi.fn>;
+  /** Tells the controller that what `safeToReload` reads may have changed, as the page's watch does. */
+  changed: () => void;
+  watching: () => boolean;
   cacheKeys: string[];
   unregister: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
@@ -42,6 +45,7 @@ function start(channel: UpdateChannel, options: { current?: string; answer?: Ver
   const session = options.session === null ? null : (options.session ?? memorySession());
   let wake = () => {};
   const unlisten = vi.fn();
+  let changed: (() => void) | null = null;
   const listen = vi.fn((fn: () => void) => {
     wake = fn;
     return unlisten;
@@ -65,9 +69,31 @@ function start(channel: UpdateChannel, options: { current?: string; answer?: Ver
     },
     online: () => online.current,
     listen,
+    watchSafety: (fn) => {
+      expect(changed).toBeNull();
+      changed = fn;
+      return () => (changed = null);
+    },
   };
   const controller = createAppUpdate(env);
-  rig = { env, controller, answer, fetchAnswer, reload, safe, online, session: session!, wake: () => wake(), listen, unlisten, cacheKeys, unregister, update };
+  rig = {
+    env,
+    controller,
+    answer,
+    fetchAnswer,
+    reload,
+    safe,
+    online,
+    session: session!,
+    wake: () => wake(),
+    listen,
+    unlisten,
+    changed: () => changed?.(),
+    watching: () => changed !== null,
+    cacheKeys,
+    unregister,
+    update,
+  };
   return rig;
 }
 
@@ -123,14 +149,80 @@ describe('the browser', () => {
     expect(r.reload).toHaveBeenCalledOnce();
   });
 
-  it('never throws away what is open: the lock waits for the button', async () => {
+  it('never covers what is open: no lock while it is, a notice instead', async () => {
     const r = start('web', { answer: { version: '1.16.1' } });
     r.safe.current = false;
     await settle();
-    expect(useAppUpdate.getState()).toMatchObject({ locked: true, busy: false });
+    expect(useAppUpdate.getState()).toMatchObject({ locked: false, waiting: true, latest: '1.16.1', busy: false });
     expect(r.reload).not.toHaveBeenCalled();
+    // The lock's button is not there to press.
+    await r.controller.update();
+    expect(r.reload).not.toHaveBeenCalled();
+    // Typing, closing a field: still open, still waiting, never a reload.
+    r.changed();
+    await settle();
+    expect(useAppUpdate.getState()).toMatchObject({ locked: false, waiting: true });
+    expect(r.reload).not.toHaveBeenCalled();
+  });
+
+  it('locks and loads the new version the moment what was open is saved or closed', async () => {
+    const r = start('web', { answer: { version: '1.16.1' } });
+    r.safe.current = false;
+    await settle();
+    expect(r.watching()).toBe(true);
+    r.safe.current = true;
+    r.changed();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(useAppUpdate.getState()).toMatchObject({ locked: true, waiting: false, busy: true });
+    await settle();
+    expect(r.session.values.get(RELOAD_MARK_KEY)).toBe('1.16.1');
+    expect(r.reload).toHaveBeenCalledOnce();
+    // Nothing is watched any more.
+    expect(r.watching()).toBe(false);
+  });
+
+  it('locks anyway once the grace time is over, and loads by itself as soon as that is safe', async () => {
+    expect(APP_UPDATE_TIMING.graceMs).toBe(10 * 60_000);
+    const r = start('web', { answer: { version: '1.16.1' } });
+    r.safe.current = false;
+    await settle();
+    await vi.advanceTimersByTimeAsync(APP_UPDATE_TIMING.graceMs - 60_000);
+    expect(useAppUpdate.getState()).toMatchObject({ locked: false, waiting: true });
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(useAppUpdate.getState()).toMatchObject({ locked: true, waiting: false, busy: false });
+    // Covered, not thrown away: no reload while it is still open; only the button would.
+    expect(r.reload).not.toHaveBeenCalled();
+    r.changed();
+    await settle();
+    expect(r.reload).not.toHaveBeenCalled();
+    r.safe.current = true;
+    r.changed();
+    await settle();
+    expect(r.reload).toHaveBeenCalledOnce();
+  });
+
+  it('lets the button load the new version once the lock covers what is open', async () => {
+    const r = start('web', { answer: { version: '1.16.1' } });
+    r.safe.current = false;
+    await settle();
+    await vi.advanceTimersByTimeAsync(APP_UPDATE_TIMING.graceMs);
+    expect(useAppUpdate.getState()).toMatchObject({ locked: true, busy: false });
     await r.controller.update();
     expect(r.reload).toHaveBeenCalledOnce();
+    expect(r.watching()).toBe(false);
+  });
+
+  it('forgets the wait when the server goes back to this version', async () => {
+    const r = start('web', { answer: { version: '1.16.1' } });
+    r.safe.current = false;
+    await settle();
+    r.answer.current = { version: '1.16.0' };
+    await vi.advanceTimersByTimeAsync(APP_UPDATE_TIMING.intervalMs);
+    expect(useAppUpdate.getState()).toMatchObject({ locked: false, waiting: false, latest: null });
+    expect(r.watching()).toBe(false);
+    // Nor does the grace time of the version that went lock later.
+    await vi.advanceTimersByTimeAsync(APP_UPDATE_TIMING.graceMs);
+    expect(useAppUpdate.getState().locked).toBe(false);
   });
 
   it('does not load by itself where the tab cannot note that it did', async () => {
@@ -160,8 +252,8 @@ describe('the browser', () => {
   });
 
   it('keeps the lock through answers it cannot read, and lifts it on a well-formed one that is not newer', async () => {
-    const r = start('web', { answer: { version: '1.16.1' } });
-    r.safe.current = false;
+    // Loaded for it once already: the lock waits for the button.
+    const r = start('web', { answer: { version: '1.16.1' }, session: memorySession({ [RELOAD_MARK_KEY]: '1.16.1' }) });
     await settle();
     expect(useAppUpdate.getState().locked).toBe(true);
     r.answer.current = null;
@@ -233,6 +325,29 @@ describe('the Android app built with a server', () => {
     r.answer.current = { version: '1.16.0' };
     await vi.advanceTimersByTimeAsync(APP_UPDATE_TIMING.intervalMs);
     expect(useAppUpdate.getState().locked).toBe(false);
+  });
+
+  it('waits for what is open before it locks, as the browser does', async () => {
+    const r = start('android', { answer: { version: '1.16.1' } });
+    r.safe.current = false;
+    await settle();
+    expect(useAppUpdate.getState()).toMatchObject({ locked: false, waiting: true, latest: '1.16.1' });
+    r.safe.current = true;
+    r.changed();
+    await settle();
+    expect(useAppUpdate.getState()).toMatchObject({ locked: true, waiting: false });
+    expect(r.watching()).toBe(false);
+    expect(r.reload).not.toHaveBeenCalled();
+  });
+
+  it('locks anyway once the grace time is over', async () => {
+    const r = start('android', { answer: { version: '1.16.1' } });
+    r.safe.current = false;
+    await settle();
+    await vi.advanceTimersByTimeAsync(APP_UPDATE_TIMING.graceMs);
+    expect(useAppUpdate.getState()).toMatchObject({ locked: true, waiting: false, latest: '1.16.1' });
+    expect(r.watching()).toBe(false);
+    expect(r.reload).not.toHaveBeenCalled();
   });
 });
 

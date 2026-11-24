@@ -8,13 +8,14 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettings } from '@/store/settings';
 import { useUi } from '@/store/ui';
+import { useData } from '@/store/data';
 
 const update = vi.hoisted(() => ({ updateNow: vi.fn(async () => {}) }));
 vi.mock('@/lib/appUpdate', async (original) => ({ ...(await original<typeof import('@/lib/appUpdate')>()), ...update }));
 
 const { useAppUpdate, INITIAL_APP_UPDATE } = await import('@/lib/appUpdate');
 const { AppUpdateLock } = await import('./AppUpdateLock');
-const { readReloadProbe } = await import('./reloadProbe');
+const { readReloadProbe, watchReloadProbe } = await import('./reloadProbe');
 const { Modal, closeTopModal, isModalOpen } = await import('@/components/ui/Modal');
 
 let root: Root | null = null;
@@ -142,10 +143,62 @@ describe('the app lock', () => {
   });
 });
 
+describe('a newer version waiting for what is open', () => {
+  it('says so in a notice that covers nothing and takes no tap or focus, also over a dialog', () => {
+    useAppUpdate.setState({ channel: 'web', waiting: true, latest: '1.16.1' });
+    draw(h('div', null, h(Modal, { open: true, onClose: () => {}, title: 'Editor', children: h('input', { 'aria-label': 'Title' }) }), h(AppUpdateLock)));
+    expect(lock()).toBeNull();
+    const notice = document.querySelector<HTMLElement>('[data-app-update-waiting]')!;
+    expect(notice.parentElement).toBe(document.body);
+    expect(notice.querySelector('[role="status"]')!.textContent).toBe('A new version of Calendar CE is ready. The app updates once you save or close what is open.');
+    expect(notice.className).toContain('pointer-events-none');
+    expect(notice.querySelectorAll('button, a, input, [tabindex]')).toHaveLength(0);
+    // Read out above the dialog's layer, which leaves the dialog usable.
+    expect(notice.closest('[inert]')).toBeNull();
+    const dialog = document.querySelector('[role="dialog"]')!;
+    expect(dialog.closest('[inert]')).toBeNull();
+    expect(isModalOpen()).toBe(true);
+    // Locked, the notice gives way to the lock.
+    act(() => useAppUpdate.setState({ locked: true, waiting: false }));
+    expect(document.querySelector('[data-app-update-waiting]')).toBeNull();
+    expect(lock()).not.toBeNull();
+  });
+
+  it('is shown for the Android app built with a download, and nowhere there is nothing to update to', () => {
+    useAppUpdate.setState({ channel: 'android', waiting: true, latest: '1.16.1' });
+    draw(h(AppUpdateLock, { downloadUrl: 'https://calendar.example.com/calendar.apk' }));
+    expect(document.querySelector('[data-app-update-waiting]')).not.toBeNull();
+    act(() => root!.render(h(AppUpdateLock, { downloadUrl: '' })));
+    expect(document.querySelector('[data-app-update-waiting]')).toBeNull();
+    act(() => useAppUpdate.setState({ channel: 'none' }));
+    act(() => root!.render(h(AppUpdateLock, { downloadUrl: 'https://calendar.example.com/calendar.apk' })));
+    expect(document.querySelector('[data-app-update-waiting]')).toBeNull();
+  });
+});
+
+describe('Escape under the lock', () => {
+  it('reaches nothing under it: no menu or picker listening on the document closes', () => {
+    const heard = vi.fn();
+    document.addEventListener('keydown', heard);
+    try {
+      useAppUpdate.setState({ channel: 'web', locked: true, latest: '1.16.1' });
+      draw(h(AppUpdateLock));
+      const event = press('Escape');
+      expect(event.defaultPrevented).toBe(true);
+      expect(heard).not.toHaveBeenCalled();
+      // Other keys go their way (Tab is kept inside by the lock itself).
+      press('a');
+      expect(heard).toHaveBeenCalledOnce();
+    } finally {
+      document.removeEventListener('keydown', heard);
+    }
+  });
+});
+
 describe('what the page has open', () => {
   it('lets it load again by itself only when nothing is open or typed', () => {
     draw(h('div', null, h('input', { 'aria-label': 'Search', defaultValue: '' }), h('input', { type: 'checkbox', defaultChecked: true })));
-    expect(readReloadProbe()).toEqual({ modalOpen: false, overlayOpen: false, typing: false, filled: false });
+    expect(readReloadProbe()).toEqual({ modalOpen: false, overlayOpen: false, typing: false, filled: false, working: false });
     const field = document.querySelector<HTMLInputElement>('input[aria-label="Search"]')!;
     field.focus();
     expect(readReloadProbe().typing).toBe(true);
@@ -161,5 +214,49 @@ describe('what the page has open', () => {
     expect(readReloadProbe().overlayOpen).toBe(false);
     draw(h(Modal, { open: true, onClose: () => {}, title: 'Prompt', children: 'Sure?' }));
     expect(readReloadProbe().modalOpen).toBe(true);
+  });
+
+  it('counts work that must not be cut off: a sync under way', () => {
+    useData.setState({ syncing: { acc: true } });
+    expect(readReloadProbe().working).toBe(true);
+    useData.setState({ syncing: { acc: false } });
+    expect(readReloadProbe().working).toBe(false);
+  });
+
+  it('is watched without polling: every change of what it reads is told, until the watch stops', async () => {
+    const changed = vi.fn();
+    const stop = watchReloadProbe(changed);
+    const told = async (what: () => void) => {
+      changed.mockClear();
+      what();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await Promise.resolve();
+      expect(changed).toHaveBeenCalled();
+    };
+    try {
+      await told(() => useUi.setState({ settings: 'general' }));
+      await told(() => useUi.setState({ settings: null }));
+      await told(() => useData.setState({ syncing: { acc: true } }));
+      // A dialog opened or closed: a child of <body>.
+      await told(() => document.body.appendChild(document.createElement('div')));
+      const field = document.createElement('input');
+      document.body.appendChild(field);
+      await told(() => field.focus());
+      await told(() => field.dispatchEvent(new Event('input', { bubbles: true })));
+      await told(() => field.blur());
+      // A data change that is not a sync says nothing.
+      changed.mockClear();
+      useData.setState({ revision: useData.getState().revision + 1 });
+      expect(changed).not.toHaveBeenCalled();
+    } finally {
+      stop();
+      useData.setState({ syncing: {} });
+    }
+    changed.mockClear();
+    useUi.setState({ settings: 'general' });
+    document.body.appendChild(document.createElement('div'));
+    document.body.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(changed).not.toHaveBeenCalled();
   });
 });

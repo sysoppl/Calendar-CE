@@ -10,7 +10,7 @@ export { compareVersions, isNewer, parseVersion } from './version';
 export { readVersionAnswer, fetchVersionAnswer, type VersionAnswer } from './answer';
 export { safeToReload, type ReloadProbe } from './reload';
 export { updateChannel, type UpdateChannel } from './channel';
-export { useAppUpdate, createAppUpdate, INITIAL_APP_UPDATE, type AppUpdateState } from './controller';
+export { useAppUpdate, createAppUpdate, APP_UPDATE_TIMING, INITIAL_APP_UPDATE, type AppUpdateState } from './controller';
 
 /** The file the build writes into the web bundle (scripts/version-file.mjs). */
 export const VERSION_PATH = '/version.json';
@@ -62,7 +62,7 @@ let running: AppUpdateController | null = null;
  * The browser asks its own server; the Android app asks the server it was
  * built for, and nobody at all when it was built without one.
  */
-export function startAppUpdate(options: { safeToReload: () => boolean; enabled?: boolean; android?: AndroidUpdate }): () => void {
+export function startAppUpdate(options: { safeToReload: () => boolean; watchSafety?: (changed: () => void) => () => void; enabled?: boolean; android?: AndroidUpdate }): () => void {
   if (!(options.enabled ?? import.meta.env.PROD)) return () => {};
   running?.stop();
   const android = options.android ?? ANDROID_UPDATE;
@@ -74,6 +74,7 @@ export function startAppUpdate(options: { safeToReload: () => boolean; enabled?:
     versionUrl: channel === 'android' ? android.versionUrl : VERSION_PATH,
     fetchAnswer: (url) => fetchVersionAnswer(url),
     safeToReload: options.safeToReload,
+    watchSafety: options.watchSafety,
     session: session(),
     reload: () => window.location.reload(),
     shell: {
